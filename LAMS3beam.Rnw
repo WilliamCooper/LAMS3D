@@ -1,0 +1,434 @@
+%% LyX 2.1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[12pt]{article}
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage[letterpaper]{geometry}
+\geometry{verbose,tmargin=3.54cm,bmargin=2.54cm,lmargin=2.54cm,rmargin=2.54cm,headheight=1cm,headsep=2cm,footskip=0.5cm}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\setlength{\parskip}{\medskipamount}
+\setlength{\parindent}{0pt}
+\usepackage{color}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\input colordvi
+\usepackage{color}
+\fancyhead{}
+\fancyfoot[CE,CO]{}
+\newtoks{\addressee} \global\addressee={}
+\newdimen\longindent \longindent=3.5truein
+\fancyhead[L]{Memo to: \the\addressee \\ \datetoday \\ Page \thepage \hfill}
+\renewcommand{\headrulewidth}{0.0pt}
+\newenvironment{lyxlist}[1]
+{\begin{list}{}
+{\settowidth{\labelwidth}{#1}
+\setlength{\leftmargin}{\labelwidth}
+\addtolength{\leftmargin}{\labelsep}
+\renewcommand{\makelabel}[1]{##1\hfil}}}
+{\end{list}}
+\newcommand{\datetoday}{\number\day\space
+     \ifcase\month\or January\or February\or March\or April\or May\or
+     June\or July\or August\or September\or October\or November\or
+     December\fi
+     \space\number\year}
+\newcommand{\EOLmemo}{\null \vskip-1.5truein
+{\raggedright \textsf{\textsc{\large \textcolor{blue}{Earth Observing Laboratory}}}}\par
+{\raggedright \textsf{\textsl{\textcolor{blue}{Memorandum:}}}} \par \vskip6pt
+{\color{blue}{\hrule}}\par
+\vskip0.3truein \leftline{\hskip \longindent \datetoday} \vskip0.2truein
+\thispagestyle{empty}}
+\newcommand{\attachm}[1]{\begin{lyxlist}{Attachments:00}
+\item [Attachments:] {#1}
+\end{lyxlist}}
+\newcommand{\cc}[1]{\begin{lyxlist}{Attachments:00}
+\item [cc:] {#1}
+\end{lyxlist}}
+\newcommand{\attach}[1]{\begin{lyxlist}{Attachments:00}
+\item [Attachment:] {#1}
+\end{lyxlist}}
+%usage: \encl{A\\B\\C} or \cc{ma,e1\\name2\\name3}
+
+\makeatother
+
+\begin{document}
+\EOLmemo 
+
+\global\addressee={LAMS File}  % >>change "File" to the "To:" name desired
+
+\begin{tabular}{ll}
+\textsf{\textsc{\textcolor{blue}{To:}}} & \the\addressee\tabularnewline
+\textsf{\textsc{\textcolor{blue}{From:}}} & Al Cooper\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Subject:}}} & 3-beam test of LAMS in HCRTEST\tabularnewline
+\end{tabular}
+
+\bigskip
+
+<<initialization,echo=FALSE,include=FALSE>>=
+opts_chunk$set(echo=FALSE, include=FALSE, fig.lp="fig:")
+opts_chunk$set(fig.width=6, fig.height=5, fig.pos="center", digits=4)
+thisFileName <- "LAMS3beam"
+require(Ranadu, quietly = TRUE, warn.conflicts=FALSE)
+require(ggplot2)
+require(grid)
+library(knitr)
+require(ggthemes)
+require(vioplot)
+require(plyr)
+Directory <- DataDirectory ()
+Flight <- "rf03" 				# XXX change this
+Project = "HCRTEST" 			 # XXX change this
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,Project,Project,Flight)
+VarList <- c("WDC", "WSC", "WIC", "AKRD", "SSRD", "U_LAMS", "V_LAMS", "W_LAMS",
+             "BEAM1speed", "BEAM2speed", "BEAM3speed", "ADIFR", "QCF", "BDIFR",
+             "CVEW_LAMS", "CVNS_LAMS", "CVSPD_LAMS", "GGVEW", "GGVNS",
+             "CTHDG_LAMS", "CROLL_LAMS", "CPITCH_LAMS", "PITCH", "THDG",
+             "WD_LAMS", "WS_LAMS", "WI_LAMS", "ATTACK_L", "SSLIP_L")
+Data <- getNetCDF (fname, standardVariables(c(VarList)))		#XXX set variables needed here
+SaveRData <- sprintf("%s.Rdata.gz", thisFileName)
+SummarizeFit <- function(ft) {
+  print (summary(ft)$call)
+  print ("Coefficients:")
+  print (summary(ft)$coefficients)
+  print (sprintf ("Residual standard deviation: %.3f, dof=%d", summary(ft)$sigma, summary(ft)$df[2]))
+  print (sprintf ("R-squared %.3f", summary(ft)$r.squared))
+}
+
+
+@
+
+
+\section{Introduction}
+
+A test of the LAMS was conducted in Nov. 2014 during the project called
+HCRTEST. Here the focus is on flight 3, Nov. 24 2014, because LAMS
+worked well and the flight included standard maneuvers at altitudes
+where the backscatter from aerosols was sufficient to provide good
+signals for LAMS. The configuration for this flight was non-standard:
+Beam 1 was upward as usual, but beam 2 was forward along the longitudinal
+axis and beam 3 was outboard and downward. This is not an ideal configuration
+for determining three-dimensional wind, but problems with flow distortion
+when one beam was directed downward and inboard led to use of this
+configuration. It provides the advantage of having a longitudinal
+beam and so providing a good measurement of airspeed.
+
+The flight included these maneuvers, flown at an altitude of about
+6000~m and an airspeed of about 200 m/s except for the speed run:
+
+\begin{tabular}{|c|c|c|}
+\hline 
+\textbf{Maneuver} & \textbf{Start {[}UTC{]}} & \textbf{End {[}UTC{]}}\tabularnewline
+\hline 
+\hline 
+circle & 20:06:45 & 20:15:40\tabularnewline
+\hline 
+speed run & 20:32:00 & 20:42:00\tabularnewline
+\hline 
+yaw & 20:43:00 & 20:46:00\tabularnewline
+\hline 
+pitch & 20:46:00 & 20:48:10\tabularnewline
+\hline 
+\end{tabular}
+
+There was a change in system configuration around 21:00 UTC to test
+a different configuration, so that part of the flight will not be
+used here. There was also a descent to about 2000~m starting at 20:55,
+a climb from 2000 to 6000~m starting about 21:10, then a straight
+segment to about 21:40 before the descent back to RMMA. For most of
+these times, there was a solid LAMS signal, so the flight provides
+a good test of the 3-beam LAMS.
+
+
+\section{LAMS data processing}
+
+The calculations used to obtain wind measurements from the LAMS were
+documented previously and won't be repeated here. Two processing routes
+were used, that of Scott Spuler who obtained line-of-sight beam speeds
+using a principle-component analysis and another that used the Python
+processing program LAMS4beam-SG.py, which used Savitsky-Golay polynomials
+to smooth the measured histograms of beam speeds from the measured
+Doppler shift in the backscattered light and then detected peaks above
+these smoothed histograms. Both will be shown and used here. Once
+the line-of-sight speeds were measured, these were used to find the
+three components of the relative wind as described in the memo LAMS4beam-SG.pdf
+via combination of the relative wind and the ground-referenced motion
+of the aircraft as measured by the C-MIGITSIII inertial reference
+unit in the LAMS pod. The calculated variables are WD\_LAMS, WS\_LAMS,
+WI\_LAMS, ATTACK\_L, and SSLIP\_L as well as U\_LAMS, V\_LAMS, and
+W\_LAMS which represent the components of the three-dimensional wind.
+
+<<full-flight-wind, include=FALSE, fig.cap="Comparison of wind measurements from LAMS and from the standard GV wind measuring system, for flight 3 of HCRTEST on 24 Nov 2014.">>=
+
+op <- par (mar=c(2,4,1,1)+0.1)
+r <- setRange (Data$Time, 193000, 205000)
+layout(matrix(1:3, ncol = 1), widths = 1,  heights = c(5,5,6))
+plotWAC (Data[r, c("Time", "WDC", "WD_LAMS")], ylab='wind direction [deg.]', ylim=c(200,360))
+plotWAC (Data[r, c("Time", "WSC", "WS_LAMS")], ylab='wind speed [m/s]', ylim=c(0,30))
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC (Data[r, c("Time", "WIC", "WI_LAMS")], ylab='vertical wind [m/s]', ylim=c(-5,5))
+
+@
+
+<<cart-component-wind, include=FALSE, fig.cap="Comparison of wind measurements from LAMS and from the standard GV wind measuring system, for flight 3 of HCRTEST on 24 Nov 2014.">>=
+
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+layout(matrix(1:3, ncol = 1), widths = 1,  heights = c(5,5,6))
+plotWAC (Data[r, c("Time", "U_LAMS")], ylab='longitudinal wind [m/s]', ylim=c(100,250))
+plotWAC (Data[r, c("Time", "V_LAMS")], ylab='lateral wind [m/s]', ylim=c(-10,10))
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC (Data[r, c("Time", "W_LAMS")], ylab='upward wind [m/s]', ylim=c(5,10))
+
+@
+
+<<transform, include=TRUE, fig.cap="Wind measurements from LAMS (WDL, WSL, WIL) compared to those from the standard wind-sensing system (WDC, WSC, WIC) for a flight segment from the HCRTEST program, flight 3, 24 Nov 2014.">>=
+
+Data$BEAM1speed <- zoo::na.approx (as.vector(Data$BEAM1speed), maxgap=1000, na.rm = FALSE)
+Data$BEAM2speed <- zoo::na.approx (as.vector(Data$BEAM2speed), maxgap=1000, na.rm = FALSE)
+Data$BEAM3speed <- zoo::na.approx (as.vector(Data$BEAM3speed), maxgap=1000, na.rm = FALSE)
+
+## try to fix CTHDG_LAMS bad points in transition through 180:
+for (i in 2:(nrow(Data)-1)) {
+  if (is.na(Data$CTHDG_LAMS[i]) || is.na(Data$CTHDG_LAMS[i-1]) || is.na(Data$CTHDG_LAMS[i+1])) {next}
+  if (abs(Data$CTHDG[i-1]-Data$CTHDG_LAMS[i+1]) > 10.) {next}
+  if ((Data$CTHDG_LAMS[i-1] < 180.) && (Data$CTHDG_LAMS[i+1] > 180)) {Data$CTHDG_LAMS[i] <- NA}
+  if ((Data$CTHDG_LAMS[i-1] > 180.) && (Data$CTHDG_LAMS[i+1] < 180)) {Data$CTHDG_LAMS[i] <- NA}
+}
+Data$CTHDG_LAMS <- zoo::na.approx (as.vector(Data$CTHDG_LAMS), maxgap=1000, na.rm = FALSE)
+
+Theta =  c(35.0802, 34.8501, 34.8496, 0.) * pi / 180 # revised 12 May 2014
+Phi = c(179.2171, -61.0712, 59.1506, 0.) * pi / 180  #  "  "
+# special for HCRTEST:
+Theta[2] = 0.   # beam 2 is forward
+
+# also need the distances from the IRS to LAMS: (x,y,z)
+LL = c(-10.305, -6.319, 1.359)                # see Scott's email, recorded above.
+# unit vectors along beams are then:
+#   a[i] = [cos(Theta[i]), -sin(Theta[i])*sin(Phi[i]), sin(Theta[i])*cos(Phi[i])]
+# and the dot products with the (i,j,k) unit vectors give the direction cosine matrix:
+S = c(cos(Theta[1]), -sin(Theta[1])*sin(Phi[1]), sin(Theta[1])*cos(Phi[1]), 
+               cos(Theta[2]), -sin(Theta[2])*sin(Phi[2]), sin(Theta[2])*cos(Phi[2]), 
+               cos(Theta[3]), -sin(Theta[3])*sin(Phi[3]), sin(Theta[3])*cos(Phi[3]))
+dim(S) <- c(3,3)
+Si = t(solve(S))  # calculate the inverse of S -- this is the 3-beam version
+A = c(Data$BEAM1speed, Data$BEAM2speed, Data$BEAM3speed)
+dim(A) <- c(nrow(Data), 3)
+RW = t (Si %*% t(A))    # gives u, v, w components, RW[,1] is u
+D <- data.frame("Time"=Data$Time)
+D$TASX <- RW[,1]
+D$ATTACK <- atan (RW[, 3] / RW[, 1]) * 180 / pi
+D$SSLIP <-  atan (RW[, 2] / RW[, 1]) * 180 / pi
+D$GGVEW <- Data$GGVEW
+D$GGVNS <- Data$GGVNS
+D$GGVSPD <- Data$CVSPD_LAMS
+D$VEW <- Data$CVEW_LAMS
+D$VNS <- Data$CVNS_LAMS
+D$THDG <- Data$CTHDG_LAMS
+D$ROLL <- Data$CROLL_LAMS
+D$PITCH <- Data$CPITCH_LAMS +0.15
+D$BEAM1speed <- Data$BEAM1speed
+D$BEAM2speed <- Data$BEAM2speed
+D$BEAM3speed <- Data$BEAM3speed
+D$WDC <- Data$WDC
+D$WSC <- Data$WSC
+D$WIC <- Data$WIC
+D$AKRD <- Data$AKRD
+D$SSRD <- Data$SSRD
+rg <- setRange (D$Time, 193000,205000)
+D <- D[rg, ]
+DW <- WindProcessor (data=D)
+layout(matrix(1:3, ncol = 1), widths = 1,  heights = c(5,5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(DW[c("Time", "WDC", "WDN")], ylim=c(250,360))
+plotWAC(DW[c("Time", "WSC", "WSN")], ylim=c(0,40))
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(DW[c("Time", "WIC", "WIN")], ylim=c(-5,5))
+
+@
+
+
+\section{Example results}
+
+Figure~\ref{fig:transform} shows the wind measurements obtained
+from LAMS in comparison to the standard measurements. In addition
+to the processing described above, it was necessary to adjust the
+measurements of heading for a peculiarity in the data that introduced
+large jumps as the measurements moved through a heading of 180$^{\circ}$
+and, if not removed, produced similar jumps in the measured horizontal
+wind. Interpolation through these bad points removed these spurious
+measurements. The measurements from LAMS are independent of those
+from the standard system, so the general agreement between these two
+sets of results is a good indication that the three-beam version of
+LAMS is working well. The mean speed detected in the forward-pointing
+beam was about 0.5~m/s larger than TASX and the standard deviation
+in the difference over the period of this plot is about 0.4~m/s.
+This is somewhat larger than the expected difference but fairly small,
+so there is no evident problem. 
+
+
+\section{Maneuvers}
+
+
+\subsection{Speed run}
+
+The speed run flown from 20:30--20:45 UTC provides a check on the
+sensitivity coefficient determined for the standard system because,
+although there may be an offset the differs between the two systems,
+the two measurements should correlate well with unity slope if the
+sensitivity coefficient in standard processing is correct, because
+the LAMS measurements provide an absolute reference for relative wind.
+Figure~\ref{fig:attack-plot} shows that there is good correlation
+between these two measurements. The slope determined from a fit to
+these measurements is about 1.04, with a standard error of 0.005,
+and the correlation coefficient is above 0.99, so this fit provides
+a low-uncertainty check on the sensitivity coefficients for the radome.
+The residual standard deviation of AKRD measurements about the best-fit
+line is about 0.1$^{\circ}$. The large offset, 3.7$^{\circ}$, between
+the two systems reflects that they are installed with different orientation,
+as confirmed by the similar difference in pitch measurements from
+the two IRUs. At a flight speed of 200~m/s, an angle-of-attack change
+of 0.1$^{\circ}$ would produce a change in measured updraft of about
+3.5~m/s, so a change in that value of 4\% would change the measured
+updraft by 4\% also or about 0.14~m/s. This uncertainty is thus not
+negligible, so it is useful to determine if there is other evidence
+for this shift. 
+
+<<attack-plot, include=TRUE, fig.cap="Angle of attack determined by the standard system (AKRD) plotted vs.\ the angle of attack determined from the LAMS. The orange dashed line is the regression line for AKRD as a function of the LAMS angle-of-attack.">>=
+
+rb <- setRange (DW$Time, 203200,204200)
+op <- par (mar=c(5,4,1,1)+0.1)
+DW$ATTACK[DW$ATTACK < -2] <- NA
+plot(DW$ATTACK[rb], DW$AKRD[rb], type='p', pch=20, col='blue', ylab="Standard AKRD [deg.]", xlab="LAMS-based angle of attack [deg.]")
+f <- lm(DW$AKRD[rb]~DW$ATTACK[rb])
+cf <- coef(f)
+print ("Fit results using the standard sensitivity coefficients for the GV")
+SummarizeFit(f)
+x <- c(-3.,2.)
+y <- cf[1]+cf[2]*x
+points (x,y, type='l', col='darkorange', lwd=2, lty=2)
+
+@
+
+The calibration recommended for DEEPWAVE was slightly different and
+based on measurements that emphasized upper-altitude flight conditions.
+If those sensitivity coefficients, 4.468$^{\circ}$ and 21.481$^{\circ}$,
+are used instead of the standard calibration then the regression slope
+changes from 1.04 to 0.98 and the standard deviation and standard
+error for the determination of slope both decrease. Use of these coefficients,
+according to the LAMS results, would lead to a 2\% underestimate of
+vertical wind instead of a 4\% overestimate. 
+
+<<dw-calibration, include=TRUE>>=
+Data$AKDW <- 4.468 + 21.481 * Data$ADIFR/Data$QCF
+rc <- setRange (Data$Time, 203200, 204200)
+fc <- lm (Data$AKDW[rc]~DW$ATTACK[rb])
+print ("Fit results using the DEEPWAVE sensitivity coefficients for AKRD")
+SummarizeFit(fc)
+
+@
+
+
+\subsection{Yaw maneuver}
+
+The yaw maneuver flown from 20:43 to 20:46 UTC provides a similar
+opportunity to check the sensitivity coefficient in use for sideslip.
+Figure~\ref{fig:yaw} shows the standard measurement of sideslip
+angle (SSRD) plotted against the sideslip angle determined from the
+LAMS measurements. The regression line has slope 0.94, indicating
+that the standard formula underestimates the sideslip angle by about
+6\%. However, repeating this with the calibration determined for DEEPWAVE,
+with coefficients \{0.008, 22.302\}, gave a regression slope of 0.994,
+so this is a better representation of the LAMS-measured sideslip and
+should be made the standard calibration.
+
+<<yaw, include=TRUE, fig.cap="Sideslip angle determined by the standard system (SSRD) plotted vs.\ the sideslip angle determined from the LAMS, for HCRTEST flight 3, 20:43:00--20:46:00 UTC. The orange dashed line is the regression line for SSRD as a function of the LAMS-provided sideslip angle.">>=
+
+rd <- setRange (DW$Time, 204300, 204600)
+plot(DW$SSLIP[rd], DW$SSRD[rd], type='p', pch=20, col='blue', ylab="Standard SSRD [deg.]", xlab="LAMS-based sideslip angle [deg.]")
+fd <- lm (DW$SSRD[rd]~DW$SSLIP[rd])
+cfs <- coef(fd)
+print (sprintf("Fit results using the standard sideslip calibration for the GV"))
+SummarizeFit(fd)
+x <- c(-2.,-1.)
+y <- cfs[1]+cfs[2]*x
+points (x,y, type='l', col='darkorange', lwd=2, lty=2)
+Data$SSDW <- 0.008 + 22.302 * Data$BDIFR / Data$QCF
+rc <- setRange (Data$Time, 204300, 204600)
+fe <- lm (Data$SSDW[rc]~DW$SSLIP[rd])
+print (sprintf ("Fit results using the DEEPWAVE calibration for sideslip"))
+SummarizeFit (fe)
+
+@
+
+
+\subsection{Pitch maneuver}
+
+The pitch maneuver (20:46:00--20:48:10 UTC) should show no residual
+pattern in the vertical wind that matches the imposed vertical motion
+of the aircraft if both systems are operating properly. Figure~\ref{fig:pitch}
+shows that both systems pass this test well. While there is a residual
+standard deviation in vertical wind of about 0.15~m/s, this seems
+to be mostly natural variability in the vertical wind because there
+is little correspondence between the fluctuations and the imposed
+sine-wave pattern of the pitch maneuver. The small offset between
+wind as measured by the two systems appears to arise from differences
+in the pitch measurements from the two systems. Otherwise, the pitch
+maneuver provides a good indication that both systems are performing
+well.
+
+<<pitch, include=TRUE, fig.cap="Pitch maneuver, HCRTEST flight 3, 20:46:00--20:48:10 UTC. The red line labeled WREF shows GGVSPD/10, the vertical motion of the aircraft after division by 10.">>=
+
+rf <- setRange (DW$Time, 204600,204810)
+DW$WREF <- DW$GGVSPD / 10.
+plotWAC(DW[rf, c("Time", "WIC", "WIN", "WREF")])
+print (sprintf (" WIC std dev: %.2f; WI_LAMS std dev: %.2f", sd(DW$WIC[rf]), sd(DW$WIN[rf])))
+
+@
+
+
+\subsection{The circle maneuver}
+
+A circle maneuver was flown from 20:06:45 to 20:15:40 UTC.
+
+\clearpage
+
+\begin{center}
+\textsf{\textcolor{blue}{-- End of Memo --}}
+\par\end{center}
+
+Reproducibility:
+
+\begin{tabular}{ll}
+\textsf{\textsc{\textcolor{blue}{Project:}}} & \Sexpr{thisFileName}\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Archive package:}}} & \Sexpr{thisFileName}.zip\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Contains:}}} & attachment list below\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Program:}}} & \Sexpr{thisFileName}.Rnw\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Original Data:}}} & /scr/raf\_data/\Sexpr{Project}/\Sexpr{Flight}.nc \tabularnewline
+\textsf{\textsc{\textcolor{blue}{Git:}}} & git@github.com:WilliamCooper/\Sexpr{thisFileName}.git\tabularnewline
+\end{tabular}
+
+\attachm{\Sexpr{thisFileName}.Rnw\\\Sexpr{thisFileName}.pdf\\\Sexpr{SaveRData}\\SessionInfo}
+%\cc{first attachment\\second\\3rd att}
+%\attach{attachment}
+%\attachm{first\\second} %\cc{first attachment\\second\\3rd att}
+<<save-system-info, echo=FALSE>>= 
+cat (toLatex(sessionInfo()), file="SessionInfo")
+
+@ 
+<<make-zip-archive, echo=TRUE, INCLUDE=TRUE>>=
+system (sprintf("zip %s.zip %s.Rnw %s.pdf SessionInfo %s", thisFileName, thisFileName, thisFileName, SaveRData))
+
+@ 
+
+%\attach{attachment}
+%\attachm{ProgramFile\\Document.pdf\\SaveRData}
+
+%\cc{first attachment\\second\\3rd att}
+\end{document}
