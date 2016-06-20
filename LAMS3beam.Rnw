@@ -73,6 +73,7 @@
 \bigskip
 
 <<initialization,echo=FALSE,include=FALSE>>=
+
 opts_chunk$set(echo=FALSE, include=FALSE, fig.lp="fig:")
 opts_chunk$set(fig.width=6, fig.height=5, fig.pos="center", digits=4)
 thisFileName <- "LAMS3beam"
@@ -81,18 +82,19 @@ require(ggplot2)
 require(grid)
 library(knitr)
 require(ggthemes)
-require(vioplot)
+# require(vioplot)
 require(plyr)
 Directory <- DataDirectory ()
-Flight <- "rf03" 				# XXX change this
-Project = "HCRTEST" 			 # XXX change this
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,Project,Project,Flight)
-VarList <- c("WDC", "WSC", "WIC", "AKRD", "SSRD", "U_LAMS", "V_LAMS", "W_LAMS",
-             "BEAM1speed", "BEAM2speed", "BEAM3speed", "ADIFR", "QCF", "BDIFR",
-             "CVEW_LAMS", "CVNS_LAMS", "CVSPD_LAMS", "GGVEW", "GGVNS",
+Flight <- "03HR"  				# XXX change this
+Project <- 'HT'
+ProjectDir = "HCRTEST" 			 # XXX change this
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+VarList <- c("WDC", "WSC", "WIC", "AKRD", "SSLIP", "U_LAMS", "V_LAMS", "W_LAMS",
+             "BEAM1speed", "BEAM2speed", "BEAM3speed", "ADIFR", "QCF",
+             "CVEW_LAMS", "CVNS_LAMS", "CVSPD_LAMS", "GGVEW", "GGVNS", "TASX",
              "CTHDG_LAMS", "CROLL_LAMS", "CPITCH_LAMS", "PITCH", "THDG",
              "WD_LAMS", "WS_LAMS", "WI_LAMS", "ATTACK_L", "SSLIP_L")
-Data <- getNetCDF (fname, standardVariables(c(VarList)))		#XXX set variables needed here
+Data <- getNetCDF (fname, VarList)		#XXX set variables needed here
 SaveRData <- sprintf("%s.Rdata.gz", thisFileName)
 SummarizeFit <- function(ft) {
   print (summary(ft)$call)
@@ -228,11 +230,14 @@ D$SSLIP <-  atan (RW[, 2] / RW[, 1]) * 180 / pi
 D$GGVEW <- Data$GGVEW
 D$GGVNS <- Data$GGVNS
 D$GGVSPD <- Data$CVSPD_LAMS
+# shift <- +80
+# D$GGVSPD <- ShiftInTime (D$GGVSPD, .shift=shift)
 D$VEW <- Data$CVEW_LAMS
 D$VNS <- Data$CVNS_LAMS
 D$THDG <- Data$CTHDG_LAMS
 D$ROLL <- Data$CROLL_LAMS
 D$PITCH <- Data$CPITCH_LAMS +0.15
+D$DPITCH <- c(0, diff(D$PITCH))
 D$BEAM1speed <- Data$BEAM1speed
 D$BEAM2speed <- Data$BEAM2speed
 D$BEAM3speed <- Data$BEAM3speed
@@ -241,9 +246,10 @@ D$WSC <- Data$WSC
 D$WIC <- Data$WIC
 D$AKRD <- Data$AKRD
 D$SSRD <- Data$SSRD
-rg <- setRange (D$Time, 193000,205000)
-D <- D[rg, ]
+# rg <- setRange (D$Time, 204000,205000)
+# D <- D[rg, ]
 DW <- WindProcessor (data=D)
+DW$WIN <- DW$WIN + 14 * DW$DPITCH * pi / 180
 layout(matrix(1:3, ncol = 1), widths = 1,  heights = c(5,5,6))
 op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
 plotWAC(DW[c("Time", "WDC", "WDN")], ylim=c(250,360))
@@ -304,7 +310,7 @@ for this shift.
 
 rb <- setRange (DW$Time, 203200,204200)
 op <- par (mar=c(5,4,1,1)+0.1)
-DW$ATTACK[DW$ATTACK < -2] <- NA
+DW$ATTACK[DW$ATTACK < -4] <- NA
 plot(DW$ATTACK[rb], DW$AKRD[rb], type='p', pch=20, col='blue', ylab="Standard AKRD [deg.]", xlab="LAMS-based angle of attack [deg.]")
 f <- lm(DW$AKRD[rb]~DW$ATTACK[rb])
 cf <- coef(f)
@@ -385,6 +391,7 @@ well.
 
 <<pitch, include=TRUE, fig.cap="Pitch maneuver, HCRTEST flight 3, 20:46:00--20:48:10 UTC. The red line labeled WREF shows GGVSPD/10, the vertical motion of the aircraft after division by 10.">>=
 
+rf <- setRange (DW$Time, 204600,204745)
 rf <- setRange (DW$Time, 204600,204810)
 DW$WREF <- DW$GGVSPD / 10.
 plotWAC(DW[rf, c("Time", "WIC", "WIN", "WREF")])
@@ -392,6 +399,49 @@ print (sprintf (" WIC std dev: %.2f; WI_LAMS std dev: %.2f", sd(DW$WIC[rf]), sd(
 
 @
 
+The LAMS also provides an opportunity to check another assumption used when determining the sensitivity coefficients. The coefficients relating the radome measurements to angle of attack are determined by fits to speed-run maneuvers, during which the pitch angle and angle of attack vary slowly. There has been evidence that some transient effects on the airflow might affect such measurements during more rapidly changing conditions, such as might be encountered during sharp changes in the vertical wind. To check for such effects, the pitch maneuver provides faster changes and might reveal a dependence on, for example, the rate of change of angle of attack or airspeed or pitch.
+
+<<transients, include=TRUE>>=
+
+layout(matrix(1:1, ncol = 1), widths = 1,  heights = c(6))
+op <- par (mar=c(5,4,1,1)+0.1)
+DWS <- DW
+DW <- DWS
+DW$WIC <- DW$WIC - with(DW[rf,], mean (WIC-WIN, na.rm=TRUE))
+DW$WIN <- ShiftInTime (DW$WIN, .shift=535)
+D <- DW[rf,]
+D$DWIC <- D$WIN - D$WIC
+D$DPITCH <- c(0, diff(D$PITCH))
+D$DATTACK <- c(0, diff(D$ATTACK))
+plot(D$DATTACK, D$DWIC, pch=20)
+f <- lm(D$DWIC~D$DATTACK)
+cf <- coef(f)
+lines(c(-0.5,0.7), c(cf[1]-0.5*cf[2], cf[1]+0.7*cf[2]), col='blue')
+summary(f)
+with(D, sd(WIC-WIN, na.rm=TRUE))
+plot(D$GGVSPD, D$DWIC, pch=20)
+f <- lm(D$DWIC~D$GGVSPD)
+summary(f)
+plot(D$DPITCH, D$DWIC, pch=20)
+f <- lm(D$DWIC~D$DPITCH)
+summary(f)
+cf <- coef(f)
+lines(c(-0.1,0.1), c(cf[1]-0.1*cf[2], cf[1]+0.1*cf[2]), col='darkorange', lw=2, lty=2)
+
+
+# D$AOAREF <- D$PITCH - D$GGVSPD/D$TASX*180/pi
+# D$DATTACK <- D$ATTACK-D$AOAREF
+# plot(D$DPITCH, D$DATTACK, pch=20)
+# f <- lm(DATTACK~DPITCH, data=D)
+# summary(f)
+# lines(c(-0.5,0.7), c(cf[1]-cf[2]*0.5, cf[1]+cf[2]*0.7), col='blue')
+
+
+
+
+
+
+@
 
 \subsection{The circle maneuver}
 
