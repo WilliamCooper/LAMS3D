@@ -447,6 +447,1005 @@ SummarizeFit <- function(ft) {
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<special-getNetCDF, include=FALSE, echo=FALSE>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+## this treats 100-Hz LAMS specially, without producing a full 100-Hz file
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @title getNetCDF
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @description Loads selected variables in a specified netCDF data file
+ into a data.frame.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @details 'Time' is converted to a POSIXct variable, and other variables
+ specified in 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' VarList are included in the data.frame.
+ By default, the entire file is loaded, but 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' optional arguments Start and End can limit the time range.
+ After reading the data, the 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' netCDF file is closed before returning the data.frame to the calling program.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' The global attributes in the netCDF file are loaded as attributes of
+ the returned 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' data.frame, and attributes of each requested variable are also assigned
+ to that column 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' in the data.frame from the variable attributes in the netCDF file.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' When working with attributes, it is a feature of R data.frames that subsetting
+ loses 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' all the assigned variable attributes.
+ To preserve them, copy them via 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' A <- attributes (Data$VAR), remove A$dim (e.g., A$dim <- NULL),
+\end_layout
+
+\begin_layout Plain Layout
+
+#' and re-assign via attributes (DataNew$VAR) <- A.
+ The function does not handle 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' multi-dimensional variables (e.g., CCDP, the size distribution measured
+ by a cloud
+\end_layout
+
+\begin_layout Plain Layout
+
+#' droplet probe) yet; it does work for 25-Hz files, and returns with fractional
+-second times.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @aliases getnetcdf GetNetCDF
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @author William Cooper
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @import ncdf4
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @importFrom signal filter sgolay
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @importFrom stats approx
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @export getNetCDF
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param fname string, full-path file name, e.g., "/scr/raf_data/PREDICT/PREDICTr
+f01.nc"
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param VarList vector of variable names to load from the netCDF file.
+ Use "ALL" to load 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' everything.
+ (May produce quite large data.frames.) The default is the list given by
+\end_layout
+
+\begin_layout Plain Layout
+
+#' standardVariables ().
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' SPECIAL NOTE: Some variable names
+\end_layout
+
+\begin_layout Plain Layout
+
+#' have a suffix indicating the location on the aircraft, like _LWI (left-wing
+ inboard).
+\end_layout
+
+\begin_layout Plain Layout
+
+#' To avoid having to supply these, a partial name can be supplied, like
+ "CONCD_", and
+\end_layout
+
+\begin_layout Plain Layout
+
+#' the routine will find the first matching variable and use that variable
+ name.
+ These
+\end_layout
+
+\begin_layout Plain Layout
+
+#' can always be overridden by providing the full name; this is just a convenien
+ce to
+\end_layout
+
+\begin_layout Plain Layout
+
+#' avoid having to look up where a particular measurement was installed
+ in a given project.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param Start An optional numeric giving the desired start time in HHMMSS
+ format
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param End An optional numeric giving the desired end time in HHMMSS
+ format
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param F An optional numeric entered in the data.frame as a column 'RF'
+ all set to 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' this integer.
+ This may be useful when the resulting data.frame is combined with others,
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' to have a variable distinguishing different flights.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @return data.frame containing the specified variables as columns, along
+ with 'Time' 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' and optionally the flight number 'RF'.
+ The netCDF-file attributes and variable
+\end_layout
+
+\begin_layout Plain Layout
+
+#' attributes are assigned to the data.frame and columns, respectively.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @examples 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' 
+\backslash
+dontrun{D <- getNetCDF ("PathToFile.nc", c("Var1", "Var2", "Var3"))}
+\end_layout
+
+\begin_layout Plain Layout
+
+#' 
+\backslash
+dontrun{D <- getNetCDF ("PathToFile.nc", c("Var1", "Var2"), 133000, 143000,
+ 5)}
+\end_layout
+
+\begin_layout Plain Layout
+
+getNetCDF <- function (fname, VarList=standardVariables(), Start=0, End=0,
+ F=0) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  # This function reads the netCDF file 'fname' and extracts 
+\end_layout
+
+\begin_layout Plain Layout
+
+  # the variables specified in 'VarList', returning the
+\end_layout
+
+\begin_layout Plain Layout
+
+  # results in a data.frame.
+ It includes the flight number F
+\end_layout
+
+\begin_layout Plain Layout
+
+  # in the data.frame, as variable RF.
+ It converts "Time",
+\end_layout
+
+\begin_layout Plain Layout
+
+  # seconds after a reference time in the netCDF files, to
+\end_layout
+
+\begin_layout Plain Layout
+
+  # a POSIXct date/time variable.
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## get the header information
+\end_layout
+
+\begin_layout Plain Layout
+
+  netCDFfile = nc_open (fname)
+\end_layout
+
+\begin_layout Plain Layout
+
+  if ("ALL" %in% VarList) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    VarList <- names (netCDFfile$var)
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## check that requested variables are present in netCDF file; fail otherwise
+\end_layout
+
+\begin_layout Plain Layout
+
+  namesCDF <- names (netCDFfile$var)
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (V in VarList) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (is.na(V)) {next}
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (length (which (grepl (V, namesCDF)))) {next}
+\end_layout
+
+\begin_layout Plain Layout
+
+    cat (sprintf ("requested variable %s not in netCDF file;
+\backslash
+n ----> getNetCDF returning with error", V))
+\end_layout
+
+\begin_layout Plain Layout
+
+    return (-1)
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  Time <- ncvar_get (netCDFfile, "Time")
+\end_layout
+
+\begin_layout Plain Layout
+
+  DL <- length (Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## set the maximum data rate (but not above 100 Hz):
+\end_layout
+
+\begin_layout Plain Layout
+
+  Rate <- 1
+\end_layout
+
+\begin_layout Plain Layout
+
+  nms <- names(netCDFfile$dim)
+\end_layout
+
+\begin_layout Plain Layout
+
+  if ("sps25" %in% nms) {Rate <- 25}
+\end_layout
+
+\begin_layout Plain Layout
+
+  if ("sps50" %in% nms) {Rate <- 50}
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## comment next line when LAMS 100-Hz vector present but no others
+\end_layout
+
+\begin_layout Plain Layout
+
+  # if ("sps100" %in% nms) {Rate <- 100}
+\end_layout
+
+\begin_layout Plain Layout
+
+  # print (sprintf ("output rate for this data.frame is %d", Rate))
+\end_layout
+
+\begin_layout Plain Layout
+
+  # Expand Time to be high-rate if necessary
+\end_layout
+
+\begin_layout Plain Layout
+
+  if (Rate > 1) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    T <- vector ("numeric", Rate*length(Time))
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (i in 1:length(Time)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      for (j in 0:(Rate-1)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        T[(i-1)*Rate+j+1] <- Time[i] + j/Rate
+\end_layout
+
+\begin_layout Plain Layout
+
+      }  
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    Time <- T
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  time_units <- ncatt_get (netCDFfile, "Time", "units")
+\end_layout
+
+\begin_layout Plain Layout
+
+  tref <- sub ('seconds since ', '', time_units$value)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Time <- as.POSIXct (as.POSIXct (tref, tz='UTC')+Time, tz='UTC')
+\end_layout
+
+\begin_layout Plain Layout
+
+  # see if limited time range wanted:
+\end_layout
+
+\begin_layout Plain Layout
+
+  i1 <- ifelse ((Start != 0), getIndex (Time, Start), 1)
+\end_layout
+
+\begin_layout Plain Layout
+
+  i2 <- ifelse ((End != 0), getIndex (Time, End) + Rate - 1, length (Time))
+\end_layout
+
+\begin_layout Plain Layout
+
+  # if (End != 0) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  #   i2 <- getIndex (Time, End) + Rate - 1
+\end_layout
+
+\begin_layout Plain Layout
+
+  # } else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  #   i2 <- length (Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  # }
+\end_layout
+
+\begin_layout Plain Layout
+
+  r <- i1:i2
+\end_layout
+
+\begin_layout Plain Layout
+
+  # r is the appropriate index for any rate, but also need
+\end_layout
+
+\begin_layout Plain Layout
+
+  # the 1-Hz and 5-Hz indices for interpolation:
+\end_layout
+
+\begin_layout Plain Layout
+
+  r1 <- ((i1-1)/Rate+1):((i2-1)/Rate+1)
+\end_layout
+
+\begin_layout Plain Layout
+
+  DL <- length (r1)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Time <- Time[r]
+\end_layout
+
+\begin_layout Plain Layout
+
+  SE <- getStartEnd (Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## save 'Time' attributes:
+\end_layout
+
+\begin_layout Plain Layout
+
+  ATT <- ncatt_get (netCDFfile, "Time")   # get list of Time attributes
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (A in names (ATT)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    attr(Time, A) <- ATT[[A]]
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  d <- data.frame(Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## save the dimensions, useful for archiving or re-writing to netCDF:---------
+----
+\end_layout
+
+\begin_layout Plain Layout
+
+  ##    but, to save space, omit the list of times
+\end_layout
+
+\begin_layout Plain Layout
+
+  nf <- netCDFfile
+\end_layout
+
+\begin_layout Plain Layout
+
+  nf$dim[1]$Time$vals <- NULL
+\end_layout
+
+\begin_layout Plain Layout
+
+  attr (d, "Dimensions") <- nf$dim
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## Save all the global attributes in the netCDF file as 'd' attributes:-------
+---
+\end_layout
+
+\begin_layout Plain Layout
+
+  ATT <- ncatt_get (netCDFfile, 0)   # get list of global attributes
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (A in names (ATT)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    attr(d, A) <- ATT[[A]]
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  attr (d, "R_dataframe_created") <- date()    # add one global attribute
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  ######------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+  IntFilter <- function (X, inRate, outRate) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (inRate == outRate) {return (X)}
+\end_layout
+
+\begin_layout Plain Layout
+
+    ratio <- as.integer(outRate/inRate)    ## expected to be an integer
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## beware of missing values
+\end_layout
+
+\begin_layout Plain Layout
+
+    z <- zoo::na.approx (as.vector(X), maxgap=1000, na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+    z[is.na(z)] <- 0
+\end_layout
+
+\begin_layout Plain Layout
+
+    x <- 0:(length(X)-1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    A <- stats::approx (x, z, n=length(X)*ratio-ratio+1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    T <- A$y
+\end_layout
+
+\begin_layout Plain Layout
+
+    T <- signal::filter(signal::sgolay(4,75),T)
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## now shift to match 25-Hz:
+\end_layout
+
+\begin_layout Plain Layout
+
+    n <- as.integer (ratio / 2)
+\end_layout
+
+\begin_layout Plain Layout
+
+    NL = length(T)
+\end_layout
+
+\begin_layout Plain Layout
+
+    T <- c(rep(T[1],n), T, rep(T[NL],ratio-n-1))  ## OK, even or odd ratio
+\end_layout
+
+\begin_layout Plain Layout
+
+    return (T)
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  ######------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## Add the requested variables:-----------------------------------------------
+-
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (V in VarList) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (is.na(V)) {next}
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## fill in location-tag for variable name if needed:
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (substr(V, nchar(V), nchar(V)) == '_') {
+\end_layout
+
+\begin_layout Plain Layout
+
+      for (ncn in namesCDF) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (grepl (V, ncn)) {V <- ncn; break}   ## note, takes 1st match
+\end_layout
+
+\begin_layout Plain Layout
+
+      }
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## save dimensions for the variable:
+\end_layout
+
+\begin_layout Plain Layout
+
+    datt <- list()
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (dd in netCDFfile$var[[V]]$dim) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      datt[[length(datt)+1]] <- dd$name
+\end_layout
+
+\begin_layout Plain Layout
+
+    }    ## later, save datt as an attribute of V
+\end_layout
+
+\begin_layout Plain Layout
+
+    X <- ncvar_get (netCDFfile, V)
+\end_layout
+
+\begin_layout Plain Layout
+
+    ATT <- ncatt_get (netCDFfile, V)
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## for Rate == 1, nothing special is needed:
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (Rate == 1) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      X <- X[r1]
+\end_layout
+
+\begin_layout Plain Layout
+
+    } else { ## other rates require flattening and possibly interpolation
+ and filtering
+\end_layout
+
+\begin_layout Plain Layout
+
+      DM <- length(dim(X))           
+\end_layout
+
+\begin_layout Plain Layout
+
+      if (DM == 2) {    # flatten
+\end_layout
+
+\begin_layout Plain Layout
+
+        X <- X[,r1]
+\end_layout
+
+\begin_layout Plain Layout
+
+        inputRate <- dim(X)[1]
+\end_layout
+
+\begin_layout Plain Layout
+
+        needFilter <- ifelse ((dim(X)[1] != Rate), TRUE, FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+        dim(X) <- dim(X)[1]*dim(X)[2]
+\end_layout
+
+\begin_layout Plain Layout
+
+        ## see if adjustment to max rate is needed
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (needFilter) {X <- IntFilter(X, inputRate, Rate)}
+\end_layout
+
+\begin_layout Plain Layout
+
+      } else {  ## single-dimension (1 Hz) in high-rate file
+\end_layout
+
+\begin_layout Plain Layout
+
+        X <- X[r1]
+\end_layout
+
+\begin_layout Plain Layout
+
+        X <- IntFilter (X, 1, Rate)
+\end_layout
+
+\begin_layout Plain Layout
+
+      }
+\end_layout
+
+\begin_layout Plain Layout
+
+    } 
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## add variable attributes as in netCDF file
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (A in names (ATT)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      attr (X, A) <- ATT[[A]]
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    attr (X, "Dimensions") <- datt
+\end_layout
+
+\begin_layout Plain Layout
+
+    d[V] <- X
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  if (F != 0) {    # if specified, include the flight number
+\end_layout
+
+\begin_layout Plain Layout
+
+    RF <- rep (F, times=length(Time))    # label flight number
+\end_layout
+
+\begin_layout Plain Layout
+
+    d["RF"] <- RF
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  nc_close (netCDFfile)
+\end_layout
+
+\begin_layout Plain Layout
+
+  return (d)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section*
 Overview
 \end_layout
@@ -729,6 +1728,66 @@ t beam speeds using a principle-component analysis and another that used
  The calculated variables are WD_LAMS, WS_LAMS, WI_LAMS, ATTACK_L, and SSLIP_L
  as well as U_LAMS, V_LAMS, and W_LAMS which represent the components of
  the three-dimensional wind.
+\end_layout
+
+\begin_layout Standard
+An effect that is important in the following analysis is the correction
+ made for motion of the sensing unit relative to the location of the GPS
+ antenna, because GPS-derived velocity components are used to update the
+ LAMS IRU via its internal Kalman filter.
+ In addition, because the LAMS sensitive volume is displaced from the unit
+ itself, the possible effect of this displacement during rotation of the
+ aircraft needs evaluation.
+ 
+\end_layout
+
+\begin_layout Standard
+The first effect is incorporated into the measurements within the IRU because
+ the offset coordinates of the GPS antenna are transferred to the unit during
+ initialization.
+ However, because the GPS-dependent adjustment is a result of the internal
+ Kalman filter, it is not clear how this affects the response of the results
+ to rapid rotations of the aircraft.
+ This will be discussed later in this note.
+\end_layout
+
+\begin_layout Standard
+The second effect, the displacement of the LAMS sensitive volume from the
+ LAMS unit itself, does not require a correction.
+ If the sensor were a gust sensor located at that displaced location, it
+ would detect a false contribution to the lateral components of the wind
+ at that location.
+ However, each LAMS beam measures only the longitudinal component of the
+ wind along its line-of-sight, so as the position of the sensitive volume
+ changes relative to the aircraft it remains at any time a valid measurement
+ of the line-of-sight airspeed even as the aircraft rotates.
+ The correction for rotation rate of the aircraft is 
+\begin_inset Formula $\Omega\times R$
+\end_inset
+
+ where 
+\begin_inset Formula $\Omega$
+\end_inset
+
+ is the rotation vector of the aircraft and 
+\begin_inset Formula $R$
+\end_inset
+
+ the displacement between the reference location and the sensing point.
+ The result is necessarily perpendicular to 
+\begin_inset Formula $R$
+\end_inset
+
+ so there is no contribution to the line-of-sight airspeed measured along
+ the direction 
+\begin_inset Formula $R$
+\end_inset
+
+, for any rotation 
+\begin_inset Formula $\Omega$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -2166,7 +3225,18 @@ DW <- WindProcessor (data=D)
 
 \begin_layout Plain Layout
 
-## WindProcessor in effect uses gust-GPS distance of 0.12
+## WindProcessor in effect uses gust-GPS distance of 0.12,
+\end_layout
+
+\begin_layout Plain Layout
+
+## because gust measurement increased by Pdot but Vp measurement decreased
+ by Pdot,
+\end_layout
+
+\begin_layout Plain Layout
+
+## with IRU about midway between radome and GPS antenna.
 \end_layout
 
 \begin_layout Plain Layout
@@ -2176,12 +3246,17 @@ DW <- WindProcessor (data=D)
 
 \begin_layout Plain Layout
 
-## so use an additional correction of 5.885
+## so use an additional correction of 5.885?
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$WIN <- DW$WIN - 5.885 * DW$DPITCH * pi / 180 ## DPITCH already multipled
+## but adjustment of 6.005 already provided to LAMS IRU, so only need -0.12
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WIN <- DW$WIN + 0.12 * DW$DPITCH * pi / 180 ## DPITCH already multipled
  by SampleRate
 \end_layout
 
@@ -2193,7 +3268,12 @@ DW$WIN <- DW$WIN - 5.885 * DW$DPITCH * pi / 180 ## DPITCH already multipled
 
 \begin_layout Plain Layout
 
-#### temporary test: 15 m required to remove discrepancy
+#### temporary test: +9 m required to remove discrepancy?
+\end_layout
+
+\begin_layout Plain Layout
+
+## DW$WIN <- DW$WIN + 9 * DW$DPITCH * pi / 180
 \end_layout
 
 \begin_layout Plain Layout
@@ -2608,8 +3688,10 @@ status open
 
 \begin_layout Plain Layout
 
-<<zaccel, include=TRUE, fig.cap='Difference in measurements of vertical wind
- (WIN-WIC) as a function of the vertical acceleration of the aircraft.'>>=
+<<zaccel, include=TRUE, fig.cap=c('Difference in measurements of vertical
+ wind (WIN-WIC) as a function of the vertical acceleration of the aircraft.',
+ 'Difference in measurements of vertical wind (WIN-WIC) as a function of
+ the rate of change of the angle-of-attack.')>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -2628,8 +3710,8 @@ D$DWIC <- D$WIN - D$WIC
 
 \begin_layout Plain Layout
 
-plotWAC(data.frame(D$AZ, D$DWIC), xlab='vertical acceleration [m/s^2]', ylab='WIN
--WIC', pch=20, type='p')
+plotWAC(data.frame(D$AZ, D$DWIC), xlab=expression(paste('vertical acceleration
+ [m/s'^'2',']')), ylab='WIN-WIC', pch=20, type='p')
 \end_layout
 
 \begin_layout Plain Layout
@@ -2675,6 +3757,47 @@ lines (x, y, col='darkorange', lwd=3, lty=2)
 \begin_layout Plain Layout
 
 fsd <- sqrt (sd(D$DWIC, na.rm=TRUE)^2 - summary(faz)$sigma^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+D$DAKRD <- c(0, diff (D$AKRD)) * SampleRate
+\end_layout
+
+\begin_layout Plain Layout
+
+plotWAC(data.frame(D$DAKRD, D$DWIC), xlab='derivative of AOA [deg/s]', ylab='WIN-
+WIC', pch=20, type='p')
+\end_layout
+
+\begin_layout Plain Layout
+
+fakrd <- lm(D$DWIC~D$DAKRD)
+\end_layout
+
+\begin_layout Plain Layout
+
+cfakrd <- coef(fakrd)
+\end_layout
+
+\begin_layout Plain Layout
+
+akrdcoef <- sqrt(summary(fakrd)$r.squared)
+\end_layout
+
+\begin_layout Plain Layout
+
+x <- c(-5,5)
+\end_layout
+
+\begin_layout Plain Layout
+
+y <- cfakrd[1]+cfakrd[2]*x
+\end_layout
+
+\begin_layout Plain Layout
+
+lines(x,y,col='darkorange', lwd=3, lty=2)
 \end_layout
 
 \begin_layout Plain Layout
@@ -2733,7 +3856,7 @@ status open
 
 
 \backslash
-ref{fig:zaccel}
+ref{fig:zaccel1}
 \end_layout
 
 \end_inset
@@ -2813,6 +3936,108 @@ m/s.
 \end_layout
 
 \begin_layout Standard
+Another prime candidate is the rate of change of angle of attack, possibly
+ offset in time.
+ Without an offset, the dependence of the apparent error in vertical wind
+ on the derivative of the angle-of-attack is shown in Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+ref{fig:zaccel2}
+\end_layout
+
+\end_inset
+
+.
+ There is a definite correlation, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(akrdcoef,2)}
+\end_layout
+
+\end_inset
+
+, but it is much smaller than that for vertical acceleration and the reduction
+ in residual standard deviation in 
+\begin_inset Formula $\delta W$
+\end_inset
+
+ is also much less, to only 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(summary(fakrd)$sigma,3)}
+\end_layout
+
+\end_inset
+
+~m/s.
+ If the derivative of the angle-of-attack is shifted by 
+\begin_inset Formula $-50$
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+ms, the residual standard deviation reaches a minimum relative to other
+ shifts of 0.156
+\begin_inset space ~
+\end_inset
+
+m/s, still much less reduction than that based on vertical acceleration.
+ However, there is almost no correlation between the derivative of angle-of-atta
+ck and the vertical acceleration, so the dependence represented in Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+ref{fig:zaccel2}
+\end_layout
+
+\end_inset
+
+ might be used in combination with vertical acceleration to improve the
+ fit.
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+offsets were explored for vertical acceleration also, but the result was
+ insensitive to reasonable offsets because the vertical acceleration tended
+ to persist for longer than reasonable offsets.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset ERT
 status open
 
@@ -2864,7 +4089,7 @@ lines(x, y, col='darkorange', lwd=3, lty=2)
 
 \begin_layout Plain Layout
 
-ftot <- lm (D$DWIC ~ D$AZ + D$SSRD)
+ftot <- lm (D$DWIC ~ D$AZ + D$DAKRD + D$SSRD)
 \end_layout
 
 \begin_layout Plain Layout
@@ -2925,9 +4150,9 @@ Sexpr{round(summary(fss)$sigma, 2)}
 \end_inset
 
  slightly.
- The coefficients for the best fit including dependence on both vertical
- acceleration and sideslip are {
-\begin_inset Formula $c_{0},\,c_{1},\,c_{2}$
+ The coefficients for the best fit including dependence on vertical acceleration
+, rate of change in angle-of-attack, and sideslip angle are {
+\begin_inset Formula $c_{0},\,c_{1},\,c_{2},\,c_{3}$
 \end_inset
 
 } = {
@@ -2990,6 +4215,27 @@ Sexpr{round(cftot[3], 4)}
 \end_inset
 
 m
+\begin_inset Formula $/^{\circ}$
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cftot[4], 4)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset space \thinspace{}
+\end_inset
+
+m
 \begin_inset space \thinspace{}
 \end_inset
 
@@ -3001,14 +4247,19 @@ s
 \begin_inset Formula $\dot{w}_{p}$
 \end_inset
 
- is the vertical acceleration of the aircraft and 
+ is the vertical acceleration of the aircraft, 
 \begin_inset Formula $\beta$
 \end_inset
 
- the sideslip angle ) and characterized by the table that follows:
+ the sideslip angle, and 
+\begin_inset Formula $\dot{\alpha}$
+\end_inset
+
+ the rate of change in angle of attack) and characterized by the table that
+ follows:
 \begin_inset Formula 
 \begin{equation}
-\delta W=c_{0}+c_{1}\dot{w}_{p}+c_{2}\beta\label{eq:deltaW}
+\delta W=c_{0}+c_{1}\dot{w}_{p}+c_{2}\dot{\alpha}+c_{3}\beta\label{eq:deltaW}
 \end{equation}
 
 \end_inset
@@ -3065,6 +4316,39 @@ SummarizeFit (ftot)
 \end_layout
 
 \begin_layout Standard
+The value of the square of the correlation coefficient, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(summary(ftot)$r.squared, 2)}
+\end_layout
+
+\end_inset
+
+ indicates that correlations with these variables account for a minor part
+ (about 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(summary(ftot)$r.squared*100, 0)}
+\end_layout
+
+\end_inset
+
+%) of the total variance in the difference between the measurements of vertical
+ wind.
+ 
+\end_layout
+
+\begin_layout Standard
 \begin_inset ERT
 status open
 
@@ -3099,7 +4383,8 @@ status open
 
 \begin_layout Plain Layout
 
-D$WIX <- D$WIC + cftot[1] + cftot[2] * D$AZ + cftot[3] * D$SSRD
+D$WIX <- D$WIC + cftot[1] + cftot[2] * D$AZ + cftot[3] * D$DAKRD + cftot[4]
+ * D$SSRD
 \end_layout
 
 \begin_layout Plain Layout
@@ -3214,7 +4499,7 @@ status open
 
 
 \backslash
-ref{fig:zaccel}
+ref{fig:zaccel1}
 \end_layout
 
 \end_inset
@@ -3232,11 +4517,12 @@ ref{fig:zaccel}
  does not appear to introduce any substantial error.
  Longitudinal acceleration of the aircraft also does not show any substantial
  effect.
- Other factors showing negligible correlation to 
+ Another factor showing negligible correlation to 
 \begin_inset Formula $\delta W$
 \end_inset
 
- are the horizontal acceleration and the rate-of-change in angle of attack.
+ is the horizontal acceleration.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -3281,15 +4567,15 @@ m (LAMS to GPS antenna).
 \end_inset
 
  of the magnitude observed would require an additional displacement of about
- 15
+ 9
 \begin_inset space ~
 \end_inset
 
-m (radome forward of the IRU by an additional 15
+m (radome forward of the IRU by an additional 9
 \begin_inset space ~
 \end_inset
 
-m or GPS antenna behind the IRU by an additional 15
+m or GPS antenna behind the IRU by an additional 9
 \begin_inset space ~
 \end_inset
 
@@ -3297,7 +4583,7 @@ m), or alternately the LAMS to be
 \emph on
 forward 
 \emph default
-of the GPS antenna by an additional 15
+of the GPS antenna by an additional 9
 \begin_inset space ~
 \end_inset
 
@@ -3317,12 +4603,34 @@ behind
 m longitudinal displacement between the GPS antenna and the LAMS IRU, so
  the rotation-rate correction to measured velocity does not appear able
  to account for the observed dependence.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Evidence that the lever-arm correction is being applied correctly is that,
+ after the 6-m correction was applied to CVSPD_LAMS, the difference between
+ GGVSPD and CVSPD_LAMS showed no remaining dependence on 
+\begin_inset Formula $\dot{\Theta}$
+\end_inset
+
+ and the two measurements were nearly identical (RMS difference of 0.05
+\begin_inset space ~
+\end_inset
+
+m/s.and correlation coefficient of 0.99997).
+ 
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 If the fit coefficients in the list of fit parameters as a function of vertical
- acceleration and sideslip are used to correct the radome-based vertical
- wind, the result is the variable WIXS shown in Fig.
+ acceleration, derivative of angle of attack, and sideslip angle are used
+ to correct the radome-based vertical wind, the result is the variable WIXS
+ shown in Fig.
 \begin_inset space ~
 \end_inset
 
@@ -3415,7 +4723,7 @@ status open
 
 
 \backslash
-Sexpr{round(DemingFit(D$WIN, D$WIX)[3], 2)}
+Sexpr{round(DemingFit(D$WIN, D$WIX)[3], 2)}0
 \end_layout
 
 \end_inset
@@ -3716,9 +5024,10 @@ The pitch maneuver revealed that the difference between the LAMS-derived
  vertical wind and that from the radome-based system varied with the vertical
  acceleration, and that difference was larger than expected from uncertainty
  analyses of the two systems.
- A weak dependence on sideslip was also present.
- The estimated magnitude of the effects, however, are small, leading to
- typical errors in WIC of about 0.1
+ Weaker dependences on sideslip and on the derivative of the angle-of-attack
+ were also present.
+ The estimated magnitude of the combined effects, however, is small, leading
+ to typical errors in WIC of about 0.1
 \begin_inset space ~
 \end_inset
 
@@ -3749,7 +5058,7 @@ reference "eq:deltaW"
 
 \end_inset
 
-) can be used to remove the error in vertical wind.
+) can be used to remove this error in vertical wind.
  After application of that regression correction based on the pitch maneuver,
  the measurements of vertical wind from the radome-based system agree with
  those from the LAMS with a standard deviation between the two measurements
@@ -3759,8 +5068,8 @@ reference "eq:deltaW"
 
 m/s during that pronounced maneuver.
  This confirms the ability of the measuring system to remove the effects
- of even rapid pilot-induced changes in pitch, leading to rates-of-climb
- exceeding 
+ of even rapid pilot-induced changes in pitch, where rates-of-climb exceeded
+ 
 \begin_inset Formula $\pm10$
 \end_inset
 
@@ -3924,7 +5233,7 @@ status open
 
 \begin_layout Plain Layout
 
-
+%
 \backslash
 clearpage
 \end_layout
