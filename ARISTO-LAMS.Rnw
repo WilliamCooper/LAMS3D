@@ -12,7 +12,11 @@
 \setlength{\parskip}{\medskipamount}
 \setlength{\parindent}{0pt}
 \usepackage{color}
+\usepackage{babel}
 \usepackage{array}
+\usepackage[unicode=true]
+ {hyperref}
+\usepackage{breakurl}
 
 \makeatletter
 
@@ -60,7 +64,6 @@
 
 \makeatother
 
-\usepackage{babel}
 \begin{document}
 \begin{tabular}{ll}
 \textsf{\textsc{\textcolor{blue}{To:}}} & \the\addressee\tabularnewline
@@ -133,8 +136,7 @@ provides a few of the characteristics of these flights:
 speed variations & actual takeoff about 170000; BEAM2speed weak, BEAM2\_LAMS (Scott's
 value) better.\tabularnewline
 \hline 
-150925 & 162500 & 214500 & both upper and lower-level legs; speed runs, pitch maneuvers, some
-turbulence & CPITCH\_LAMS bad before 192300, and CROLL also, so wind measurements
+150925 & 162500 & 214500 & both upper and lower-level legs; speed runs, some turbulence & CPITCH\_LAMS bad before 192300, and CROLL also, so wind measurements
 from LAMS unavailable until after then.\tabularnewline
 \hline 
 150930 & 170100 & 205000 & good pitch and yaw maneuvers; also a partial speed run. & Beams 1 and 4 problematic before 1915 in high-level leg; beam 2 probably
@@ -297,17 +299,17 @@ processWind <- function(Data) {
   dim(A) <- c(nrow(Data), 3)
   RW = t (Si %*% t(A))    # gives u, v, w components, RW[,1] is u
   RW2 <- t (M %*% t(A4))
-  RW <- RW2
   ## calculate the error in the solution:
   A4P <- t (t (S4) %*% t (RW2)) - A4
   CSQ <- A4P[,1]^2 + A4P[,2]^2 + A4P[,3]^2 + A4P[,4]^2
 
   ## set up special data.frame for calculation of wind:
   D <- data.frame("Time"=Data$Time)
-  D$TASX <- sqrt(RW[,1]^2 + RW[,2]^2 + RW[,3]^2)
+  D$TASX <- sqrt(RW2[,1]^2 + RW2[,2]^2 + RW2[,3]^2)
+  D$TASX3 <- sqrt(RW[,1]^2 + RW[,2]^2 + RW[,3]^2)
   D$TASCSQ <- CSQ 
-  D$ATTACK <- atan (RW[, 3] / RW[, 1]) * 180 / pi
-  D$SSLIP <-  atan (RW[, 2] / RW[, 1]) * 180 / pi
+  D$ATTACK <- atan (RW2[, 3] / RW2[, 1]) * 180 / pi
+  D$SSLIP <-  atan (RW2[, 2] / RW2[, 1]) * 180 / pi
   D$GGVEW <- Data$CVEW_LAMS
   D$GGVNS <- Data$CVNS_LAMS
   D$GGVSPD <- Data$CVSPD_LAMS
@@ -416,9 +418,9 @@ for a fit to those data.
 
 <<All-flight-cal, include=TRUE, fig.cap=''>>=
 
-Data <- getNetCDF('/Data/ARISTO/ARISTOrf02_LAMSLAMS.nc', VarList, F=2)
-Data <- rbind(Data, getNetCDF('/Data/ARISTO/ARISTOrf03_LAMSLAMS.nc', VarList, F=3))
-Data <- rbind(Data, getNetCDF('/Data/ARISTO/ARISTOrf04_LAMSLAMS.nc', VarList, F=4))
+Data <- getNetCDF (sprintf ('%sARISTO/ARISTOrf02_LAMSLAMS.nc', Directory), VarList, F=2)
+Data <- rbind(Data, getNetCDF (sprintf ('%sARISTO/ARISTOrf03_LAMSLAMS.nc', Directory), VarList, F=3))
+Data <- rbind(Data, getNetCDF (sprintf ('%sARISTO/ARISTOrf04_LAMSLAMS.nc', Directory), VarList, F=4))
 rej <- (Data$TASX < 90) | (abs(Data$ROLL) > 5) | (abs(Data$GGVSPD) > 5)
 Data <- Data[!rej,]
 Data$AOAREF <- Data$PITCH - (Data$GGVSPD / Data$TASX) * (180./pi)
@@ -700,7 +702,7 @@ speeds are not valid even when the PCA algorithm detects peak values.
 <<SR6, include=TRUE, fig.cap='Angle of attack from the new fit to the radome values (blue line) and the angle-of-attack determined from the LAMS measurements (green line), for speed run \\#6.'>>=
 
 Flight <- "rf04_LAMS"
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
 Data <- getNetCDF (fname, standardVariables(c(VarList)))
 DW <- processWind(Data)
 DW$AKRDF <- cf3[1] + DW$ADIFR/DW$QCF * (cf3[2] + cf3[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
@@ -892,7 +894,7 @@ is shown in Fig.~\ref{fig:PSA-FRAPPE}.
 
 <<PSA-FRAPPE, include=TRUE, fig.cap='The difference between the avionic-provided pressure (PS\\_A) and the standard pressure after the correction as expressed in (1) (PSFDC).'>>=
 
-fname <- '/Data/FRAPPE/FRAPPErf05.nc'
+fname <- sprintf ('%sFRAPPE/FRAPPErf05.nc', Directory)
 VList <- c('PS_A', 'PS_A2', 'PSFC', 'PSFDC', 'PSFD', 'PSFRD', 'QCF', 'AKRD')
 Data <- getNetCDF (fname, standardVariables (VList))
 Data <- Data[Data$TASX > 80,]
@@ -1033,10 +1035,10 @@ with a few other brief passes through rain, ice, or cloud:
 \end{tabular}
 \par\end{center}
 
-<<LAMST-1, include=TRUE, fig.cap='The temperature deduced from the measurement obtained using the LAMS-measured airspeed (magenta dots), adjusted as described in the text, and plotted with a smoothed version (TLS) and with the standard measurement of temperature (ATX). The measurements from periods where the CDP concentration exceeded 5\\_cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a different color.'>>=
+<<LAMST-1, include=TRUE, fig.cap='The temperature deduced from the measurement obtained using the LAMS-measured airspeed (magenta dots), adjusted as described in the text, and plotted with a smoothed version (TLS) and with the standard measurement of temperature (ATX). The measurements from periods where the CDP concentration exceeded 5\\_cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a different color.', fig.height=4>>=
 
 Flight <- "rf03_LAMS"
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
 Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT")))
 ## these points appear to be bad, beam 2:
 Data$BEAM2speed[getIndex(Data, 200951)] <- NA
@@ -1119,6 +1121,8 @@ temperature. The unsmoothed measurement is quite noisy, so smoothing
 is important in order to see trends.\footnote{ATX is not smoothed, but it is thought to have a response time between
 2 and 3 s.} 
 
+\clearpage
+
 Despite the noisy signal, particularly in the vicinity of the clouds,
 the LAMS-based temperature shows good correlation with the standard
 temperature. There is also a suggestion of a trend in the cloud passes:
@@ -1193,6 +1197,7 @@ Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT", "PLWCD_RPT")
 PCA <- FALSE    ## use SG polynomial solution
 PCA <- TRUE     ## use PCA solution
 DW <- processWind(Data)
+DW$RMS <- sqrt (DW$TASCSQ / 4)
 DW$BEAM2speed <- Data$BEAM2speed
 DW$PSXC <- Data$PSXC
 DW$QCXC <- Data$QCXC
@@ -1201,7 +1206,7 @@ DW$CONCD <- Data$CONCD_RPT
 DW$PLWCD <- Data$PLWCD_RPT
 DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
 r <- setRange (DW, 173000, 192000)
-rt <- setRange (DW$Time, 173900, 174600)
+rt <- setRange (DW$Time, 173900, 174500)
 DW$QR <- DW$ADIFR / DW$QCF
 DW$Mach <- MachNumber (DW$PSXC, DW$QCXC, DW$EWX)
 DW$TASL <- DW$TASX
@@ -1210,6 +1215,10 @@ DW$TASL <- DW$TASX
 DW$TASL3 <- (Data$BEAM1speed + DW$BEAM3speed + DW$BEAM4speed) / (3 * cos (35*pi/180))
 DW$TASL1 <- Data$BEAM2speed
 DW$TASX <- Data$TASX
+## reject and interpolate at points with high RMS
+RMStest <- 0.3
+DW$TASL[DW$RMS > 0.2] <- NA
+DW$TASL <- zoo::na.approx(DW$TASL, na.rm=FALSE)
 # DW <- DW[r, ]
 CP <- SpecificHeats (DW$EWX / DW$PSXC)
 cpa <- CP[,1]
@@ -1243,7 +1252,6 @@ ATX <- DW$ATX
 # points (DW$Time, TL, pch=20, col='magenta')
 # op <- par (mar=c(5,4,1,1)+0.1)
 # plotWAC(subset(DW,, c(Time, CONCD)))
-DW$RMS <- sqrt (DW$TASCSQ / 4)
 plotWAC (data.frame (DW$Time, DW$TASL-DW$TASX)[rt, ], ylab='TASL-TASX', ylim=c(-1,1))
 op <- par (mar=c(5,4,1,1)+0.1)
 with (DW[rt, ], plotWAC (Time, RMS, ylim=c(0,0.5), ylab='RMS [m/s]'))
@@ -1253,31 +1261,309 @@ with (DW[rt, ], plotWAC (Time, RMS, ylim=c(0,0.5), ylab='RMS [m/s]'))
 <<LAMST-3, include=TRUE, fig.cap='For the same flight period shown in the previous figure, the temperature deduced from the measurement obtained using the LAMS-measured airspeed (dark green line), adjusted as described in the text, plotted with the standard measurement of temperature (ATX). The measurements from periods where the CDP concentration exceeded 5\\_cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a different color.'>>=
 
 DW$TLS <-TLS
+rt1 <- setRange (DW, 173900, 174200)
+rt2 <- setRange (DW, 174300, 174500)
+meanC <- with (DW[rt1, ], mean (TLS-ATX, na.rm=TRUE))
+meanE <- with (DW[rt2, ], mean (TLS-ATX, na.rm=TRUE))
 DW <- DW[rt, ]
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
 op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
 plotWAC(data.frame(DW$Time, DW$ATX, DW$TLS), ylab='Temperature [C]', 
         ylim=c(5,17), lwd=c(2,2), lty=c(1,2), legend.position='topright')
 Excl <- DW$CONC < 5
-DW$ATX[Excl] <- NA
-DW$TLS[Excl] <- NA
-lines (DW$Time+0.5, DW$ATX, lwd=4, col='cyan')
-lines (DW$Time+0.5, DW$TLS, lwd=4, col='darkgreen')
+DW$ATXE <- DW$ATX
+DW$TLSE <- DW$TLS
+DW$ATXE[Excl] <- NA
+DW$TLSE[Excl] <- NA
+lines (DW$Time+0.5, DW$ATXE, lwd=4, col='cyan')
+lines (DW$Time+0.5, DW$TLSE, lwd=4, col='darkgreen')
 # points (DW$Time, TL, pch=20, col='magenta')
 op <- par (mar=c(5,4,1,1)+0.1)
 plotWAC(subset(DW,, c(Time, CONCD)))
 
 @
 
+<<LAMST-4, include=TRUE, fig.cap='Dependence of the difference between the LAMS-derived temperature (TLS) and the standard temperature (ATX) as a function of the liquid water content measured by the CDP (PLWCD), for the same flight period shown in the preceding two plots.'>>=
+
+layout(matrix(1:1, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(5,4,1,1))
+plot(DW$PLWCD, DW$TLS-DW$ATX, pch=20, col='blue')
+cflw <- coef (lm (DW$TLS-DW$ATX ~ DW$PLWCD))
+xx <- c(0,0.3)
+yy <- cflw[1] + cflw[2] * xx
+lines (xx, yy, col='darkorange', lty=2, lwd=3)
+
+
+@
+
 Figure \ref{fig:LAMST-2} shows a segment from this flight for which
 the measurements appear consistent among the four beams, especially
-for the last 2-min period. 
+for the last 2-min period that is not in cloud. This flight segment
+was selected because the LAMS measurements are mostly consistent with
+the standard airspeed and have low RMS. Figure \ref{fig:LAMST-3}
+shows the corresponding measurements of temperature from the two sources
+and also the droplet concentration. The in-cloud LAMS temperature
+is on average slightly lower than the standard temperature, by about
+\Sexpr{round(meanC,2)}$^{\circ}$C, while the out-of-cloud measurements
+are offset in the other direction, with a mean difference of \Sexpr{round(meanE,2)}$^{\circ}$C.
+There is some correlation between the temperature difference and the
+liquid water content, as shown in Fig.~\ref{fig:LAMST-4}. The observed
+difference is in the opposite direction to that expected if ATX is
+cooled as a result of wetting of the sensor, so this result is not
+an indication of sensor wetting. An alternate explanation might be
+that the returned signal has greater contributions from locations
+closer to the LAMS in the high-backscatter of a cloud, so that the
+airspeed and hence temperature is biased low in such a region, with
+the bias increasing with the density of the cloud.
 
 \clearpage
+
+\subsection*{Case 3: Flight 3, 18:10:00\textendash 18:20:00}
+
+<<LAMST-5, include=TRUE, fig.cap='(top) The difference between the LAMS-derived airspeed (TASL) and the conventional airspeed (TASX), for the period from 18:10:00--18:20:00 from ARISTO-2015 flight 3. (bottom) The RMS error for the fit to the four measured line-of-sight beam speeds, for the same flight segment.'>>=
+
+Flight <- "rf03_LAMS"
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT", "PLWCD_RPT")))
+## these points appear to be bad, beam 2:
+# Data$BEAM2speed[getIndex(Data, 200951)] <- NA
+# Data$BEAM2speed[getIndex(Data, 200948)] <- NA
+# Data$BEAM2speed[getIndex(Data, 200954)] <- NA
+PCA <- FALSE    ## use SG polynomial solution
+PCA <- TRUE     ## use PCA solution
+DW <- processWind(Data)
+DW$RMS <- sqrt (DW$TASCSQ / 4)
+DW$BEAM2speed <- Data$BEAM2speed
+DW$PSXC <- Data$PSXC
+DW$QCXC <- Data$QCXC
+DW$ATX <- Data$ATX
+DW$CONCD <- Data$CONCD_RPT
+DW$PLWCD <- Data$PLWCD_RPT
+DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+rt <- setRange (DW$Time, 181000, 182000)
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSXC, DW$QCXC, DW$EWX)
+DW$TASL <- DW$TASX
+## temporary: use beam 2 only
+# DW$TASL <- DW$BEAM2speed
+DW$TASL3 <- DW$TASX3  ## (Data$BEAM1speed + DW$BEAM3speed + DW$BEAM4speed) / (3 * cos (35*pi/180))
+DW$TASL1 <- Data$BEAM2speed
+DW$TASX <- Data$TASX
+## reject and interpolate at points with high RMS
+RMStest <- 0.3
+DW$TASL[DW$RMS > 0.2] <- NA
+DW$TASL <- zoo::na.approx(DW$TASL, na.rm=FALSE)
+CP <- SpecificHeats (DW$EWX / DW$PSXC)
+cpa <- CP[,1]
+Ra <- CP[,3]
+cva <- CP[,2]
+gamma <- cpa/cva
+DTAS <- with(DW[rt, ], mean (TASX-TASL, na.rm=TRUE))
+DTAS3 <- with (DW[rt, ], mean (TASX-TASL3, na.rm=TRUE))
+DTAS1 <- with (DW[rt, ], mean (TASX-TASL1, na.rm=TRUE))
+Vs <- (DW$TASL + DTAS) / DW$Mach
+Vs3 <- (DW$TASL3 + DTAS3) / DW$Mach
+Vs1 <- (DW$TASL1 + DTAS1) / DW$Mach
+TL <- Vs^2 / (gamma * Ra) - 273.15
+TL3 <- Vs3^2 / (gamma * Ra) - 273.15
+TL1 <- Vs1^2 / (gamma * Ra) - 273.15
+LS <- 13
+TLS <- SmoothInterp (TL, .Length=LS)
+TLS1 <- SmoothInterp (TL1, .Length=LS)
+TLS3 <- SmoothInterp (TL3, .Length=LS)
+# TL <- DW$TASL^2 / (2*cpa * (((DW$PSXC+DW$QCXC)/DW$PSXC)^(Ra/cpa) - 1)) - 273.15
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+ATX <- DW$ATX
+# plotWAC(data.frame(DW$Time, ATX, TLS), ylab='Temperature [C]', 
+#         ylim=c(5,17), lwd=c(2,2), lty=c(1,2), legend.position='topright')
+# Excl <- DW$CONC < 5
+# ATX[Excl] <- NA
+# TLS[Excl] <- NA
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+# lines (DW$Time+0.5, TLS, lwd=4, col='darkgreen')
+# points (DW$Time, TL, pch=20, col='magenta')
+# op <- par (mar=c(5,4,1,1)+0.1)
+# plotWAC(subset(DW,, c(Time, CONCD)))
+plotWAC (data.frame (DW$Time, DW$TASL-DW$TASX)[rt, ], ylab='TASL-TASX', ylim=c(-5,5))
+op <- par (mar=c(5,4,1,1)+0.1)
+with (DW[rt, ], plotWAC (Time, RMS, ylim=c(0,0.5), ylab='RMS [m/s]'))
+
+@
+
+<<LAMST-6, include=TRUE, fig.cap='For the subset of the flight period shown in the previous figure from 18:12:30--18:14:00, the temperature deduced from the measurement obtained using the LAMS-measured airspeed (TLS, dark green line), adjusted as described in the text, plotted with the standard measurement of temperature (ATX). The measurements from periods where the CDP concentration exceeded 5\\_cm$^{-3}$ are shown as thicker lines. The red line on this plot (TLSG) shows the periods where TLS was based on measurements with RMS smaller than 0.2 m/s. The cyan line (TLS1) is the result based only on the forward-pointing beam 2, and the orange line (TLS3) is the result based on the 3-beam result using beams 1, 3, and 4.'>>=
+
+DW$TLS <-TLS
+DW$TLS1 <- TLS1
+DW$TLS3 <- TLS3
+DW$TLSG <- TLS
+DW$TLSG[DW$RMS > 0.2] <- NA
+# rt1 <- setRange (DW, 173900, 174200)
+# rt2 <- setRange (DW, 174300, 174500)
+# meanC <- with (DW[rt1, ], mean (TLS-ATX, na.rm=TRUE))
+# meanE <- with (DW[rt2, ], mean (TLS-ATX, na.rm=TRUE))
+rt <- setRange (DW, 181230, 181400)
+DW1 <- DW[rt, ]
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(subset(DW1,, c(Time, ATX, TLS, TLSG, TLS1, TLS3)), ylab='Temperature [C]', 
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,1), legend.position='topleft')
+Excl <- DW1$CONC < 5
+DW1$ATXE <- DW1$ATX
+DW1$TLSE <- DW1$TLS
+DW1$ATXE[Excl] <- NA
+DW1$TLSE[Excl] <- NA
+lines (DW1$Time+0.5, DW1$ATXE, lwd=4, col='blue')
+lines (DW1$Time+0.5, DW1$TLSE, lwd=4, col='darkgreen')
+# points (DW1$Time, TL, pch=20, col='magenta')
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(subset(DW1,, c(Time, CONCD)))
+
+@
+
+The third case examined here is a series of passes through clouds
+at temperatures near freezing. Droplet concentrations were often several
+100/cm$^{3}$, and there were 2D particles often in concentrations
+of 1\textendash 10/L. The cloud pass near 18:13 was a more dense cloud
+than those presented above, with droplet concentrations around 400~cm$^{-3}$
+and liquid water content above 0.6~g\,m$^{-3}$. It serves as a
+good illustration of the problems with LAMS that occur in a dense
+cloud. The measurements of airspeed and the associated RMS for this
+flight period is shown in Fig.~\ref{fig:LAMST5}, and the associated
+measuirement of temperature for the pass through particularly dense
+cloud is shown in Fig.~\ref{fig:LAMST-6}. In this dense cloud, the
+RMS for the four-beam measurements became >0.5 inside the cloud, the
+LAMS-measured airspeed was about 2~m/s below the conventional measurement,
+and as a result the LAMS-measured temperature was as much as 10$^{\circ}$C
+below the standard temperature ATX. However, this large error arose
+mostly from beam 2, which alone would give an error of more than 30$^{\circ}$C.
+If instead airspeed is determined using the three beams slanted into
+the wind by about 35$^{\circ}$, the result (plotted as TLS3, the
+orange line in Fig.~\ref{fig:LAMST-6}) shows a smaller but still
+significant negative bias relative to ATX. This shows the value of
+using four beams and applying an RMS test to exclude bad measurements,
+because the measurements were quite seriously biased in this dense
+cloud and only this RMS test was able to identify the regions where
+measurements are unreliable.
+
+<<LAMST-7, include=TRUE, fig.cap='Same as in the previous plot, but for a later portion of the flight segment. See the caption for the previous plot.'>>=
+
+rt <- setRange (DW, 181500, 182000)
+DW1 <- DW[rt, ]
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(subset(DW1,, c(Time, ATX, TLS, TLSG, TLS1, TLS3)), ylab='Temperature [C]', 
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,1), legend.position='topleft')
+Excl <- DW1$CONC < 5
+DW1$ATXE <- DW1$ATX
+DW1$TLSE <- DW1$TLS
+DW1$ATXE[Excl] <- NA
+DW1$TLSE[Excl] <- NA
+lines (DW1$Time+0.5, DW1$ATXE, lwd=4, col='blue')
+lines (DW1$Time+0.5, DW1$TLSE, lwd=4, col='darkgreen')
+# points (DW1$Time, TL, pch=20, col='magenta')
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(subset(DW1,, c(Time, CONCD)))
+meanE <- with(DW1[DW1$CONCD < 5,], mean(TLS3-ATX, na.rm=TRUE))
+meanC <- with(DW1[DW1$CONCD >= 5,], mean(TLS3-ATX, na.rm=TRUE))
+
+@
+
+Figure \ref{fig:LAMST-7} shows a similar plot for a subsequent period
+of flight through this sequence of small clouds. The temperature based
+only on beam 2 is again strongly affected and evidently too low in
+this sequence of weaker clouds. However, it has less influence on
+the 4-beam solution, and both the 4-beam and the 3-beam solution appear
+reasonable. The difference between the 3-beam solution (TLS3) and
+ATX is \Sexpr{round(meanE,2)}$^{\circ}$C for locations out-of-cloud
+but \Sexpr{round(meanC, 2)}$^{\circ}$C for in-cloud measurements.
+Because errors in the LAMS-derived temperature are negative when influenced
+by cloud, these differences suggest possible evaporative-cooling influence
+on the standard temperature probes.
+
+\subsection*{Conclusions, LAMS-measured temperature}
+
+The three cloud regions discussed in the previous three subsections
+are the best measurements from ARISTO-2015 for this study. The following
+assessment is based on those studies:
+\begin{enumerate}
+\item The temperature deduced from LAMS is mostly valid out-of-cloud. Because
+it is only dependent on the LAMS-deduced airspeed and on the Mach
+number that is in turn based on ambient and dynamic pressure, themselves
+calibrated by the LAMS measurements, and it does not rely on any temperature
+sensor beyond that needed for the initial calibration. The LAMS-derived
+temperature therefore can be a useful check on the performance of
+standard temperature sensors and may be useful in flagging problems
+with those sensors. However, the LAMS-based measurement of temperature
+is noisy, especially in turbulence, so averaging over periods of at
+least 10~s or more appears necessary.
+\item When in cloud, beam 2 is often strongly biased toward negative temperature
+because the measured airspeed appears to be too low. The problem does
+not appear as strongly in the other three beams, perhaps because they
+are at a 35$^{\circ}$ angle to the relative wind. Possible causes
+are water on the forward surface that causes defocusing of the beam
+or strong scattering or multiple scattering that displaces the effective
+sample volume closer to the aircraft into distorted airflow. The temperature
+measurement based on a single forward-pointing beam therefore is not
+useful in cloud.
+\item The RMS for the four-beam solution for airspeed is a valuable indicator
+of quality, and it often flags regions with bad measurements when
+both available processing schemes for the LAMS line-of-sight velocities
+otherwise indicate good measurements. This benefit from the 4-beam
+configuration was not anticipated but appears to be a particularly
+important reason for using that configuration.
+\item The airspeed based on the three off-axis beams is much less affected
+by cloud and appears to provide a valid measurement except in very
+dense cloud. The temperature deduced from that measurement of airspeed
+tends to be slightly higher than the standard measurement in warm
+cloud, as would be expected if there is evaporative cooling as a result
+of wetting of the temperature sensor. However, this conclusion is
+based on only a few cloud passes, and more data and analysis would
+help test the utility of this measurement.
+\item It would be especially useful to operate a 4-beam LAMS with the in-cloud
+radiometer and perhaps an unheated temperature sensor to obtain further
+tests of the LAMS-based temperature measurement.
+\end{enumerate}
+\clearpage
+
+\section*{Transient effects on wind measurements}
+
+Transient effects on measurements of vertical wind were discussed
+for the GV in \href{https://drive.google.com/open?id=0B1kIUH45ca5AVEJrbElxWmQzRnc}{this earlier memo}.
+The conclusion of that memo was that effects, while detectable and
+correctable, were at the margin of uncertainty for wind measurements
+and so had little significant effect on wind measurements from the
+GV. The intent here is to check, more briefly, for similar effects
+for C-130-based measurements. For this purpose, a pitch maneuver with
+strong LAMS signals is needed, and it appears that the best data are
+those from the pitch maneuver on ARISTO-2015 flight 4, 18:58:00\textendash 19:01:00
+UTC. 
+
+<<Transient-1, include=TRUE, fig.cap=' '>>=
+
+Flight <- "rf04_LAMS"
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+Data <- getNetCDF (fname, standardVariables(c(VarList)))
+PCA <- FALSE    ## use SG polynomial solution
+PCA <- TRUE     ## use PCA solution
+DW <- processWind(Data)
+DW$RMS <- sqrt (DW$TASCSQ / 4)
+DW$BEAM2speed <- Data$BEAM2speed
+DW$PSXC <- Data$PSXC
+DW$QCXC <- Data$QCXC
+DW$ATX <- Data$ATX
+DW$CONCD <- Data$CONCD_RPT
+DW$PLWCD <- Data$PLWCD_RPT
+DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+r <- setRange (DW, 185800, 190100)
+with (DW, plotWAC(c(Time, WIC, WIN)))
+
+@
 \begin{center}
 \textsf{\textcolor{blue}{\textendash{} End of Memo \textendash{}}}
 \par\end{center}
 
-Reproducibility:
+Reproducibility: 
 
 \begin{tabular}{ll}
 \textsf{\textsc{\textcolor{blue}{Project:}}} & \Sexpr{thisFileName}\tabularnewline
