@@ -1,0 +1,1134 @@
+%% LyX 2.2.0 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[12pt,english]{article}
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage[letterpaper]{geometry}
+\geometry{verbose,tmargin=3.54cm,bmargin=2.54cm,lmargin=2.54cm,rmargin=2.54cm,headheight=1cm,headsep=2cm,footskip=0.5cm}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\setlength{\parskip}{\medskipamount}
+\setlength{\parindent}{0pt}
+\usepackage{color}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\input colordvi
+\usepackage{color}
+\fancyhead{}
+\fancyfoot[CE,CO]{}
+\newtoks{\addressee} \global\addressee={}
+\newdimen\longindent \longindent=3.5truein
+\fancyhead[L]{Memo to: \the\addressee \\ \datetoday \\ Page \thepage \hfill}
+\renewcommand{\headrulewidth}{0.0pt}
+\newenvironment{lxlist}[1]
+{\begin{list}{}
+{\settowidth{\labelwidth}{#1}
+\setlength{\leftmargin}{\labelwidth}
+\addtolength{\leftmargin}{\labelsep}
+\renewcommand{\makelabel}[1]{##1\hfil}}}
+{\end{list}}
+\newcommand{\datetoday}{\number\day\space
+     \ifcase\month\or January\or February\or March\or April\or May\or
+     June\or July\or August\or September\or October\or November\or
+     December\fi
+     \space\number\year}
+\newcommand{\EOLmemo}{\null \vskip-1.5truein
+{\raggedright \textsf{\textsc{\large \textcolor{blue}{Earth Observing Laboratory}}}}\par
+{\raggedright \textsf{\textsl{\textcolor{blue}{Memorandum:}}}} \par \vskip6pt
+{\color{blue}{\hrule}}\par
+\vskip0.3truein \leftline{\hskip \longindent \datetoday} \vskip0.2truein
+\thispagestyle{empty}}
+\newcommand{\attachm}[1]{\begin{lxlist}{Attachments:00}
+\item [Attachments:] {#1}
+\end{lxlist}}
+\newcommand{\cc}[1]{\begin{lxlist}{Attachments:00}
+\item [cc:] {#1}
+\end{lxlist}}
+\newcommand{\attach}[1]{\begin{lxlist}{Attachments:00}
+\item [Attachment:] {#1}
+\end{lxlist}}
+%usage: \encl{A\\B\\C} or \cc{ma,e1\\name2\\name3}
+
+\makeatother
+
+\usepackage{babel}
+\begin{document}
+\EOLmemo 
+
+\global\addressee={LAMS File}  % >>change "File" to the "To:" name desired
+
+\begin{tabular}{ll}
+\textsf{\textsc{\textcolor{blue}{To:}}} & \the\addressee\tabularnewline
+\textsf{\textsc{\textcolor{blue}{From:}}} & Al Cooper\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Subject:}}} & Studies of transient response to winds using LAMS\tabularnewline
+\end{tabular}
+
+\bigskip
+
+<<initialization,echo=FALSE,include=FALSE>>=
+
+
+library(knitr)
+opts_chunk$set(echo=FALSE, include=FALSE, fig.lp="fig:")
+opts_chunk$set(fig.width=6, fig.height=5, fig.pos="center", digits=4)
+thisFileName <- "TransientEffects"
+require(Ranadu, quietly = TRUE, warn.conflicts=FALSE)
+require(ggplot2)
+require(grid)
+require(ggthemes)
+Directory <- DataDirectory ()
+Flight <- "rf03" 		
+Project = "HCRTEST"		
+ProjectDir <- 'HCRTEST'
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+VarList <- c("WDC", "WSC", "WIC", "AKRD", "SSLIP", "U_LAMS", "V_LAMS", "W_LAMS",
+             "BEAM1speed", "BEAM2speed", "BEAM3speed", "ADIFR", "QCF", "TASX", 'GGVSPD',
+             "CVEW_LAMS", "CVNS_LAMS", "CVSPD_LAMS", "GGVEW", "GGVNS", "BDIFR", 'ROLL',
+             "CTHDG_LAMS", "CROLL_LAMS", "CPITCH_LAMS", "PITCH", "THDG", 'VEW', 'VNS',
+             "WD_LAMS", "WS_LAMS", "WI_LAMS", "ATTACK_L", "SSLIP_L")
+Data <- getNetCDF (fname, VarList)		#XXX set variables needed here
+Data$SSRD <- Data$SSLIP
+Data$ATTACK <- Data$AKRD
+SaveRData <- sprintf("%s.Rdata", thisFileName)
+
+SummarizeFit <- function(ft) {
+  print (summary(ft)$call)
+  print ("Coefficients:")
+  print (summary(ft)$coefficients)
+  print (sprintf ("Residual standard deviation: %.3f, dof=%d", summary(ft)$sigma, summary(ft)$df[2]))
+  print (sprintf ("R-squared %.3f", summary(ft)$r.squared))
+}
+
+@
+
+<<special-getNetCDF, include=FALSE, echo=FALSE>>=
+
+## this treats 100-Hz LAMS specially, without producing a full 100-Hz file
+#' @title getNetCDF
+#' @description Loads selected variables in a specified netCDF data file into a data.frame.
+#' @details 'Time' is converted to a POSIXct variable, and other variables specified in 
+#' VarList are included in the data.frame. By default, the entire file is loaded, but 
+#' optional arguments Start and End can limit the time range. After reading the data, the 
+#' netCDF file is closed before returning the data.frame to the calling program.
+#' The global attributes in the netCDF file are loaded as attributes of the returned 
+#' data.frame, and attributes of each requested variable are also assigned to that column 
+#' in the data.frame from the variable attributes in the netCDF file.
+#' When working with attributes, it is a feature of R data.frames that subsetting loses 
+#' all the assigned variable attributes. To preserve them, copy them via 
+#' A <- attributes (Data$VAR), remove A$dim (e.g., A$dim <- NULL),
+#' and re-assign via attributes (DataNew$VAR) <- A. The function does not handle 
+#' multi-dimensional variables (e.g., CCDP, the size distribution measured by a cloud
+#' droplet probe) yet; it does work for 25-Hz files, and returns with fractional-second times.
+#' @aliases getnetcdf GetNetCDF
+#' @author William Cooper
+#' @import ncdf4
+#' @importFrom signal filter sgolay
+#' @importFrom stats approx
+#' @export getNetCDF
+#' @param fname string, full-path file name, e.g., "/scr/raf_data/PREDICT/PREDICTrf01.nc"
+#' @param VarList vector of variable names to load from the netCDF file. Use "ALL" to load 
+#' everything. (May produce quite large data.frames.) The default is the list given by
+#' standardVariables (). 
+#' SPECIAL NOTE: Some variable names
+#' have a suffix indicating the location on the aircraft, like _LWI (left-wing inboard).
+#' To avoid having to supply these, a partial name can be supplied, like "CONCD_", and
+#' the routine will find the first matching variable and use that variable name. These
+#' can always be overridden by providing the full name; this is just a convenience to
+#' avoid having to look up where a particular measurement was installed in a given project.
+#' @param Start An optional numeric giving the desired start time in HHMMSS format
+#' @param End An optional numeric giving the desired end time in HHMMSS format
+#' @param F An optional numeric entered in the data.frame as a column 'RF' all set to 
+#' this integer. This may be useful when the resulting data.frame is combined with others, 
+#' to have a variable distinguishing different flights.
+#' @return data.frame containing the specified variables as columns, along with 'Time' 
+#' and optionally the flight number 'RF'. The netCDF-file attributes and variable
+#' attributes are assigned to the data.frame and columns, respectively.
+#' @examples 
+#' \dontrun{D <- getNetCDF ("PathToFile.nc", c("Var1", "Var2", "Var3"))}
+#' \dontrun{D <- getNetCDF ("PathToFile.nc", c("Var1", "Var2"), 133000, 143000, 5)}
+getNetCDF <- function (fname, VarList=standardVariables(), Start=0, End=0, F=0) {
+  # This function reads the netCDF file 'fname' and extracts 
+  # the variables specified in 'VarList', returning the
+  # results in a data.frame. It includes the flight number F
+  # in the data.frame, as variable RF. It converts "Time",
+  # seconds after a reference time in the netCDF files, to
+  # a POSIXct date/time variable.
+  
+  ## get the header information
+  netCDFfile = nc_open (fname)
+  if ("ALL" %in% VarList) {
+    VarList <- names (netCDFfile$var)
+  }
+  ## check that requested variables are present in netCDF file; fail otherwise
+  namesCDF <- names (netCDFfile$var)
+  for (V in VarList) {
+    if (is.na(V)) {next}
+    if (length (which (grepl (V, namesCDF)))) {next}
+    cat (sprintf ("requested variable %s not in netCDF file;\n ----> getNetCDF returning with error", V))
+    return (-1)
+  }
+  Time <- ncvar_get (netCDFfile, "Time")
+  DL <- length (Time)
+  ## set the maximum data rate (but not above 100 Hz):
+  Rate <- 1
+  nms <- names(netCDFfile$dim)
+  if ("sps25" %in% nms) {Rate <- 25}
+  if ("sps50" %in% nms) {Rate <- 50}
+  ## comment next line when LAMS 100-Hz vector present but no others
+  # if ("sps100" %in% nms) {Rate <- 100}
+  # print (sprintf ("output rate for this data.frame is %d", Rate))
+  # Expand Time to be high-rate if necessary
+  if (Rate > 1) {
+    T <- vector ("numeric", Rate*length(Time))
+    for (i in 1:length(Time)) {
+      for (j in 0:(Rate-1)) {
+        T[(i-1)*Rate+j+1] <- Time[i] + j/Rate
+      }  
+    }
+    Time <- T
+  }
+  time_units <- ncatt_get (netCDFfile, "Time", "units")
+  tref <- sub ('seconds since ', '', time_units$value)
+  Time <- as.POSIXct (as.POSIXct (tref, tz='UTC')+Time, tz='UTC')
+  # see if limited time range wanted:
+  i1 <- ifelse ((Start != 0), getIndex (Time, Start), 1)
+  i2 <- ifelse ((End != 0), getIndex (Time, End) + Rate - 1, length (Time))
+  # if (End != 0) {
+  #   i2 <- getIndex (Time, End) + Rate - 1
+  # } else {
+  #   i2 <- length (Time)
+  # }
+  r <- i1:i2
+  # r is the appropriate index for any rate, but also need
+  # the 1-Hz and 5-Hz indices for interpolation:
+  r1 <- ((i1-1)/Rate+1):((i2-1)/Rate+1)
+  DL <- length (r1)
+  Time <- Time[r]
+  SE <- getStartEnd (Time)
+  ## save 'Time' attributes:
+  ATT <- ncatt_get (netCDFfile, "Time")   # get list of Time attributes
+  for (A in names (ATT)) {
+    attr(Time, A) <- ATT[[A]]
+  }
+  d <- data.frame(Time)
+  ## save the dimensions, useful for archiving or re-writing to netCDF:-------------
+  ##    but, to save space, omit the list of times
+  nf <- netCDFfile
+  nf$dim[1]$Time$vals <- NULL
+  attr (d, "Dimensions") <- nf$dim
+  ## Save all the global attributes in the netCDF file as 'd' attributes:----------
+  ATT <- ncatt_get (netCDFfile, 0)   # get list of global attributes
+  for (A in names (ATT)) {
+    attr(d, A) <- ATT[[A]]
+  }
+  attr (d, "R_dataframe_created") <- date()    # add one global attribute
+  
+  ######------------------------------------------------------------------
+  IntFilter <- function (X, inRate, outRate) {
+    if (inRate == outRate) {return (X)}
+    ratio <- as.integer(outRate/inRate)    ## expected to be an integer
+    ## beware of missing values
+    z <- zoo::na.approx (as.vector(X), maxgap=1000, na.rm = FALSE)
+    z[is.na(z)] <- 0
+    x <- 0:(length(X)-1)
+    A <- stats::approx (x, z, n=length(X)*ratio-ratio+1)
+    T <- A$y
+    T <- signal::filter(signal::sgolay(4,75),T)
+    ## now shift to match 25-Hz:
+    n <- as.integer (ratio / 2)
+    NL = length(T)
+    T <- c(rep(T[1],n), T, rep(T[NL],ratio-n-1))  ## OK, even or odd ratio
+    return (T)
+  }
+  ######------------------------------------------------------------------
+  
+  ## Add the requested variables:------------------------------------------------
+  for (V in VarList) {
+    if (is.na(V)) {next}
+    ## fill in location-tag for variable name if needed:
+    if (substr(V, nchar(V), nchar(V)) == '_') {
+      for (ncn in namesCDF) {
+        if (grepl (V, ncn)) {V <- ncn; break}   ## note, takes 1st match
+      }
+    }
+    ## save dimensions for the variable:
+    datt <- list()
+    for (dd in netCDFfile$var[[V]]$dim) {
+      datt[[length(datt)+1]] <- dd$name
+    }    ## later, save datt as an attribute of V
+    X <- ncvar_get (netCDFfile, V)
+    ATT <- ncatt_get (netCDFfile, V)
+    ## for Rate == 1, nothing special is needed:
+    if (Rate == 1) {
+      X <- X[r1]
+    } else { ## other rates require flattening and possibly interpolation and filtering
+      DM <- length(dim(X))           
+      if (DM == 2) {    # flatten
+        X <- X[,r1]
+        inputRate <- dim(X)[1]
+        needFilter <- ifelse ((dim(X)[1] != Rate), TRUE, FALSE)
+        dim(X) <- dim(X)[1]*dim(X)[2]
+        ## see if adjustment to max rate is needed
+        if (needFilter) {X <- IntFilter(X, inputRate, Rate)}
+      } else {  ## single-dimension (1 Hz) in high-rate file
+        X <- X[r1]
+        X <- IntFilter (X, 1, Rate)
+      }
+    } 
+    ## add variable attributes as in netCDF file
+    for (A in names (ATT)) {
+      attr (X, A) <- ATT[[A]]
+    }
+    attr (X, "Dimensions") <- datt
+    d[V] <- X
+  }
+  if (F != 0) {    # if specified, include the flight number
+    RF <- rep (F, times=length(Time))    # label flight number
+    d["RF"] <- RF
+  }
+  nc_close (netCDFfile)
+  return (d)
+}
+
+@
+
+\section*{Overview}
+
+The procedure used to measure wind via the radome uses ``sensitivity
+coefficients'' that relate the pressure differences between vertically
+separated ports on the radome to angle of attack. These coefficients
+are usually determined using speed runs, where the angle of attack
+gradually changes as the speed increases and decreases in level flight.
+If it is assumed that the vertical wind is zero during the maneuver,
+or at least averages to zero, it is straightforward to determine the
+sensitivity coefficients from the corresponding measurements of ADIFR,
+QCF, PITCH, and GGVSPD, the latter near zero but possibly varying
+a litte during the maneuver.
+
+The weakness in this approach is that the angle of attack changes
+slowly so the results might not represent the case where changes occur
+rapidly, as might be the case when encountering sudden gusts of wind.
+Lenschow, working with Marie Lothon, has presented evidence that the
+airflow can have transient differences vs.~the steady-state conditions
+in the presence of such gusts. If those transients affect the airflow
+at the radome or the pitot tube used for QCF, they might caused the
+angle of attack inferred from the standard sensitivity coefficients
+to be in error.
+
+Because the LAMS provides an independent measurement of the relative
+wind and measures well ahead of the aircraft, it may be possible to
+check for transient effects by comparing LAMS-based measurements to
+radome-based measurements. The purpose of this memo is to document
+a search for such effects and to place some preliminary limits on
+how large the associated errors might be..
+
+\section*{Data Used}
+
+A test of the LAMS was conducted in Nov. 2014 during the project called
+HCRTEST. Here the focus is on flight 3, Nov. 24 2014, because LAMS
+worked well and the flight included standard maneuvers at altitudes
+where the backscatter from aerosols was sufficient to provide good
+signals for LAMS. The configuration for this flight was non-standard:
+Beam 1 was upward as usual, but beam 2 was forward along the longitudinal
+axis and beam 3 was outboard and downward. This is not an ideal configuration
+for determining three-dimensional wind, but problems with flow distortion
+when one beam was directed downward and inboard led to use of this
+configuration. It provides the advantage of having a longitudinal
+beam and so providing a good measurement of airspeed.
+
+The flight included these maneuvers, flown at an altitude of about
+6000~m and an airspeed of about 200 m/s except for the speed run:
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline 
+\textbf{Maneuver} & \textbf{start } & \textbf{end}\tabularnewline
+\hline 
+\hline 
+circle & 20:06:45 & 20:15:40\tabularnewline
+\hline 
+speed run & 20:32:00 & 20:42:00\tabularnewline
+\hline 
+yaw & 20:43:00 & 20:46:00\tabularnewline
+\hline 
+pitch & 20:46:00 & 20:48:10\tabularnewline
+\hline 
+\end{tabular}
+\par\end{center}
+
+There was a change in system configuration around 21:00 UTC to test
+a different configuration, so that part of the flight will not be
+used here. There was also a descent to about 2000\textasciitilde{}m
+starting at 20:55, a climb from 2000 to 6000\textasciitilde{}m starting
+about 21:10, then a straight segment to about 21:40 before the descent
+back to RMMA. For most of these times, there was a solid LAMS signal,
+so the flight provides a good test of the 3-beam LAMS.
+
+\section*{LAMS data processing}
+
+The calculations used to obtain wind measurements from the LAMS were
+documented previously and won't be repeated here. Two processing routes
+were used, that of Scott Spuler who obtained line-of-sight beam speeds
+using a principle-component analysis and another that used the Python
+processing program LAMS4beam-SG.py, which used Savitsky-Golay polynomials
+to smooth the measured histograms of beam speeds from the measured
+Doppler shift in the backscattered light and then detected peaks above
+these smoothed histograms. Both will be shown and used here. Once
+the line-of-sight speeds were measured, these were used to find the
+three components of the relative wind as described in the memo LAMS4beam-SG.pdf
+via combination of the relative wind and the ground-referenced motion
+of the aircraft as measured by the C-MIGITSIII inertial reference
+unit in the LAMS pod. The calculated variables are WD\_LAMS, WS\_LAMS,
+WI\_LAMS, ATTACK\_L, and SSLIP\_L as well as U\_LAMS, V\_LAMS, and
+W\_LAMS which represent the components of the three-dimensional wind.
+
+An effect that is important in the following analysis is the correction
+made for motion of the sensing unit relative to the location of the
+GPS antenna, because GPS-derived velocity components are used to update
+the LAMS IRU via its internal Kalman filter. In addition, because
+the LAMS sensitive volume is displaced from the unit itself, the possible
+effect of this displacement during rotation of the aircraft needs
+evaluation. 
+
+The first effect is incorporated into the measurements within the
+IRU because the offset coordinates of the GPS antenna are transferred
+to the unit during initialization. However, because the GPS-dependent
+adjustment is a result of the internal Kalman filter, it is not clear
+how this affects the response of the results to rapid rotations of
+the aircraft. This will be discussed later in this note.
+
+The second effect, the displacement of the LAMS sensitive volume from
+the LAMS unit itself, does not require a correction. If the sensor
+were a gust sensor located at that displaced location, it would detect
+a false contribution to the lateral components of the wind at that
+location. However, each LAMS beam measures only the longitudinal component
+of the wind along its line-of-sight, so as the position of the sensitive
+volume changes relative to the aircraft it remains at any time a valid
+measurement of the line-of-sight airspeed even as the aircraft rotates.
+The correction for rotation rate of the aircraft is $\Omega\times R$
+where $\Omega$ is the rotation vector of the aircraft and $R$ the
+displacement between the reference location and the sensing point.
+The result is necessarily perpendicular to $R$ so there is no contribution
+to the line-of-sight airspeed measured along the direction $R$, for
+any rotation $\Omega$.
+
+In addition, it was necessary to adjust the measurements of heading
+for a peculiarity in the data that introduced large jumps as the measurements
+moved through a heading of 180$^{\circ}$ and, if not removed, produced
+similar jumps in the measured horizontal wind. Interpolation through
+these bad points removed these spurious measurements. The error that
+led to this problem has since been corrected.
+
+<<transform, include=TRUE, fig.cap="Wind measurements from LAMS (WDL, WSL, WIL) compared to those from the standard wind-sensing system (WDC, WSC, WIC) for a flight segment from the HCRTEST program, flight 3, 24 Nov 2014.">>=
+
+Data$BEAM1speed <- zoo::na.approx (as.vector(Data$BEAM1speed), maxgap=1000, na.rm = FALSE)
+Data$BEAM2speed <- zoo::na.approx (as.vector(Data$BEAM2speed), maxgap=1000, na.rm = FALSE)
+Data$BEAM3speed <- zoo::na.approx (as.vector(Data$BEAM3speed), maxgap=1000, na.rm = FALSE)
+
+## try to fix CTHDG_LAMS bad points in transition through 180:
+for (i in 2:(nrow(Data)-1)) {
+  if (is.na(Data$CTHDG_LAMS[i]) || is.na(Data$CTHDG_LAMS[i-1]) || is.na(Data$CTHDG_LAMS[i+1])) {next}
+  if (abs(Data$CTHDG[i-1]-Data$CTHDG_LAMS[i+1]) > 10.) {next}
+  if ((Data$CTHDG_LAMS[i-1] < 180.) && (Data$CTHDG_LAMS[i+1] > 180)) {Data$CTHDG_LAMS[i] <- NA}
+  if ((Data$CTHDG_LAMS[i-1] > 180.) && (Data$CTHDG_LAMS[i+1] < 180)) {Data$CTHDG_LAMS[i] <- NA}
+}
+Data$CTHDG_LAMS <- zoo::na.approx (as.vector(Data$CTHDG_LAMS), maxgap=1000, na.rm = FALSE)
+
+Theta =  c(35.0802, 34.8501, 34.8496, 0.) * pi / 180 # revised 12 May 2014
+Phi = c(179.2171, -61.0712, 59.1506, 0.) * pi / 180  #  "  "
+# special for HCRTEST:
+Theta[2] = 0.   # beam 2 is forward
+
+# also need the distances from the IRS to LAMS: (x,y,z)
+LL = c(-10.305, -6.319, 1.359)                # see Scott's email, recorded above.
+# unit vectors along beams are then:
+#   a[i] = [cos(Theta[i]), -sin(Theta[i])*sin(Phi[i]), sin(Theta[i])*cos(Phi[i])]
+# and the dot products with the (i,j,k) unit vectors give the direction cosine matrix:
+S = c(cos(Theta[1]), -sin(Theta[1])*sin(Phi[1]), sin(Theta[1])*cos(Phi[1]), 
+               cos(Theta[2]), -sin(Theta[2])*sin(Phi[2]), sin(Theta[2])*cos(Phi[2]), 
+               cos(Theta[3]), -sin(Theta[3])*sin(Phi[3]), sin(Theta[3])*cos(Phi[3]))
+dim(S) <- c(3,3)
+Si = t(solve(S))  # calculate the inverse of S -- this is the 3-beam version
+A = c(Data$BEAM1speed, Data$BEAM2speed, Data$BEAM3speed)
+dim(A) <- c(nrow(Data), 3)
+RW = t (Si %*% t(A))    # gives u, v, w components, RW[,1] is u
+D <- data.frame("Time"=Data$Time)
+D$TASX <- RW[,1]
+D$ATTACK <- atan (RW[, 3] / RW[, 1]) * 180 / pi
+D$SSLIP <-  atan (RW[, 2] / RW[, 1]) * 180 / pi
+D$GGVEW <- Data$GGVEW
+D$GGVNS <- Data$GGVNS
+D$GGVSPD <- Data$CVSPD_LAMS
+# shift <- +80
+# D$GGVSPD <- ShiftInTime (D$GGVSPD, .shift=shift)
+D$VEW <- Data$CVEW_LAMS
+D$VNS <- Data$CVNS_LAMS
+D$THDG <- Data$CTHDG_LAMS
+D$ROLL <- Data$CROLL_LAMS
+D$PITCH <- Data$CPITCH_LAMS +0.15
+D$DPITCH <- c(0, diff(D$PITCH))
+D$BEAM1speed <- Data$BEAM1speed
+D$BEAM2speed <- Data$BEAM2speed
+D$BEAM3speed <- Data$BEAM3speed
+D$WDC <- Data$WDC
+D$WSC <- Data$WSC
+D$WIC <- Data$WIC
+D$AKRD <- Data$AKRD
+D$SSRD <- Data$SSRD
+rg <- setRange (D$Time, 193000,205000)
+D <- D[rg, ]
+DW <- WindProcessor (data=D)
+DW$WIN <- DW$WIN + 14 * DW$DPITCH * pi / 180
+layout(matrix(1:3, ncol = 1), widths = 1,  heights = c(5,5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(DW[c("Time", "WDC", "WDN")], ylim=c(250,360))
+plotWAC(DW[c("Time", "WSC", "WSN")], ylim=c(0,40))
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(DW[c("Time", "WIC", "WIN")], ylim=c(-5,5))
+
+@
+
+
+\section*{Example Results}
+
+Figure~\ref{fig:transform} shows the wind measurements obtained
+from LAMS and the standard measurements. . The measurements from LAMS
+are independent of those from the standard system, so the general
+agreement between these two sets of results is a good indication that
+the three-beam version of LAMS is working well. The mean speed detected
+in the forward-pointing beam was about 0.5~m/s larger than TASX and
+the standard deviation in the difference over the period of this plot
+is about 0.4~m/s. This is a little larger than the expected difference
+from the previous studies with the single-beam LAMS, but the difference
+remains relatively small so there is no evident problem. 
+
+\section*{Maneuvers}
+
+\subsection*{Speed run}
+
+The speed run flown from 20:30\textendash 20:45 UTC provides a check
+on the sensitivity coefficient determined for the standard system.
+The inertial system mounted with the LAMS pod is installed so that
+its pitch axis differs from the standard GV IRU by about 3.5$^{\circ},$with
+the CMIGITS-III pointing downward relative to the Honeywell IRU. Measurements
+from LAMS provide a measurement of angle of attack that is independent
+of the standard measurement, so this measurement from LAMS can provide
+an alternate reference angle for the determination of sensitivity
+coefficients, but the resulting coefficients will differ substantially
+in the constant-offset term because of the difference in installation
+angles. Nevertheless, other terms in the sensitivity coefficients
+determined in this way should match those determined in standard ways,
+because the measurements from LAMS provide an absolute reference for
+relative wind. 
+
+<<attack-plot, include=TRUE, fig.cap="Angle of attack determined by the standard system (AKRD) plotted vs.\ the angle of attack determined from the LAMS. The orange dashed line is the regression line for AKRD as a function of the LAMS angle-of-attack.">>=
+
+rb <- setRange (DW$Time, 203200,204200)
+op <- par (mar=c(5,4,1,1)+0.1)
+## exclude some obvious outliers:
+DW$ATTACK[DW$ATTACK < -2] <- NA
+plot(DW$ATTACK[rb], DW$AKRD[rb], type='p', pch=20, col='blue', ylab="Standard AKRD [deg.]", xlab="LAMS-based angle of attack [deg.]")
+f <- lm(DW$AKRD[rb]~DW$ATTACK[rb])
+cf <- coef(f)
+print ("Fit results using the standard sensitivity coefficients for the GV")
+SummarizeFit(f)
+x <- c(-3.,2.)
+y <- cf[1]+cf[2]*x
+points (x,y, type='l', col='darkorange', lwd=3, lty=2)
+
+@
+
+Figure~\ref{fig:attack-plot} shows that there is good correlation
+between these two measurements. The slope determined from a fit to
+these measurements is about \Sexpr{round(cf[2], 2)}, with a standard
+error of 0.005, and the correlation coefficient is above 0.99, so
+this fit provides a low-uncertainty check on the sensitivity coefficients
+for the radome. The residual standard deviation of AKRD measurements
+about the best-fit line is about \Sexpr{round(summary(f)$sigma,2)}$^{\circ}$.
+The large offset between the two systems is as expected for the difference
+in installation angles. The \Sexpr{round((cf[2]-1)*100,0)}\% difference
+in slope would lead to measurements of vertical wind that typically
+differ by a similar percentage, so the resulting change is small but
+not negligible. It is therefore useful to determine if there is other
+evidence for this departure from unity slope. 
+
+<<dw-calibration, include=TRUE>>=
+Data$AKDW <- 4.468 + 21.481 * Data$ADIFR/Data$QCF
+rc <- setRange (Data$Time, 203200, 204200)
+fc <- lm (Data$AKDW[rc]~DW$ATTACK[rb])
+print ("Fit results using the DEEPWAVE sensitivity coefficients for AKRD")
+SummarizeFit(fc)
+@
+
+The calibration recommended for DEEPWAVE was slightly different and
+based on measurements that emphasized upper-altitude flight conditions.
+If those sensitivity coefficients, 4.468$^{\circ}$ and 21.481$^{\circ}$,
+are used instead of the standard calibration then the regression slope
+changes from \Sexpr{round(cf[2], 2)} to \Sexpr{round(coef(fc)[2], 2)}
+and the standard deviation and standard error for the determination
+of slope both decrease, as shown in the fit summary above.. Use of
+the DEEPWAVE coefficients, according to the LAMS results, would lead
+to a 2\% underestimate of vertical wind instead of a 4\% overestimate. 
+
+From these results, it appears that the LAMS-provided measurements
+support the standard calibration of the radome to within the typical
+uncertainty of those determinations and there does not appear to be
+a systematic error in those coefficients.
+
+\subsection*{Yaw maneuver}
+
+<<yaw, include=TRUE, fig.cap="Sideslip angle determined by the standard system (SSRD) plotted vs.\ the sideslip angle determined from the LAMS, for HCRTEST flight 3, 20:43:00--20:46:00 UTC. The orange dashed line is the regression line for SSRD as a function of the LAMS-provided sideslip angle.">>=
+rd <- setRange (DW$Time, 204300, 204600)
+plot(DW$SSLIP[rd], DW$SSRD[rd], type='p', pch=20, col='blue', ylab="Standard SSRD [deg.]", xlab="LAMS-based sideslip angle [deg.]")
+fd <- lm (DW$SSRD[rd]~DW$SSLIP[rd])
+cfs <- coef(fd)
+print (sprintf("Fit results using the standard sideslip calibration for the GV"))
+SummarizeFit(fd)
+x <- c(-2.,0.)
+y <- cfs[1]+cfs[2]*x
+points (x,y, type='l', col='darkorange', lwd=3, lty=2)
+Data$SSDW <- 0.008 + 22.302 * Data$BDIFR / Data$QCF
+rc <- setRange (Data$Time, 204300, 204600)
+fe <- lm (Data$SSDW[rc]~DW$SSLIP[rd])
+print (sprintf ("Fit results using the DEEPWAVE calibration for sideslip"))
+SummarizeFit (fe)
+@
+
+The yaw maneuver flown from 20:43 to 20:46 UTC provides a similar
+opportunity to check the sensitivity coefficient in use for sideslip.
+Figure~\ref{fig:yaw} shows the standard measurement of sideslip
+angle (SSRD) plotted against the sideslip angle determined from the
+LAMS measurements. The regression line has slope \Sexpr{round(coef(fd)[2],2)},
+indicating that the standard formula underestimates the sideslip angle
+by about \Sexpr{round(-(coef(fd)[2]-1)*100,0)}\%. However, repeating
+this with the calibration determined for DEEPWAVE, with coefficients
+\{0.008, 22.302\}, gave a regression slope of \Sexpr{round(coef(fe)[2],3)}.
+During DEEPWAVE, the yaw maneuver was flown in a different manner
+to minimize roll changes, which may have affected previous calibrations,
+so the DEEPWAVE sensitivity coefficients are a better representation
+of the LAMS-measured sideslip and should be made the standard calibration
+for the radome. They also include an offset, as discussed in the Technical
+Note on wind uncertainty for the GV.
+
+\subsection*{Pitch maneuver}
+
+The pitch maneuver (20:46:00\textendash 20:48:10 UTC) should show
+no residual pattern in the vertical wind that matches the imposed
+vertical motion of the aircraft if both systems are operating properly.
+Figure~\ref{fig:pitch} shows that both systems pass this test well.
+While there is a residual standard deviation in vertical wind of about
+0.15\textasciitilde{}m/s, this seems to be mostly natural variability
+in the vertical wind because there is little correspondence between
+the fluctuations and the imposed sine-wave pattern of the pitch maneuver.
+The small offset between wind as measured by the two systems appears
+to arise from differences in the pitch measurements from the two systems.
+Otherwise, the pitch maneuver provides a good indication that both
+systems are performing well.
+
+<<pitch, include=TRUE, fig.cap="Pitch maneuver, HCRTEST flight 3, 20:46:00--20:48:10 UTC. WIN is the vertical wind determined solely from the measurements from LAMS, while WIC is the conventional radome-based vertical wind. The red line labeled WREF shows GGVSPD/10, the vertical motion of the aircraft after division by 10.">>=
+
+rf <- setRange (DW$Time, 204600,204745)
+rf <- setRange (DW$Time, 204600,204810)
+DW$WREF <- DW$GGVSPD / 10.
+# plotWAC(DW[rf, c("Time", "WIC", "WIN", "WREF")])
+# print (sprintf (" WIC std dev: %.2f; WI_LAMS std dev: %.2f", sd(DW$WIC[rf]), sd(DW$WIN[rf])))
+
+@
+
+The LAMS also provides an opportunity to check another assumption
+used when determining the sensitivity coefficients. The coefficients
+relating the radome measurements to angle of attack are determined
+by fits to speed-run maneuvers, during which the pitch angle and angle
+of attack vary slowly. There has been evidence that some transient
+effects on the airflow might affect such measurements during more
+rapidly changing conditions, such as might be encountered during sharp
+changes in the vertical wind. To check for such effects, the pitch
+maneuver provides faster changes and might reveal a dependence on,
+for example, the rate of change of angle of attack or airspeed or
+pitch.
+
+For this study, it is useful to use measurements at higher rate, so
+a different data file was constructed with measurements at 25~Hz
+for the conventional variables needed for calculating wind and with
+100-Hz measurements from LAMS. The 100-Hz measurements were then averaged
+to 25~Hz. (This was necessary because of difficulty getting 25~Hz
+measurements directly from nimbus, possibly because the required averaging
+hasn't been implemented?) 
+
+<<hrdata, include=TRUE, echo=FALSE>>=
+
+VarList <- VarList[-which('BDIFR' == VarList)]  ## BDIFR was omitted from processing
+Directory <- DataDirectory ()
+Flight <- "03HR" 		
+Project = "HT"		
+ProjectDir <- 'HCRTEST'
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+Data1 <- Data  ## save for archiving
+Data <- getNetCDF (fname, VarList)		
+Data$SSRD <- Data$SSLIP
+Data$ATTACK <- Data$AKRD
+SaveRData <- sprintf("%s.Rdata", thisFileName)
+save(Data1, Data, file=SaveRData)
+SampleRate <- 25  ## this is forced by special getNetCDF with 100-Hz file
+## recalculate the vertical wind, for reference and to include the GPS-to-IRU distance:
+DS <- WindProcessor (Data)
+Data$WIC <- DS$WIN
+
+@
+
+<<transform-HR, include=TRUE, echo=FALSE, fig.cap="Wind measurements from LAMS (WDL, WSL, WIL) compared to those from the standard wind-sensing system (WDC, WSC, WIC) for a flight segment from the HCRTEST program, flight 3, 24 Nov 2014.">>=
+
+Data$BEAM1speed <- zoo::na.approx (as.vector(Data$BEAM1speed), maxgap=1000, na.rm = FALSE)
+Data$BEAM2speed <- zoo::na.approx (as.vector(Data$BEAM2speed), maxgap=1000, na.rm = FALSE)
+Data$BEAM3speed <- zoo::na.approx (as.vector(Data$BEAM3speed), maxgap=1000, na.rm = FALSE)
+
+## try to fix CTHDG_LAMS bad points in transition through 180:
+for (i in 2:(nrow(Data)-1)) {
+  if (is.na(Data$CTHDG_LAMS[i]) || is.na(Data$CTHDG_LAMS[i-1]) || is.na(Data$CTHDG_LAMS[i+1])) {next}
+  if (abs(Data$CTHDG[i-1]-Data$CTHDG_LAMS[i+1]) > 10.) {next}
+  if ((Data$CTHDG_LAMS[i-1] < 180.) && (Data$CTHDG_LAMS[i+1] > 180)) {Data$CTHDG_LAMS[i] <- NA}
+  if ((Data$CTHDG_LAMS[i-1] > 180.) && (Data$CTHDG_LAMS[i+1] < 180)) {Data$CTHDG_LAMS[i] <- NA}
+}
+Data$CTHDG_LAMS <- zoo::na.approx (as.vector(Data$CTHDG_LAMS), maxgap=1000, na.rm = FALSE)
+
+Theta =  c(35.0802, 34.8501, 34.8496, 0.) * pi / 180 # revised 12 May 2014
+Phi = c(179.2171, -61.0712, 59.1506, 0.) * pi / 180  #  "  "
+# special for HCRTEST:
+Theta[2] = 0.   # beam 2 is forward
+
+# also need the distances from the IRS to LAMS: (x,y,z)
+LL = c(-10.305, -6.319, 1.359)                # see Scott's email, recorded above.
+# unit vectors along beams are then:
+#   a[i] = [cos(Theta[i]), -sin(Theta[i])*sin(Phi[i]), sin(Theta[i])*cos(Phi[i])]
+# and the dot products with the (i,j,k) unit vectors give the direction cosine matrix:
+S = c(cos(Theta[1]), -sin(Theta[1])*sin(Phi[1]), sin(Theta[1])*cos(Phi[1]), 
+               cos(Theta[2]), -sin(Theta[2])*sin(Phi[2]), sin(Theta[2])*cos(Phi[2]), 
+               cos(Theta[3]), -sin(Theta[3])*sin(Phi[3]), sin(Theta[3])*cos(Phi[3]))
+dim(S) <- c(3,3)
+Si = t(solve(S))  # calculate the inverse of S -- this is the 3-beam version
+A = c(Data$BEAM1speed, Data$BEAM2speed, Data$BEAM3speed)
+dim(A) <- c(nrow(Data), 3)
+RW = t (Si %*% t(A))    # gives u, v, w components, RW[,1] is u
+D <- data.frame("Time"=Data$Time)
+D$TASX <- RW[,1]
+D$ATTACK <- atan (RW[, 3] / RW[, 1]) * 180 / pi
+D$SSLIP <-  atan (RW[, 2] / RW[, 1]) * 180 / pi
+D$GGVEW <- Data$GGVEW
+D$GGVNS <- Data$GGVNS
+D$GGVSPD <- Data$CVSPD_LAMS
+# shift <- +80
+# D$GGVSPD <- ShiftInTime (D$GGVSPD, .shift=shift)
+D$VEW <- Data$CVEW_LAMS
+D$VNS <- Data$CVNS_LAMS
+D$THDG <- Data$CTHDG_LAMS
+D$ROLL <- Data$CROLL_LAMS
+D$PITCH <- Data$CPITCH_LAMS +0.15
+D$BEAM1speed <- Data$BEAM1speed
+D$BEAM2speed <- Data$BEAM2speed
+D$BEAM3speed <- Data$BEAM3speed
+D$WDC <- Data$WDC
+D$WSC <- Data$WSC
+D$WIC <- Data$WIC
+D$AKRD <- Data$AKRD
+D$SSRD <- Data$SSRD
+D$DPITCH <- c(0, diff(D$PITCH)) * SampleRate
+DW <- WindProcessor (data=D)
+## WindProcessor in effect uses gust-GPS distance of 0.12,
+## because gust measurement increased by Pdot but Vp measurement decreased by Pdot,
+## with IRU about midway between radome and GPS antenna.
+## For LAMS, gust-GPS distance of 10.305-4.30=6.005 (to antenna)
+## so use an additional correction of 5.885?
+## but adjustment of 6.005 already provided to LAMS IRU, so only need -0.12
+DW$WIN <- DW$WIN + 0.12 * DW$DPITCH * pi / 180 ## DPITCH already multipled by SampleRate
+## Because GGVSPD is used directly for WIC, the appropriate correction is already included in WIC
+#### temporary test: +9 m required to remove discrepancy?
+## DW$WIN <- DW$WIN + 9 * DW$DPITCH * pi / 180
+# DW$WIC <- DW$WIC - 15 * DW$DPITCH * pi / 180
+# DW$WIN <- DW$WIN + 15 * DW$DPITCH * pi / 180
+# layout(matrix(1:3, ncol = 1), widths = 1,  heights = c(5,5,6))
+# op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+# plotWAC(DW[c("Time", "WDC", "WDN")], ylim=c(250,360))
+# plotWAC(DW[c("Time", "WSC", "WSN")], ylim=c(0,40))
+# op <- par (mar=c(5,4,1,1)+0.1)
+# plotWAC(DW[c("Time", "WIC", "WIN")], ylim=c(-5,5))
+
+@
+
+<<two-winds, include=TRUE, fig.cap='Comparison of WIC (from the radome-based system) and WIN (from LAMS). Both are smoothed to about 5-Hz response, and the mean value is removed from each to exclude differences arising from drifts in the measurements of pitch. For reference, the red line (WGV) is the vertical speed of the GV divided by 40, to show that the fluctuations in WIC and WIN are of about this magnitude despite the pronounced maneuvers.', fig.width=6, fig.height=4>>=
+
+layout(matrix(1:1, ncol = 1), widths = 1, heights = c(6))
+op <- par (mar=c(5,4,1,1)+0.1)
+DWS <- DW  ## just saving for debug runs that start with next statement
+DW <- DWS
+DW$WIN <- ShiftInTime (DW$WIN, .shift=500)
+rf <- setRange (DW, 204600, 204810)
+D <- DW[rf,]
+D$WIC <- D$WIC - with(D, mean (WIC, na.rm=TRUE))
+D$WIN <- D$WIN - with(D, mean (WIN, na.rm=TRUE))
+D$WICS <- SmoothInterp (D$WIC, .Length=51) 
+D$WINS <- SmoothInterp (D$WIN, .Length=51)
+D$WGV <- D$GGVSPD / 40
+plotWAC (subset (D,, c(Time, WICS, WINS, WGV)), ylim=c(-0.5,0.5))
+sdWIC <- sd (D$WIC, na.rm=TRUE)
+sdWIN <- sd (D$WIN, na.rm=TRUE)
+
+@
+
+The independent measurements of vertical wind, WIC from the radome-based
+system and WIN from the LAMS, are shown in Fig.~\ref{fig:two-winds}.
+Also shown for reference is the vertical speed of the GV during the
+maneuver, divided by 40 to avoid enlargement of the scale. Both measurements
+of vertical wind are smoothed to about 5-Hz response to minimize fluctuations
+between the systems that are likely of shorter scale than the separation
+among the sampled beams in LAMS or the separation of those beams from
+the radome. The resulting LAMS-based measurement WINS (green line)
+still shows more high-frequency noise than the radome-based measurement
+(WICS). The suspicious feature of this plot is the increase in WIC
+(blue line) near and following the troughs in the rate-of-climb (red
+line) and an associated decrease in WIC following the peaks in rate-of-climb,
+features that are not apparent in the LAMS-based measurement WIN.
+The pattern, correlated with vertical acceleration rather than vertical
+speed, is suggestive of some airflow effect on WIC that is associated
+with vertical acceleration, 
+
+<<scplt, include=TRUE, fig.cap='Corresponding measurements of WIC and WIN for the period of the pitch maneuver. The dashed orange line shows the result of a Deming fit to the measurements, as documented in the text.'>>=
+
+plotWAC (data.frame(D$WIC, D$WIN), ylab='LAMS-based W', xlab='radome-based W', type='p', pch=20)
+DF <- DemingFit (D$WIN, D$WIC)
+x <- c(-1,1)
+y <- DF[1] + DF[2] * x
+lines (x,y, col='darkorange', lwd=3, lty=2)
+
+@
+
+Despite the consistency of the angle-of-attack comparison for the
+two systems, there is more scatter between the two signals than would
+be expected if both are measuring the same signal. For WIC, the standard
+deviation is \Sexpr{round(sdWIC, 2)}~m/s for 25-Hz measurements
+and the corresponding standard deviation for WIN is \Sexpr{round(sdWIN, 2)},
+both similar to the standard deviation in vertical wind before and
+after the pitch maneuvers, so the maneuver does not introduce a substantial
+false signal. However, a comparison of the two measurements shows
+considerable scatter, as shown in Fig.~\ref{fig:scplt}. A Deming
+fit to these measurements gives a slope of \Sexpr{round(DF[2], 2)}
+(WIN:WIC), so they are about of the same magnitude, but the RMS of
+the Deming fit (characterizing the perpendicular distance from the
+points to the fitted line) is \Sexpr{round(DF[3], 2)}~m/s while
+the expected scatter for randomly distributed points with standard
+deviation in each variable of \Sexpr{round(sdWIC, 2)}~m/s would
+be \Sexpr{round(sdWIC*sqrt(2), 2)}~m/s, so the scatter about the
+fitted line is about \Sexpr{round(DF[3]/(sdWIC*sqrt(2))*100, 0)}\%
+of that expected without correlation. Although these differences represent
+fairly small errors and the two measurements characterize different
+spatial regions, this degree of scatter is still troubling because
+it is comparable to our best claimed uncertainty for vertical wind.
+It is therefore worthwhile to search for possible factors that might
+distort one of the measurements, perhaps WIC as a result of flow distortion.
+
+<<zaccel, include=TRUE, fig.cap=c('Difference in measurements of vertical wind (WIN-WIC) as a function of the vertical acceleration of the aircraft.', 'Difference in measurements of vertical wind (WIN-WIC) as a function of the rate of change of the angle-of-attack.')>>=
+
+D$AZ <- c(0, diff(D$GGVSPD)) * SampleRate
+D$DWIC <- D$WIN - D$WIC
+plotWAC(data.frame(D$AZ, D$DWIC), xlab=expression(paste('vertical acceleration [m/s'^'2',']')), ylab='WIN-WIC', pch=20, type='p')
+faz <- lm(D$DWIC ~ D$AZ)
+cfaz <- coef(faz)
+ccoef <- sqrt(summary(faz)$r.squared)
+x <- c(-5, 5)
+y <- cfaz[1] + cfaz[2] * x
+lines (x, y, col='darkorange', lwd=3, lty=2)
+# print ('Results of linear fitting of vertical acceleration to WIN-WIC')
+# SummarizeFit (faz)
+fsd <- sqrt (sd(D$DWIC, na.rm=TRUE)^2 - summary(faz)$sigma^2)
+D$DAKRD <- c(0, diff (D$AKRD)) * SampleRate
+plotWAC(data.frame(D$DAKRD, D$DWIC), xlab='derivative of AOA [deg/s]', ylab='WIN-WIC', pch=20, type='p')
+fakrd <- lm(D$DWIC~D$DAKRD)
+cfakrd <- coef(fakrd)
+akrdcoef <- sqrt(summary(fakrd)$r.squared)
+x <- c(-5,5)
+y <- cfakrd[1]+cfakrd[2]*x
+lines(x,y,col='darkorange', lwd=3, lty=2)
+
+@
+
+To investigate possible sources of this distortion, the difference
+WIN-WIC was examined as a function of various factors with which it
+might be correlated. Candidate factors include the rate of climb of
+the aircraft (GGVSPD), the attack, pitch and sideslip angles, derivatives
+of those angles, and the accelerations experienced by the aircraft.
+Of these, vertical acceleration of the aircraft is a prime candidate,
+as discussed in connection with Fig.~\ref{fig:two-winds}, and is
+highly correlated with some of the other factors, so that is examined
+first. The correlation between $\delta W$=(WIN-WIC) and vertical
+acceleration, shown in Fig.~\ref{fig:zaccel1}, is \Sexpr{round(ccoef, 2)},
+so this is strong evidence that the measurement of measured vertical
+wind WIC may depend on the vertical acceleration. The LAMS-based measurement
+WIN is sufficiently removed from the location of the aircraft that
+transient flow effects are unlikely to affect it, so the effect is
+more likely one on WIC. The regression leads to reduction of the residual
+standard deviation of $\delta W$ from \Sexpr{round(sd(D$DWIC, na.rm=TRUE), 3)}
+to \Sexpr{round(summary(faz)$sigma, 3)}~m/s, which suggests that
+the false component of vertical wind introduced by vertical acceleration
+might be about \Sexpr{round(fsd, 2)}~m/s.
+
+Another prime candidate is the rate of change of angle of attack,
+possibly offset in time. Without an offset, the dependence of the
+apparent error in vertical wind on the derivative of the angle-of-attack
+is shown in Fig.~\ref{fig:zaccel2}. There is a definite correlation,
+\Sexpr{round(akrdcoef,2)}, but it is much smaller than that for vertical
+acceleration and the reduction in residual standard deviation in $\delta W$
+is also much less, to only \Sexpr{round(summary(fakrd)$sigma,3)}\textasciitilde{}m/s.
+If the derivative of the angle-of-attack is shifted by $-50$~ms,
+the residual standard deviation reaches a minimum relative to other
+shifts of 0.156~m/s, still much less reduction than that based on
+vertical acceleration. However, there is almost no correlation between
+the derivative of angle-of-attack and the vertical acceleration, so
+the dependence represented in Fig.~\ref{fig:zaccel2} might be used
+in combination with vertical acceleration to improve the fit.
+
+<<sideslip, include=TRUE, fig.cap='Vertical wind difference WIN-WIC as a function of sideslip.', fig.height=4>>=
+
+plotWAC (data.frame (D$SSRD, D$DWIC), xlab='sideslip angle [degrees]', ylab='WIN-WIC', pch=20, type='p')
+fss <- lm (D$DWIC ~ D$SSRD)
+cfss <- coef (fss)
+x <- c(-3,3)
+y <- cfss[1] + cfss[2] * x
+lines(x, y, col='darkorange', lwd=3, lty=2)
+# SummarizeFit (fss)
+ftot <- lm (D$DWIC ~ D$AZ + D$DAKRD + D$SSRD)
+cftot <- coef(ftot)
+
+@
+
+Another flight characteristic with some correlation to WIN-WIC is
+sideslip, as shown in Fig.~\ref{fig:sideslip}. In this case, the
+correlation is much smaller, about \Sexpr{round(summary(fss)$sigma, 2)},
+but the dependence on sideslip appears to be real so including this
+dependence can reduce the residual standard deviation in $\delta W$
+slightly. The coefficients for the best fit including dependence on
+vertical acceleration, rate of change in angle-of-attack, and sideslip
+angle are \{$c_{0},\,c_{1},\,c_{2},\,c_{3}$\} = \{\Sexpr{round(cftot[1], 4)}\,m\,s$^{-1}$,
+\Sexpr{round(cftot[2], 4)}\,s, \Sexpr{round(cftot[3], 4)}\,m$/^{\circ}$,
+\Sexpr{round(cftot[4], 4)}\,m\,s$^{-1}/^{\circ}$\} as used in
+the following equation (where $\dot{w}_{p}$ is the vertical acceleration
+of the aircraft, $\beta$ the sideslip angle, and $\dot{\alpha}$
+the rate of change in angle of attack) and characterized by the table
+that follows:
+\begin{equation}
+\delta W=c_{0}+c_{1}\dot{w}_{p}+c_{2}\dot{\alpha}+c_{3}\beta\label{eq:deltaW}
+\end{equation}
+
+\newpage
+
+<<ss-table, include=TRUE>>=
+
+SummarizeFit (ftot)
+
+@
+
+The value of the square of the correlation coefficient, \Sexpr{round(summary(ftot)$r.squared, 2)}
+indicates that correlations with these variables account for a minor
+part (about \Sexpr{round(summary(ftot)$r.squared*100, 0)}\%) of the
+total variance in the difference between the measurements of vertical
+wind. 
+
+\clearpage
+
+<<corrected-w, include=TRUE, fig.cap='Wind measurements like those shown in Fig.\ 4 but after correction of WIC for effects of vertical acceleration and sideslip.'>>=
+
+D$WIX <- D$WIC + cftot[1] + cftot[2] * D$AZ + cftot[3] * D$DAKRD + cftot[4] * D$SSRD
+D$WIXS <- SmoothInterp (D$WIX, .Length=51)
+D$WINS <- SmoothInterp (D$WIN, .Length=101)
+plotWAC (subset (D,, c(Time, WIXS, WINS)), ylim=c(-0.5,0.5))
+
+@
+
+<<vs-pitch, include=TRUE, fig.cap='Difference WIN-WIC as a function of the rate of change in pitch angle.', eval=FALSE>>=
+
+plotWAC (data.frame (D$DPITCH, D$DWIC), xlab='rate of change of pitch [deg/s]', ylab='WIN-WIC', pch=20, type='p')
+fp <- lm (D$DWIC ~ D$DPITCH)
+cfp <- coef (fp)
+x <- c(-1,1)
+y <- cfp[1] + cfp[2] * x
+lines (x, y, col='darkorange', lwd=3, lty=2)
+# print ('Results of linear fitting of the derivative of pitch to WIN-WIC')
+# SummarizeFit (fp)
+
+@
+
+Angle of attack is highly correlated with vertical acceleration during
+the pitch maneuvers, so a plot like Fig.~\ref{fig:zaccel1} but for
+AKRD shows a similar strong correlation. Because the direct dependence
+on AKRD is calibrated for the radome-based system, it is more likely
+that the dependence is on vertical acceleration, which is not significant
+during the speed runs used for calibration. A similar plot of $\delta W$
+(WIN-WIC) vs rate-of-climb shows only a weak correlation (about 0.15)
+and negligible reduction in the residual standard deviation, so rate-of-climb
+does not appear to introduce any substantial error. Longitudinal acceleration
+of the aircraft also does not show any substantial effect. Another
+factor showing negligible correlation to $\delta W$ is the horizontal
+acceleration. 
+
+The other candidate factor that does show substantial correlation
+to $\delta W$ is the rate of change of pitch, which is almost as
+strongly correlated to WIN-WIC as vertical acceleration. However,
+the rate of change of pitch ($\dot{\theta}$) is also highly correlated
+with vertical acceleration during the pitch maneuver (correlation
+coefficient 0.96) so it is not clear which is the cause of the difference
+between WIN and WIC. The rate of change of pitch enters the calculation
+of vertical wind directly because it determines the relative motion
+of the radome gust probe vs the IRU and GPS antenna, and a similar
+offset applies to the difference between the motion of the LAMS sensor,
+the LAMS IRU, and the GPS antenna. However, in the calculations of
+vertical wind used for this study, these rotation-rate effects were
+incorporated in the processing, using distances of 4.42~m (radome
+to Honeywell IRU), -4.30~m (Honeywell IRU to GPS antenna), and +6.0~m
+(LAMS to GPS antenna). A false correlation between $\delta W$ and
+$\dot{\theta}$ of the magnitude observed would require an additional
+displacement of about 9~m (radome forward of the IRU by an additional
+9~m or GPS antenna behind the IRU by an additional 9~m), or alternately
+the LAMS to be \emph{forward }of the GPS antenna by an additional
+9~m. The focal points for the LAMS beams are ahead of the housing
+by more than this distance, but they each detect only line-of-sight
+airspeed so no lever arm like that for the radome-IRU displacement
+is needed, and in any case the observed sensitivity to rotation would
+require a sensing location \emph{behind} the LAMS housing. A correction
+has already been made for the 6~m longitudinal displacement between
+the GPS antenna and the LAMS IRU, so the rotation-rate correction
+to measured velocity does not appear able to account for the observed
+dependence.\footnote{Evidence that the lever-arm correction is being applied correctly
+is that, after the 6-m correction was applied to CVSPD\_LAMS, the
+difference between GGVSPD and CVSPD\_LAMS showed no remaining dependence
+on $\dot{\Theta}$ and the two measurements were nearly identical
+(RMS difference of 0.05~m/s.and correlation coefficient of 0.99997). }
+
+If the fit coefficients in the list of fit parameters as a function
+of vertical acceleration, derivative of angle of attack, and sideslip
+angle are used to correct the radome-based vertical wind, the result
+is the variable WIXS shown in Fig.~\ref{fig:corrected-w} as the
+blue line. The match to the LAMS-measured vertical wind (green line)
+is good, and the problems evident in Fig.~4 have been corrected.
+The RMS difference between the two signals (after averaging to about
+5-Hz signals) is \Sexpr{round(sd(D$WIXS-D$WINS, na.rm=TRUE), 2)}~m/s,
+which is reasonable considering the claimed uncertainty in both and
+the difference in locations being measured by the two sensors. The
+vertical acceleration and the rotation rate experienced during the
+pitch maneuver are larger than those experienced during typical encounters
+with turbulence or waves, and the correction for vertical acceleration
+and sideslip in the pitch maneuver has a typical magnitude of \Sexpr{round(sd(D$WIN-D$WIX), 2)}~m/s,
+so the error arising from transient flow distortion (if that is indeed
+the cause) is smaller than the estimated uncertainty in the measurement
+of vertical wind (standard uncertainty of 0.12~m/s) in most representative
+measuring conditions. However, the RMS of the Deming fit to the LAMS-derived
+and the radome-derived vertical wind (WIN, WIC) is reduced from \Sexpr{round(DF[3], 2)}
+to \Sexpr{round(DemingFit(D$WIN, D$WIX)[3], 2)}0 by this correction,
+so the correction, although small, can be worth including in analyses
+requiring the lowest-uncertainty results.
+
+<<vs-GGVSPD, include=TRUE, fig.cap='Difference WIN-WIC as a function of the rate of climb of the aircraft (GGVSPD).', eval=FALSE>>=
+
+plotWAC(data.frame(D$GGVSPD, D$DWIC), xlab='Rate of climb [m/s]', ylab='WIN-WIC', pch=20, type='p')
+fg <- lm (D$DWIC ~ D$GGVSPD)
+cfg <- coef(fg)
+x <- c(-20,20)
+y <- cfg[1] + cfg[2]*x
+lines(x,y, col='darkorange', lwd=3, lty=2)
+# print ('Fit to WIN-WIC as a function of GGVSPD')
+# SummarizeFit (fg)
+
+@
+
+<<vs-attack, include=TRUE, fig.cap='Difference WIN-WIC as a function of the angle of attack.', eval=FALSE>>=
+
+plotWAC(data.frame(D$AKRD, D$DWIC), xlab='Angle of Attack [degrees]', ylab='WIN-WIC', pch=20, type='p')
+fa <- lm (D$DWIC ~ D$AKRD)
+cfa <- coef(fa)
+x <- c(-20,20)
+y <- cfa[1] + cfa[2]*x
+lines(x,y, col='darkorange', lwd=3, lty=2)
+# print ('Fit to WIN-WIC as a function of AKRD')
+# SummarizeFit (fa)
+
+@
+
+<<vs-accelerations, include=TRUE, fig.cap='vs accelerations'>>=
+
+D$AZ <- c(0, diff(D$GGVSPD)) * SampleRate
+D$AL <- c(0, diff(D$TASX)) * SampleRate
+
+@
+
+\newpage
+
+\section*{Conclusions}
+\begin{enumerate}
+\item The independent measurements from LAMS provide good support for the
+usual method used to determine sensitivity coefficients from maneuvers.
+The LAMS measurements confirm the values of the sensitivity coefficients
+in use to within a few percent. The revised SSRD sensitivity coefficients
+documented in the Wind Uncertainty Tech Note match the LAMS result
+very well and should be adopted as the standard GV coefficients.
+\item The pitch maneuver revealed that the difference between the LAMS-derived
+vertical wind and that from the radome-based system varied with the
+vertical acceleration, and that difference was larger than expected
+from uncertainty analyses of the two systems. Weaker dependences on
+sideslip and on the derivative of the angle-of-attack were also present.
+The estimated magnitude of the combined effects, however, is small,
+leading to typical errors in WIC of about 0.1~m/s when the vertical
+acceleration was in the range $\pm1\thinspace$m\,s$^{-2}$, as is
+typical of all but the most extreme flight conditions.
+\item A correction formula (Eq.~\ref{eq:deltaW}) can be used to remove
+this error in vertical wind. After application of that regression
+correction based on the pitch maneuver, the measurements of vertical
+wind from the radome-based system agree with those from the LAMS with
+a standard deviation between the two measurements of only 0.07~m/s
+during that pronounced maneuver. This confirms the ability of the
+measuring system to remove the effects of even rapid pilot-induced
+changes in pitch, where rates-of-climb exceeded $\pm10$~m/s, so
+that less than 1\% of the induced motion appears in the measurements.
+\end{enumerate}
+
+%\clearpage
+\begin{center}
+\textsf{\textcolor{blue}{\textendash{} End of Memo \textendash{}}}
+\par\end{center}
+
+Reproducibility:
+
+\begin{tabular}{ll}
+\textsf{\textsc{\textcolor{blue}{Project:}}} & \Sexpr{thisFileName}\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Archive package:}}} & \Sexpr{thisFileName}.zip\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Contains:}}} & attachment list below\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Program:}}} & \Sexpr{thisFileName}.Rnw\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Original Data:}}} & /scr/raf/cooperw/HT03HR.nc \textendash{} special \tabularnewline
+\textsf{\textsc{\textcolor{blue}{Workflow:}}} & Workflow\Sexpr{thisFileName}.pdf \textendash{} not yet available\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Git:}}} & https://github.com/WilliamCooper/\Sexpr{thisFileName}.git \textendash{}
+not yet\tabularnewline
+\end{tabular}
+
+\attachm{\Sexpr{thisFileName}.Rnw\\\Sexpr{thisFileName}.pdf\\\Sexpr{SaveRData}\\SessionInfo}
+%\cc{first attachment\\second\\3rd att}
+%\attach{attachment}
+%\attachm{first\\second} %\cc{first attachment\\second\\3rd att}
+<<save-system-info, echo=FALSE>>= 
+cat (toLatex(sessionInfo()), file="SessionInfo")
+
+@ 
+<<make-zip-archive, echo=TRUE, INCLUDE=TRUE>>=
+system (sprintf("zip %s.zip %s.Rnw %s.pdf Workflow%s.pdf SessionInfo %s", thisFileName, thisFileName, thisFileName, thisFileName, SaveRData))
+
+@ 
+
+% \attach{attachment}
+
+% \attachm{ProgramFile\\Document.pdf\\SaveRData}
+
+%\cc{first attachment\\second\\3rd att}
+\end{document}

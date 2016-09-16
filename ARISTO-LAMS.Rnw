@@ -1,0 +1,2696 @@
+%% LyX 2.2.1 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[12pt,english]{article}
+\usepackage{mathptmx}
+\usepackage[T1]{fontenc}
+\usepackage[letterpaper]{geometry}
+\geometry{verbose,tmargin=3.54cm,bmargin=2.54cm,lmargin=2.54cm,rmargin=2.54cm,headheight=1cm,headsep=2cm,footskip=0.5cm}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+\setlength{\parskip}{\medskipamount}
+\setlength{\parindent}{0pt}
+\usepackage{color}
+\usepackage{babel}
+\usepackage{array}
+\usepackage[unicode=true]
+ {hyperref}
+\usepackage{breakurl}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+\input colordvi
+\usepackage{color}
+\fancyhead{}
+\fancyfoot[CE,CO]{}
+\newtoks{\addressee} \global\addressee={}
+\newdimen\longindent \longindent=3.5truein
+\fancyhead[L]{Memo to: \the\addressee \\ \datetoday \\ Page \thepage \hfill}
+\renewcommand{\headrulewidth}{0.0pt}
+\newenvironment{lyxlist}[1]
+{\begin{list}{}
+{\settowidth{\labelwidth}{#1}
+\setlength{\leftmargin}{\labelwidth}
+\addtolength{\leftmargin}{\labelsep}
+\renewcommand{\makelabel}[1]{##1\hfil}}}
+{\end{list}}
+\newcommand{\datetoday}{\number\day\space
+     \ifcase\month\or January\or February\or March\or April\or May\or
+     June\or July\or August\or September\or October\or November\or
+     December\fi
+     \space\number\year}
+\newcommand{\EOLmemo}{\null \vskip-1.5truein
+{\raggedright \textsf{\textsc{\large \textcolor{blue}{Earth Observing Laboratory}}}}\par
+{\raggedright \textsf{\textsl{\textcolor{blue}{Memorandum:}}}} \par \vskip6pt
+{\color{blue}{\hrule}}\par
+\vskip0.3truein \leftline{\hskip \longindent \datetoday} \vskip0.2truein
+\thispagestyle{empty}}
+\newcommand{\attachm}[1]{\begin{lyxlist}{Attachments:00}
+\item [Attachments:] {#1}
+\end{lyxlist}}
+\newcommand{\cc}[1]{\begin{lyxlist}{Attachments:00}
+\item [cc:] {#1}
+\end{lyxlist}}
+\newcommand{\attach}[1]{\begin{lyxlist}{Attachments:00}
+\item [Attachment:] {#1}
+\end{lyxlist}}
+%usage: \encl{A\\B\\C} or \cc{ma,e1\\name2\\name3}
+
+\makeatother
+
+\begin{document}
+\global\addressee={ARISTO-LAMS archive} 
+
+\begin{tabular}{ll}
+\textsf{\textsc{\textcolor{blue}{To:}}} & \the\addressee\tabularnewline
+\textsf{\textsc{\textcolor{blue}{From:}}} & Al Cooper\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Subject:}}} & Studies of the measurements of wind using LAMS \textendash{} C130
+ARISTO2015/2016\tabularnewline
+\end{tabular}
+
+\bigskip
+
+<<initialization,echo=FALSE,include=FALSE>>=
+
+library(knitr)
+opts_chunk$set(echo=FALSE, include=FALSE, fig.lp="fig:", cache=FALSE)
+opts_chunk$set(fig.width=6, fig.height=5, fig.pos="center", digits=4)
+thisFileName <- "ARISTO-LAMS"
+require(Ranadu, quietly = TRUE, warn.conflicts=FALSE)
+require(ggplot2)
+require(grid)
+require(ggthemes)
+Directory <- DataDirectory ()
+Flight <- "rf03_LAMS" 				# XXX change this
+Project = "ARISTO"	
+ProjectDir <- "ARISTO"
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+VarList <- c("WDC", "WSC", "WIC", "AKRD", "SSRD", "U_LAMS", "V_LAMS", "W_LAMS",
+             "Beam1_LAMS", "Beam2_LAMS", "Beam3_LAMS", "Beam4_LAMS",  ## Scott's values
+             "BEAM1speed", "BEAM2speed", "BEAM3speed", "BEAM4speed", "ADIFR", "QCF", "BDIFR",
+             "CVEW_LAMS", "CVNS_LAMS", "CVSPD_LAMS", "GGVEW", "GGVNS",
+             "CTHDG_LAMS", "CROLL_LAMS", "CPITCH_LAMS", "PITCH", "ROLL", "THDG",
+             "WD_LAMS", "WS_LAMS", "WI_LAMS", "ATTACK_L", "SSLIP_L", "TASX")
+VarList <- c(VarList, 'PSFD', 'QCF', 'ADIFR', 'GGVSPD', 'EWX')
+ReloadData <- TRUE
+ReloadData <- FALSE
+SaveRData1 <- sprintf("%s1.Rdata", thisFileName)
+if (ReloadData) {
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  save (Data, file=SaveRData1)
+} else {
+  load (SaveRData1)
+}
+PCA <- FALSE
+PCA <- TRUE  ## if set true, will use Spuler's PCA-algorithm beam speeds
+SummarizeFit <- function(ft) {
+  print (summary(ft)$call)
+  print ("Coefficients:")
+  print (summary(ft)$coefficients)
+  print (sprintf ("Residual standard deviation: %.3f, dof=%d", summary(ft)$sigma, summary(ft)$df[2]))
+  print (sprintf ("R-squared %.3f", summary(ft)$r.squared))
+}
+
+@
+
+\section{Introduction}
+
+During the 2015 and 2016 ARISTO projects on the C-130, the LAMS was
+flown in a 4-beam configuration. The beam assignments were non-standard,
+though, with beam 2 forward, beam 1 downward, beam 3 outboard and
+upward, and beam 4 inboard and upward. Beams 1, 3 and 4 were approximately
+35$^{\circ}$ from the forward direction, and relative to an azimuthal
+angle starting from the downward direction they were, respectively,
+0, $-120$ and 120$^{\circ}$ in clockwise rotation about the forward
+longitudinal axis. 
+
+There were five research flights in ARISTO-2015 and six in ARISTO-2016.
+Data from both projects are included in this memo, which is somewhat
+disorganized in that the discussions have not been merged well except
+in the conclusions. All flights had some degree of measurement problems,
+so data for this study have been selected from the periods that appear
+to provide the best measurements. The following table provides a few
+of the characteristics of these flights:
+\begin{center}
+\begin{tabular}{|c|c|c|>{\raggedright}p{5cm}|>{\raggedright}p{5cm}|}
+\hline 
+\textbf{date} & \textbf{start} & \textbf{end} & \textbf{profile} & \textbf{problems}\tabularnewline
+\hline 
+\hline 
+150916 & 160225 & 200605 & climb->20kft, level, stepped descent to BL, no maneuvers & LAMS IRU attitude angles bad\tabularnewline
+\hline 
+150923 & 135907 & 204016 & mostly low level until near end; LAMS reasonable, although weak; some
+speed variations & actual takeoff about 170000; BEAM2speed weak, BEAM2\_LAMS (Scott's
+value) better.\tabularnewline
+\hline 
+150925 & 162500 & 214500 & both upper and lower-level legs; speed runs, some turbulence & CPITCH\_LAMS bad before 192300, and CROLL also, so wind measurements
+from LAMS unavailable until after then.\tabularnewline
+\hline 
+150930 & 170100 & 205000 & good pitch and yaw maneuvers; also a partial speed run. & Beams 1 and 4 problematic before 1915 in high-level leg; beam 2 probably
+useful for TAS.\tabularnewline
+\hline 
+151002 & 143000 & 184400 & upper-level pitches and lower-level turbulence & LAMS beam peaks look very weak to me, questionable although SMS processing
+seems reasonable.\tabularnewline
+\hline 
+160802 & 162500 & 183500 & profiles; no sign. cloud, no low-level \& max ca. 7 km & LAMS mostly good; some brief gaps.\tabularnewline
+\hline 
+160808 & 150500 & 160000 & brief flight at low level & some beam-1 problems at low level\tabularnewline
+\hline 
+160809 & 160000 & 183235 & some cold cloud near max altitude ca. 7km; LAMS appears bad there. & some LAMS-beam gaps at upper level.\tabularnewline
+\hline 
+160810 & 134539 & 184016 & only brief cold cloud; up to 5-6km.  & LAMS good\tabularnewline
+\hline 
+160812 & 190000 & 203616 & smoke-plume study; high CDP conc. in plumes. & LAMS good\tabularnewline
+\hline 
+160816 & 130138 & 264829 & long flight with near-sea-level leg for PCOR study; refueling stop
+at about 1800\textendash 1900. Some low-level cloud near 1900\textendash 1930,
+with shorter cloud passes during return leg. Good short maneuvers
+also. & LAMS problems early after refueling and some also prior to descent
+for refueling, esp. beam 2. Looks OK for critical part near 2100\textendash 0100. \tabularnewline
+\hline 
+\end{tabular}
+\par\end{center}
+
+For ARISTO-2015, the line-of-sight beam speeds were determined in
+two ways. Scott Spuler used principal-component analysis to find the
+beam speeds, and usually this worked very well, although there are
+some suspicious times. For example, the peaks in Flight 5 look very
+weak, yet the PCA method continued to find output values. Because
+there was tight coupling to the expected measured TAS (with adjustment
+for the beam angles), it appears suspicious that the method may be
+duplicating the TAS value at times without having an adequate signal.
+The match to TASX looks so good that it seems suspicious, as discussed
+later. A second method was to fit the background using Savitzgy-Golay
+polynomials and then search for peaks above this background. When
+signals were strong, the method usually produced the same result as
+the PCA method, but it was more prone to failure during periods where
+the signal was weak. (A signal-to-noise test of $\geq4$ was required
+for a valid measurement.) Results from both these peak-detecting algorithms
+will be discussed in this memo. 
+
+For ARISTO-2016, only the second method of processing was available
+at the time of this study, so results will all be based on the second
+method for that portion of the project.
+
+There are several objectives that can be met by using the LAMS-derived
+measurements:
+\begin{enumerate}
+\item The LAMS provides an independent measurement of angle-of-attack and
+sideslip angle, so these measurements can be used to check the empirical
+relationships used to calibrate the radome-based measurements of these
+angles.
+\item LAMS provides an independent measurement of the airspeed, so from
+that measurement it is possible to determine the expected dynamic
+pressure. This was used previously(Cooper et al., 2014) to calibrate
+not only the dynamic pressure but also the static pressure as measured
+on the C-130. However, since then the offset between the avionic static
+pressure and the research static pressure calibrated in this way has
+changed, so it is important to learn if the static defect actually
+changed or perhaps the avionic value changed. This has an important
+effect on the longitudinal component of the measured wind as well.
+ARISTO-2016, esp.~the last flight, provided an opportunity to extend
+the fit conditions to cover low-altitude flight of the C-130.
+\item The paper by Cooper et al.~(2014) developed a method for measuring
+temperature using the LAMS, which might have potential to provide
+a valid measurement of temperature in clouds. However, only a small
+sample of measurements were available for use in that paper, so it
+will be useful to explore if further measurements from ARISTO help
+characterize this measurement.
+\item The method used to calibrate the radome is based primarily on slowly
+varying measurements, such as the variation in angle-of-attack during
+a speed run. It is of concern that the calibration used might not
+apply in the case of rapidly changing flight conditions, when for
+example there might be transient adjustment of the airflow pattern
+toward a new steady state. Because the LAMS measures wind well ahead
+of the aircraft, such effects should not appear in the LAMS-based
+measurements, so a comparison of the LAMS-based and radome-based measurements
+might either identify transient-response problems or place limits
+on how large such effects might be. Some rapid changes in pitch were
+included in the last flight of ARISTO-2016 that can be used for this
+study.
+\end{enumerate}
+
+\section{Data processing}
+
+The original netCDF files, with names like ARISTOrf01.nc, contain
+histograms of the LAMS frequency measurements, with names like BEAM\{1\textendash 4\}\_LAMS.
+For ARISTO-2015, Scott Spuler has processed these to produce files
+like ARISTOrf01\_LAMS.nc with new variables Beam\{1\textendash 4\}\_LAMS
+containing the line-of-sight speeds measured in each beam. In addition,
+the Python program LAMS\_ARISTO.py has been used to process these
+further to files ARISTOrfxx\_LAMSLAMS.nc, which contain additional
+variables BEAM\{1\textendash 4\}speed also representing the line-of-sight
+speeds. Only the latter processing has been performed for ARISTO-2016,
+for which the resulting files have names like ARISTO2016rfxxLAMS.nc.
+Both sets of variables, Beam\{1\textendash 4\}\_LAMS and BEAM\{1\textendash 4\}speed,
+will be used below when available but they appear to have different
+strengths:
+\begin{enumerate}
+\item The variables Beam\{1\textendash 4\}\_LAMS are produced by Spuler's
+PCA routine. This is the most sensitive detection method, but there
+is some suspicion that it produces values when there is inadequate
+signal, perhaps by too much reliance on TASX to determine where the
+peak should be. 
+\item The variables BEAM\{1\textendash 4\}speed are produced by smoothing
+the histograms with Savitzgy-Golay polynomials and then searching
+for peaks above the smoothed background. This algorithm also uses
+TASX to determine likely locations for the peaks, but with a fairly
+large tolerance, and it requires a signal-to-noise ratio $\geq4$
+or else it produces a missing-value result. In ARISTO2015, this algorithm
+was significantly less sensitive than the PCA algorithm, and for example
+in Flight 5 it mostly did not produce useful results while the PCA
+algorithm produced almost continuous results for the line-of-sight
+beam speeds.
+\end{enumerate}
+The Python routine also produced new variables named WD\_LAMS, WS\_LAMS,
+WI\_LAMS, ATTACK\_L and SSLIP\_L, using the processing algorithms
+for a 4-beam LAMS that were discussed in the documents LAMSprocessing4Bwind.pdf
+and LAMSprocessing3Dwind.pdf. However, these variables were not used
+in the study reported here. Instead, all variables derived from the
+line-of-sight LAMS measurements were recalculated in the present R
+routine (this file) to generate measurements of vertical and horizontal
+wind, airspeed, and angles of attack and sideslip. For airspeed, angle
+of attack, and sideslip, these steps were used:
+\begin{enumerate}
+\item The four-beam measurements were used to determine a three-dimensional
+relative wind vector \textbf{RW}=\{$\mathrm{RW}_{x},\,\mathrm{RW}_{y},\,\mathrm{RW_{z}}$\}\textbf{
+}with components inbound along the longitudinal forward, lateral starboard,
+and lateral downward axis in the coordinate frame of the LAMS IRU
+(with attitude angles CPITCH, CROLL, CTHDG). The algorithm is documented
+in LAMSprocessing4Bwind.pdf. 
+\item The airspeed is then the magnitude of the vector \textbf{RW}.
+\item The angle of attack is $\alpha=\arctan\left(\mathrm{RW}_{z}/\mathrm{RW}_{x}\right)$
+and the sideslip angle is $\beta=\arctan\left(\mathrm{RW}_{y}/\mathrm{RW}_{x}\right)$. 
+\end{enumerate}
+For measurements of wind, the Ranadu routine Ranadu::WindProcessor()
+was used to calculate the wind based on LAMS-based variables for airspeed,
+angle of attack, and sideslip and the INS-provided attitude angles,
+with complementary-filter adjustment of the INS-provided groundspeed
+components based on the corresponding GPS-provided measurements.
+
+For completeness, here are suggested procedures for using the Python
+routine LAMS\_ARISTO.py, with comments regarding future use with new
+data files:
+\begin{enumerate}
+\item On tikal, copy the routine \textasciitilde{}cooperw/LAMS/LAMS\_ARISTO.py
+to another directory where you have write permission.
+\item On lines 252 and 253, change the names of the data file and the directory
+containing the file to be processed. Do not include the trailing ``.nc''
+in the file name, and if the file already contains Scott Spuler's
+processing add ``\_LAMS'' to the file name as on line 251. Save
+the edited file. CAUTION: This routine will create a new file in that
+same directory with ``LAMS'' appended to the name supplied, and
+if that file is present it will overwrite the file. This won't overwrite
+Scott's files because it adds ``LAMS'' instead of ``\_LAMS'',
+but if Scott's files are used the new file will end in ``\_LAMSLAMS''.
+In that case, the new file will contain the line-of-sight speeds obtained
+by both algorithms, in Scott's case with the names Beam1\_LAMS \textendash{}
+Beam4\_LAMS and in the case of the Python program with names BEAM1speed
+\textendash{} BEAM4speed.
+\item Run the program using the command ``python LAMS\_ARISTO.py''. There
+will be regular messages during processing, ending (if successful)
+with the message ``Reached end of routine ...''. This will typically
+take a few minutes. If this fails immediately, there may be a problem
+with the available python packages that need updating or changing.
+\item On successful completion, there should then be a new file with a name
+ending in ``LAMS.nc'' in the prescribed working directory. It should
+be slightly larger than the original file because a few variables
+are added containing the line-of-sight LAMS speeds and some derived
+quantities. These are then the netCDF files that are read by the next
+routine to produce the final document,.
+\end{enumerate}
+The next step is then to run the present routine, ``ARISTO-LAMS.Rnw'',
+in RStudio to generate the PDF document.
+
+<<beam-processing, echo=FALSE, include=TRUE, fig.cap='Wind measurements: conventional (blue), PCA-based (green), SG-based (red). The time period is restricted to 19:23--21:30 UTC because the LAMS IRU produced erronous values for the attitude angles at other times.', cache=TRUE>>=
+
+processWind <- function(Data) {
+  Data$BEAM1speed <- zoo::na.approx (as.vector(Data$BEAM1speed), maxgap=1000, na.rm = FALSE)
+  Data$BEAM2speed <- zoo::na.approx (as.vector(Data$BEAM2speed), maxgap=1000, na.rm = FALSE)
+  Data$BEAM3speed <- zoo::na.approx (as.vector(Data$BEAM3speed), maxgap=1000, na.rm = FALSE)
+  Data$BEAM4speed <- zoo::na.approx (as.vector(Data$BEAM4speed), maxgap=1000, na.rm = FALSE)
+  ## replace with Scott's values
+  if (PCA) {
+    Data$BEAM1speed <- zoo::na.approx (as.vector(Data$Beam1_LAMS), maxgap=1000, na.rm = FALSE)
+    Data$BEAM2speed <- zoo::na.approx (as.vector(Data$Beam2_LAMS), maxgap=1000, na.rm = FALSE)
+    Data$BEAM3speed <- zoo::na.approx (as.vector(Data$Beam3_LAMS), maxgap=1000, na.rm = FALSE)
+    Data$BEAM4speed <- zoo::na.approx (as.vector(Data$Beam4_LAMS), maxgap=1000, na.rm = FALSE)
+  }
+  ## try to fix CTHDG_LAMS bad points in transition through 180: (may no longer be needed)
+  for (i in 2:(nrow(Data)-1)) {
+    if (is.na(Data$CTHDG_LAMS[i]) || is.na(Data$CTHDG_LAMS[i-1]) || is.na(Data$CTHDG_LAMS[i+1])) {next}
+    if (abs(Data$CTHDG[i-1]-Data$CTHDG_LAMS[i+1]) > 10.) {next}
+    if ((Data$CTHDG_LAMS[i-1] < 180.) && (Data$CTHDG_LAMS[i+1] > 180)) {Data$CTHDG_LAMS[i] <- NA}
+    if ((Data$CTHDG_LAMS[i-1] > 180.) && (Data$CTHDG_LAMS[i+1] < 180)) {Data$CTHDG_LAMS[i] <- NA}
+  }
+  Data$CTHDG_LAMS <- zoo::na.approx (as.vector(Data$CTHDG_LAMS), maxgap=1000, na.rm = FALSE)
+  
+  Theta =  c(35.0802, 34.8501, 34.8496, 0.) * pi / 180 # revised 12 May 2014
+  Theta <- c(35, 0, 35, 35) * pi / 180  ## ARISTO
+  Phi = c(179.2171, -61.0712, 59.1506, 0.) * pi / 180  #  "  "
+  Phi = c(0, 0, -120, 120) * pi / 180
+  
+  # also need the distances from the IRS to LAMS: (x,y,z)
+  LL = c(-10.305, -6.319, 1.359)                # these are GV values; need C130 values
+  # unit vectors along beams are then:
+  #   a[i] = [cos(Theta[i]), -sin(Theta[i])*sin(Phi[i]), sin(Theta[i])*cos(Phi[i])]
+  # and the dot products with the (i,j,k) unit vectors give the direction cosine matrix:
+  S = c(cos(Theta[1]), -sin(Theta[1])*sin(Phi[1]), sin(Theta[1])*cos(Phi[1]), 
+                 cos(Theta[2]), -sin(Theta[2])*sin(Phi[2]), sin(Theta[2])*cos(Phi[2]), 
+                 cos(Theta[3]), -sin(Theta[3])*sin(Phi[3]), sin(Theta[3])*cos(Phi[3]))
+  S4 <- c(S, cos(Theta[4]), -sin(Theta[4])*sin(Phi[4]), sin(Theta[4])*cos(Phi[4]))
+  dim(S) <- c(3,3)
+  Si = t(solve(S))  # calculate the inverse of S -- this is the 3-beam version
+  ## the following commented lines are the python code:
+  # S4 = np.vstack ((S, [cos(Theta[3]), -sin(Theta[3])*sin(Phi[3]), sin(Theta[3])*cos(Phi[3])]))
+  # StS =  linalg.inv (ma.dot (S4.T, S4))
+  # M = ma.dot (StS, S4.T)      # matrix for finding relative wind from 4-beam LAMS
+  dim(S4) <- c(3,4)
+  StS <- S4 %*% t(S4)
+  StS <- solve(StS)
+  M <- StS %*% S4
+  
+  A = c(Data$BEAM1speed, Data$BEAM2speed, Data$BEAM3speed)
+  A4 <- c(A, Data$BEAM4speed)
+  dim(A4) <- c(nrow(Data), 4)
+  dim(A) <- c(nrow(Data), 3)
+  RW = t (Si %*% t(A))    # gives u, v, w components, RW[,1] is u
+  RW2 <- t (M %*% t(A4))
+  ## calculate the error in the solution:
+  A4P <- t (t (S4) %*% t (RW2)) - A4
+  CSQ <- A4P[,1]^2 + A4P[,2]^2 + A4P[,3]^2 + A4P[,4]^2
+
+  ## set up special data.frame for calculation of wind:
+  D <- data.frame("Time"=Data$Time)
+  D$TASX <- sqrt(RW2[,1]^2 + RW2[,2]^2 + RW2[,3]^2)
+  D$TASX3 <- sqrt(RW[,1]^2 + RW[,2]^2 + RW[,3]^2)
+  D$TASCSQ <- CSQ 
+  D$ATTACK <- atan (RW2[, 3] / RW2[, 1]) * 180 / pi
+  D$SSLIP <-  atan (RW2[, 2] / RW2[, 1]) * 180 / pi
+  D$GGVEW <- Data$CVEW_LAMS
+  D$GGVNS <- Data$CVNS_LAMS
+  D$GGVSPD <- Data$CVSPD_LAMS
+  D$VEW <- Data$CVEW_LAMS
+  D$VNS <- Data$CVNS_LAMS
+  D$THDG <- Data$CTHDG_LAMS
+  D$ROLL <- Data$CROLL_LAMS
+  D$PITCH <- Data$CPITCH_LAMS
+  ## save some variables for ease of plotting:
+  D$BEAM1speed <- Data$BEAM1speed
+  D$BEAM2speed <- Data$BEAM2speed
+  D$BEAM3speed <- Data$BEAM3speed
+  D$BEAM4speed <- Data$BEAM4speed
+  D$WDC <- Data$WDC
+  D$WSC <- Data$WSC
+  D$WIC <- Data$WIC
+  D$WD_LAMS <- Data$WD_LAMS
+  D$WS_LAMS <- Data$WS_LAMS
+  D$WI_LAMS <- Data$WI_LAMS
+  D$AKRD <- Data$AKRD
+  D$SSRD <- Data$SSRD
+  D$ADIFR <- Data$ADIFR
+  D$QCF <- Data$QCF
+  D$GGVSPD <- Data$GGVSPD
+  D$PSFD <- Data$PSFD
+  D$EWX <- Data$EWX
+  # if (grepl('rf03', fname)) {
+  #   rg <- setRange (D$Time, 192300,213000)
+  #   D <- D[rg, ]
+  # }
+  ## use standard wind processor 
+  ### rotation-rate corrections should be removed first, 
+  ### but for standard routine they are insignificant so will be ignored.
+  DW <- WindProcessor (data=D)
+  return (DW)
+}
+DW <- processWind (Data)
+rg <- setRange (DW, 192300, 213000)
+DW <- DW[rg,]  ## select time when LAMS IRU was working
+layout(matrix(1:3, ncol = 1), widths = 1,  heights = c(5,5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(DW[c("Time", "WDC", "WDN", 'WD_LAMS')], legend.position='bottom')  #, ylim=c(250,360)
+title(fname)
+plotWAC(DW[c("Time", "WSC", "WSN", 'WS_LAMS')], ylim=c(0,40), legend.position='topright')
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(DW[c("Time", "WIC", "WIN", 'WI_LAMS')], ylim=c(-5,5), legend.position='top')
+
+@
+
+Some results for the various processing schemes are shown in Fig.~\ref{fig:beam-processing}.
+
+\clearpage
+
+\section{Sensitivity coefficients}
+
+\subsection{Angle of attack\label{subsec:Angle-of-attack}}
+
+The following speed-run maneuvers are available from ARISTO2015:
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline 
+\textbf{\#} & \textbf{flight} & \textbf{start} & \textbf{end} & \textbf{comments}\tabularnewline
+\hline 
+\hline 
+1 & 2 & 183200 & 185500 & PCA, not SG\tabularnewline
+\hline 
+2 & 2 & 192100 & 193800 & PCA or (SG exc 193000)\tabularnewline
+\hline 
+3 & 3 & 171300 & 173800 & CPITCH bad\tabularnewline
+\hline 
+4 & 3 & 183400 & 185700 & CPITCH bad\tabularnewline
+\hline 
+5 & 3 & 205500 & 210000 & slowdown only; PCA only\tabularnewline
+\hline 
+6 & 4 & 174300 & 180700 & PCA only\tabularnewline
+\hline 
+7 & 4 & 191200 & 193000 & PCA only; SG weak\tabularnewline
+\hline 
+8 & 4 & 202500 & 203900 & PCA; SG B1 weak\tabularnewline
+\hline 
+\end{tabular}
+\par\end{center}
+
+The values of vertical wind as originally processed did not look very
+good, so the first step was to determine a conventional set of sensitivity
+coefficients to use as a radome calibration. For this purpose, a data.frame
+consisting of a concatenation of the eight speed runs in the preceding
+table was constructed and a reference value for calibration (AOAREF)
+was added to the data.frame. AOAREF, defined below, is the value that
+should be measured for angle of attack if the true vertical wind is
+zero during the maneuver:\\
+\begin{equation}
+\mathrm{AOAREF}=\theta+\frac{w_{p}}{V}\frac{180}{\pi}\label{eq:aoaref}
+\end{equation}
+where $\theta$ is the pitch angle (variable PITCH), $w_{p}$ is the
+rate of climb of the aircraft (variable GGVSPD), and $V$ is the true
+airspeed (variable TASX). The conventional fit is then\\
+\begin{equation}
+\mathrm{AOAREF}=c_{0}+\frac{\mathrm{ADIFR}}{\mathrm{QCF}}\left(c_{1}+c_{2}\thinspace\mathrm{MACH}\right)\label{eq:akrd-fit}
+\end{equation}
+where $\mathrm{MACH}$ is the Mach number determined from the uncorrected
+measurements PSFD and QCF (cf.~the technical note on processing algorithms).
+In addition, a data.frame consisting of all measurements from flights
+2\textendash 4 was constructed and coefficients were also determined
+for a fit to those data.
+
+<<All-flight-cal, include=TRUE, fig.cap='', cache=TRUE>>=
+
+SaveRData3 <- sprintf ('%s3.Rdata', thisFileName)
+if (ReloadData) {
+  Data <- getNetCDF (sprintf ('%sARISTO/ARISTOrf02_LAMSLAMS.nc', Directory), VarList, F=2)
+  Data <- rbind(Data, getNetCDF (sprintf ('%sARISTO/ARISTOrf03_LAMSLAMS.nc', Directory), VarList, F=3))
+  Data <- rbind(Data, getNetCDF (sprintf ('%sARISTO/ARISTOrf04_LAMSLAMS.nc', Directory), VarList, F=4))
+  rej <- (Data$TASX < 90) | (abs(Data$ROLL) > 5) | (abs(Data$GGVSPD) > 5)
+  Data <- Data[!rej,]
+  Data$AOAREF <- Data$PITCH - (Data$GGVSPD / Data$TASX) * (180./pi)
+  Data$QR <- Data$ADIFR / Data$QCF
+  Data$Mach <- MachNumber (Data$PSFD, Data$QCF, Data$EWX)
+  save (Data, file=SaveRData3)
+} else {
+  load (SaveRData3)
+}
+fff <- lm (AOAREF ~ QR + I(QR*Mach), data=Data)
+cfall <- coef (fff)
+
+@
+
+<<ConventionalCoef, include=TRUE, fig.cap='Angle of attack from the new calibration vs. the corresponding value of the reference variable AOAREF.', cache=TRUE>>=
+
+SaveRData4 <- sprintf ('%s4.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf02_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  SRD <- getNetCDF (fname, standardVariables(c(VarList)), Start=183200, End=185500, F=2)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=192100, End=193800, F=2)
+  SRD <- rbind (SRD, SR)
+  Flight <- "rf03_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=171300, End=173800, F=3)
+  SRD <- rbind (SRD, SR)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=183400, End=185700, F=3)
+  SRD <- rbind (SRD, SR)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=205500, End=210000, F=3)
+  SRD <- rbind (SRD, SR)
+  Flight <- "rf04_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=174300, End=180700, F=4)
+  SRD <- rbind (SRD, SR)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=191200, End=193000, F=4)
+  SRD <- rbind (SRD, SR)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=202500, End=203900, F=4)
+  SRD <- rbind (SRD, SR)
+  SRD$AOAREF <- SRD$PITCH - (SRD$GGVSPD / SRD$TASX) * (180 / pi)
+  SRD$QR <- SRD$ADIFR / SRD$QCF
+  SRD$Mach <- MachNumber (SRD$PSFD, SRD$QCF, SRD$EWX)
+  save (SRD, file=SaveRData4)
+} else {
+  load (SaveRData4)
+}
+f <- lm (AOAREF~QR+I(QR*Mach), data=SRD)
+cf <- coefficients(f)
+f2 <- lm (AOAREF~QR+I(QR*Mach), data=SRD[SRD$RF == 2,])
+cf2 <- coefficients(f2)
+f3 <- lm (AOAREF~QR+I(QR*Mach), data=SRD[SRD$RF == 3,])
+cf3 <- coefficients(f3)
+f4 <- lm (AOAREF~QR+I(QR*Mach), data=SRD[SRD$RF == 4,])
+cf4 <- coefficients(f4)
+SRD$AKRDF <- cf[1] + cf[2] * SRD$QR + cf[3] * SRD$QR * SRD$Mach
+layout(matrix(1:1, ncol = 1), widths = 1,  heights = c(6))
+op <- par (mar=c(5,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(data.frame(SRD$AOAREF, SRD$AKRDF), xlab='reference value AOAREF', pch=20, type='p')
+lines (c(-2,5), c(-2,5), col='darkorange', lwd=3, lty=2)
+
+@
+
+Figure \ref{fig:ConventionalCoef} shows the resulting fit, with coefficients
+\{$c_{0},\,c_{1},\,c_{2}$\} = \{\Sexpr{round(cf[1], 4)}, \Sexpr{round(cf[2], 4)},
+\Sexpr{round(cf[3], 4)}\}. However, the results differed for the
+three flights, and the differences were significant, as shown in the
+following table:
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline 
+Flight & $c_{0}$ & $c_{1}$ & $c_{2}$\tabularnewline
+\hline 
+\hline 
+speed runs & \Sexpr{round(cf[1], 4)} & \Sexpr{round(cf[2], 4)} & \Sexpr{round(cf[3], 4)}\tabularnewline
+\hline 
+all rf02\textendash 04 & \Sexpr{round(cfall[1], 4)} & \Sexpr{round(cfall[2], 4)} & \Sexpr{round(cfall[3], 4)}\tabularnewline
+\hline 
+2 & \Sexpr{round(cf2[1], 4)} & \Sexpr{round(cf2[2], 4)} & \Sexpr{round(cf2[3], 4)}\tabularnewline
+\hline 
+3 & \Sexpr{round(cf3[1], 4)} & \Sexpr{round(cf3[2], 4)} & \Sexpr{round(cf3[3], 4)}\tabularnewline
+\hline 
+4 & \Sexpr{round(cf4[1], 4)} & \Sexpr{round(cf4[2], 4)} & \Sexpr{round(cf4[3], 4)}\tabularnewline
+\hline 
+\end{tabular}
+\par\end{center}
+
+Therefore, the individual-flight coefficients will be used to determine
+AKRD and hence WIC in the following studies in this report.
+
+An additional adjustment of the measurements is useful because the
+LAMS is not installed parallel to the centerline of the aircraft.
+For example, the average measurement of pitch from the LAMS IRU, CPITCH\_LAMS,
+is 1.0$^{\circ}$ larger than the corresponding measurement of pitch
+from the Honeywell IRU. To account for this offset, it is useful to
+correct both the pitch and angle-of-attack from LAMS by the subtraction
+of 1.0$^{\circ}$ so that the measurements will be comparable to those
+from the standard radome-based system. That correction has been made
+in the following when the LAMS-based angle-of-attack is discussed.
+
+With these corrections, the standard angle-of-attack can be compared
+to that determined from the LAMS. The first speed run in the table
+above will be skipped here because there are too many bad measurements
+from LAMS. For the second speed run, Figure~\ref{fig:SR2} shows
+the comparison of the two angles of attack. There is a clear difference
+between the two measurements. Speed runs \#3 and \#5 have too much
+scatter in the LAMS measurements to be useful, but speed run \#4 has
+apparently good measurements as shown in Fig.~\ref{fig:SR4}. Here
+the scatter is much higher than in Fig.~\ref{fig:SR2} because this
+is a low-level flight segment in boundary-layer turbulence, but the
+measurements still show an offset like that in Fig.~\ref{fig:SR2},
+although perhaps with a smaller offset. Speed runs \#6 and \#8 have
+high scatter and are inconsistent with other apparently good speed
+runs, but speed run \#7 led to good agreement between the values of
+the radome-based and LAMS-based angles of attack, as shown in Fig.~\ref{fig:SR7}. 
+
+<<SR2, include=TRUE, fig.cap='Angle of attack from the new fit to the radome values, plotted against the corresponding anagle-of-attack as measured by the LAMS, for speed run \\#2.', cache=TRUE>>=
+
+SaveRData5 <- sprintf ('%s5.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf02_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  save (Data, file=SaveRData5)
+} else {
+  load (SaveRData5)
+}
+DW <- processWind(Data)
+DW$AKRDF <- cf2[1] + DW$ADIFR/DW$QCF * (cf2[2] + cf2[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+#r <- setRange (DW, 183200, 185500)
+r <- setRange (DW, 192100, 193800)
+DW$ATTACK <- DW$ATTACK - 1
+DW$ATTACK[abs(DW$ATTACK-DW$AKRDF) > 1] <- NA
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSFD, DW$QCF, DW$EWX)
+DW$AOAREF <- Data$PITCH - (Data$GGVSPD / Data$TASX) * (180 / pi)
+fl2 <- lm (ATTACK ~ QR, data=DW[r,])
+fa2 <- lm (AOAREF ~ QR, data=DW[r,])
+cfl2 <- coef (fl2)
+cfa2 <- coef (fa2)
+DWS <- DW[r,]
+DWS$RF <- rep (2, nrow(DWS))
+plotWAC(data.frame(DW$ATTACK[r], DW$AKRDF[r]), xlab='LAMS-based angle of attack',
+        ylab='new fit for radome-based angle of attack', pch=20, type='p', xlim=c(-2,5),
+        ylim=c(-2,5))
+lines (c(-2,5), c(-2,5), col='darkorange', lwd=3, lty=2)
+
+@
+
+<<SR4, include=TRUE, fig.cap='Angle of attack from the new fit to the radome values, plotted against the corresponding anagle-of-attack as measured by the LAMS, for speed run \\#4.', cache=TRUE>>=
+
+SaveRData6 <- sprintf ('%s6.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf03_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  save (Data, file=SaveRData6)
+} else {
+  load (SaveRData6)
+}
+DW <- processWind(Data)
+DW$AKRDF <- cf3[1] + DW$ADIFR/DW$QCF * (cf3[2] + cf3[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+#r <- setRange (DW, 183200, 185500)
+r <- setRange (DW, 171300, 173800)
+r <- setRange (DW, 183400, 185700)
+DW$ATTACK <- DW$ATTACK - 1
+DW$ATTACK[abs(DW$ATTACK-DW$AKRDF) > 4] <- NA
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSFD, DW$QCF, DW$EWX)
+fl4 <- lm (ATTACK ~ QR, data=DW[r,])
+plotWAC(data.frame(DW$ATTACK[r], DW$AKRDF[r]), xlab='LAMS-based angle of attack',
+        ylab='new fit for radome-based angle of attack', pch=20, type='p', xlim=c(-2,5),
+        ylim=c(-2,5))
+lines (c(-2,5), c(-2,5), col='darkorange', lwd=3, lty=2)
+
+@
+
+<<SR7, include=TRUE, fig.cap='Angle of attack from the new fit to the radome values, plotted against the corresponding anagle-of-attack as measured by the LAMS, for speed run \\#7. Some additional outlier points having difference between the measurements larger than 1 degree have been excluded from the plot.', cache=TRUE>>=
+
+SaveRData7 <- sprintf ('%s7.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf04_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  save (Data, file=SaveRData7)
+} else {
+  load (SaveRData7)
+}
+DW <- processWind(Data)
+DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+r <- setRange (DW, 191200, 193000)
+DW$ATTACK <- DW$ATTACK - 1
+DW$ATTACK[abs(DW$ATTACK-DW$AKRDF) > 1] <- NA
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSFD, DW$QCF, DW$EWX)
+DW$AOAREF <- Data$PITCH - (Data$GGVSPD / Data$TASX) * (180 / pi)
+fl7 <- lm (ATTACK ~ QR, data=DW[r,])
+fa7 <- lm (AOAREF ~ QR, data=DW[r,])
+cfl7 <- coef (fl7)
+cfa7 <- coef (fa7)
+DW$RF <- rep (7, nrow(DW))
+DWS <- rbind (DWS, DW[r,])
+fl <- lm (ATTACK ~ QR + I(QR*Mach), data=DWS)
+cfl <- coef (fl)
+plotWAC(data.frame(DW$ATTACK[r], DW$AKRDF[r]), xlab='LAMS-based angle of attack',
+        ylab='new fit for radome-based angle of attack', pch=20, type='p', xlim=c(-2,5),
+        ylim=c(-2,5))
+lines (c(-2,5), c(-2,5), col='darkorange', lwd=3, lty=2)
+DW$TASL <- DW$TASX
+DW$TASX <- Data$TASX
+DSR <- DW[r, ]    ## save this for later use
+
+@
+
+Figures \ref{fig:SR2} and \ref{fig:SR7} show reasonable consistency
+between the two measurements, while there is a significant offset
+evident in Fig.~\ref{fig:SR4}. Because speed run \#4 is a low-level
+boundary-layer leg, there may be bias introduced by the proximity
+of the ground and strong reflection from it that could affect the
+downward-pointing beam. A fit to the radome-based angle of attack
+as a function of the LAMS-based value gave regression coefficients
+of 0.66 (offset) and 0.70 (slope), so these measurements are clearly
+inconsistent. 
+
+\clearpage
+
+A revised LAMS-based calibration for the radome sensitivity coefficients
+can then be determined by using the LAMS-based angle of attack as
+the reference for the fits. Separate fits for speed-run \#2 and for
+\#7 produced significantly different results, so both the conventional
+and LAMS-based calibrations differ for the two speed runs. The following
+table summarizes the results:
+\begin{center}
+\begin{tabular}{|c|c|c|c||c|}
+\hline 
+\textbf{speed run} & \textbf{source of calibration} & $c_{0}$ & $c_{1}$ & $c_{2}$\tabularnewline
+\hline 
+\hline 
+\#2 & AOAREF & \Sexpr{round(cfa2[1],4)} & \Sexpr{round(cfa2[2],4)} & 0\tabularnewline
+\hline 
+\#2 & LAMS ATTACK & \Sexpr{round(cfl2[1],4)} & \Sexpr{round(cfl2[2],4)} & 0\tabularnewline
+\hline 
+\#7 & AOAREF & \Sexpr{round(cfa7[1],4)} & \Sexpr{round(cfa7[2],4)} & 0\tabularnewline
+\hline 
+\#7 & LAMS ATTACK & \Sexpr{round(cfl7[1],4)} & \Sexpr{round(cfl7[2],4)} & 0\tabularnewline
+\hline 
+\#2+\#7 & LAMS ATTACK & \Sexpr{round(cfl[1],4)} & \Sexpr{round(cfl[2],4)} & \Sexpr{round(cfl[3],4)}\tabularnewline
+\hline 
+\end{tabular}
+\par\end{center}
+
+<<summary-plot,include=TRUE, fig.cap="Comparison of the standard and LAMS-based calibrations for speed run \\#7.", cache=TRUE>>=
+
+xx <- -0.5 + (1.3-0.5) / 40 * (0:41)
+yyl7 <- cfl7[1] +cfl7[2]*xx
+yyl2 <- cfl2[1] +cfl2[2]*xx
+yya7 <- cfa7[1] +cfa7[2]*xx
+yya2 <- cfa2[1] +cfa2[2]*xx
+dfp <- data.frame (xx, 'standard SR7'=yya7, 'LAMS SR7'=yyl7, 'standard SR2'=yya2, 'LAMS SR2'=yyl2)
+plotWAC(dfp, xlab='ADIFR/QCF', ylab='angle of attack',type='l', 
+        col=c('blue', 'red', 'darkgreen', 'black'),
+        lwd=c(2,3,2,3), lty=c(1,3,1,3), legend.position='topleft')
+# lineWAC(xx, yyl2, col='darkgreen', lwd=2)
+# lineWAC(xx,yya2, col='darkorange', lwd=3, lty=2)
+# legend('topleft', c('standard', 'LAMS'), col=c('blue', 'red'), lty=c(1,2), lwd=c(2,3))
+
+@
+
+The four calibrations in the preceding table are plotted in Fig.~\ref{fig:summary-plot}.
+For speed run \#7, the calibrations based on LAMS and on AOAREF are
+close to the same, although there are small differences of typical
+magnitude of about 0.1$^{\circ}$for angles-of-attack in the typical
+range of operations (0\textendash 4$^{\circ}$). However, the different
+calibrations for speed run \#2 are not as consistent, and both calibrations
+differ significantly from those for speed run \#7. A fit to the combined
+data from \#2 and \#7 is also shown for the LAMS calibration, but
+this fit was much worse than the individual-flight calibrations and
+showed two distinct lines with little overlap for the two plots, so
+this is not a good calibration to use for these flights. For the conventional
+calibration, the differencemight be attributed to a non-zero vertical
+wind during the calibration maneuver, but the LAMS calibration is
+not affected by the vertical wind so it should be definitive unless
+there was some problem with detection of the LAMS beams. Other possibilities
+are drift of the CPITCH\_LAMS measurement or differences in altitude
+or Mach number. However, the difference between PITCH and CPITCH\_LAMS
+is the same for speed run \#2 as for speed run \#7 and both were flown
+at almost the same altitude and range in Mach number, so these explanations
+appear to be ruled out. 
+
+The result is that the two best speed runs, \#2 and \#7, are inconsistent.
+Calibrations for speed run \#7 support the validity of each, but there
+is larger than expected difference between the two calibrations for
+\#2 and between the corresponding calibrations for \#7 vs \#2. These
+are the best calibration data available, so more measurements with
+adequate LAMS signal-to-noise would be valuable. Pending such measurements,
+the LAMS-based calibration for \#7 may be the most reliable.
+
+Another conclusion from the study of the speed runs is that the PCA
+analysis does not always produce reliable line-of-sight speeds. A
+good example is speed run \#6. There are values for all four beam
+line-of-sight speeds through this maneuver, and the speed in the forward
+beam (Beam 2) matches the true airspeed (TASX) well. However, Fig.~\ref{fig:SR6}
+shows that the angle-of-attack determined from these measurements
+does not match that determined from the radome-based system and looks
+very noisy. This raises a warning that sometimes the line-of-sight
+speeds are not valid even when the PCA algorithm detects peak values. 
+
+See also Section \ref{subsec:aoa-r6-2016}, where sensitivity coefficients
+are determined from the last ARISTO-2016 flight. These are based on
+the widest range of flight conditions and are suggested as the best
+for general use for C-130 projects since 2011.
+
+<<SR6, include=TRUE, fig.cap='Angle of attack from the new fit to the radome values (blue line) and the angle-of-attack determined from the LAMS measurements (green line), for speed run \\#6.', cache=TRUE>>=
+
+SaveRData8 <- sprintf ('%s8.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf04_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  save (Data, file=SaveRData8)
+} else {
+  load (SaveRData8)
+}
+DW <- processWind(Data)
+DW$AKRDF <- cf3[1] + DW$ADIFR/DW$QCF * (cf3[2] + cf3[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+#r <- setRange (DW, 183200, 185500)
+r <- setRange (DW, 174300, 180700)
+# r <- setRange (DW, 183400, 185700)
+DW$ATTACK <- DW$ATTACK - 1
+DW$ATTACK[abs(DW$ATTACK-DW$AKRDF) > 4] <- NA
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSFD, DW$QCF, DW$EWX)
+fl4 <- lm (ATTACK ~ QR, data=DW[r,])
+# plotWAC(data.frame(DW$ATTACK[r], DW$AKRDF[r]), xlab='LAMS-based angle of attack',
+#         ylab='new fit for radome-based angle of attack', pch=20, type='p', xlim=c(-2,5),
+#         ylim=c(-2,5))
+# lines (c(-2,5), c(-2,5), col='darkorange', lwd=3, lty=2)
+plotWAC(subset(DW[r,],,c(Time,AKRDF, ATTACK)))
+
+@
+
+\subsection{Sideslip angle}
+
+There were four yaw maneuvers that can be used to find the sensitivity
+coefficients for the sideslip measurement, as listed in the following
+table:
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline 
+\textbf{maneuver \#} & \textbf{flight} & \textbf{start} & \textbf{end}\tabularnewline
+\hline 
+\hline 
+1 & 2 & 194100 & 194330\tabularnewline
+\hline 
+2 & 4 & 182800 & 183100\tabularnewline
+\hline 
+3 & 4 & 190130 & 190400\tabularnewline
+\hline 
+4 & 4 & 201830 & 202130\tabularnewline
+\hline 
+\end{tabular}
+\par\end{center}
+
+First, for completeness, the conventional fit will be used:\\
+\begin{equation}
+\beta^{*}=-\Psi+\arctan\frac{u_{p}-u}{v_{p}-v}\label{eq:SSREF}
+\end{equation}
+where $\beta^{*}$ is the reference value for the fit, $\Psi$ is
+the heading, $u_{p}$ and $v_{p}$ the eastward and northward components
+of the aircraft ground-speed and $u$ and $v$ are the east and north
+components of the wind. The empirical relationship for sideslip then
+can be found by fitting for the coefficients \{$s_{0},\,s_{1}$\}
+in:\\
+\[
+\beta^{*}=b_{0}+b_{1}\frac{\mathrm{BDIFR}}{\mathrm{QCXC}}
+\]
+and then finding the sideslip angle from\\
+\begin{equation}
+\mathrm{SSRD}=b_{0}+b_{1}\frac{\mathrm{BDIFR}}{\mathrm{QCXC}}\,\,\,.\label{eq:ssrd}
+\end{equation}
+Figure \ref{fig:sslip-cal} shows that the resulting values for $\mathrm{SSRD}$
+are in close correspondence to the reference values for the four combined
+yaw maneuvers.
+
+<<sslip-cal, include=TRUE, fig.cap='Sideslip angle calculated using new fit coefficients (SSRD) as a function of the reference value for sideslip (SSREF). The relationship determined by regression is shown as the dashed orange line.', cache=TRUE>>=
+
+VarList <- c(VarList, 'VEW', 'VNS')
+SaveRData9 <- sprintf ('%s9.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf02_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList)), Start=194100, End=194330, F=1)
+  DW <- processWind (Data)
+  DW$RF <- rep(1, nrow(DW))
+  DW$BQR <- Data$BDIFR / Data$QCXC
+  Flight <- 'rf04_LAMS'
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  D <- getNetCDF (fname, standardVariables(c(VarList)), F=2)
+  DW2 <- processWind (D)
+  DW2$RF <- rep (2, nrow(DW2))
+  DW2$BQR <- D$BDIFR / D$QCXC
+  Data <- rbind (Data, D[setRange(D, 182800, 183100),])
+  DW <- rbind (DW, DW2[setRange(D, 182800, 183100),])
+  r <- setRange(D, 190130, 190400)
+  D$RF[r] <- 3
+  DW2$RF[r] <- 3
+  Data <- rbind (Data, D[r,])
+  DW <- rbind (DW, DW2[r,])
+  r <- setRange(D, 201830, 202130)
+  D$RF[r] <- 4
+  DW2$RF[r] <- 4
+  DW <- rbind (DW, DW2[r,])
+  Data <- rbind (Data, D[r,])
+  save (Data, DW, file=SaveRData9)
+} else {
+  load (SaveRData9)
+}
+Cradeg <- pi / 180.
+u <- -1. * Data$WSC * sin (Data$WDC*Cradeg)
+v <- -1. * Data$WSC * cos (Data$WDC*Cradeg)
+Data$SSREF <- -Data$THDG + atan2((Data$GGVEW-u), (Data$GGVNS-v))/ Cradeg
+Data$SSREF[Data$SSREF < -180.] <- Data$SSREF[Data$SSREF < -180.] + 360.
+#plot (DataV$SSREF, DataV$SSLIP, pch=16, cex=0.6,col='blue')
+Data$BQR <- Data$BDIFR / Data$QCXC
+sfm <- lm(SSREF~BQR, data=Data)
+cfs <- coefficients(sfm)
+# print (sprintf('fit coefficients %.4f %.4f', cfs[1], cfs[2])) 
+Data$S2 <- cfs[1] + cfs[2] * Data$BQR
+with(Data, plotWAC(data.frame(SSREF, S2), xlab='SSREF', ylab='SSRD', pch=20, type='p'))
+lines (c(-6,6), c(-6,6), col='darkorange', lwd=3, lty=2)
+DWfit <- DW[DW$RF == 1,]
+DWfit <- DWfit[setRange (DWfit, 194150, 194305),]
+DWfit <- rbind (DWfit, DW[DW$RF == 4,])
+fls <- lm (DWfit$SSLIP ~ DWfit$BQR)
+cfls <- coef(fls)
+
+@ 
+
+The resulting sensitivity coefficients for sideslip are \{$b_{0},\,b{}_{1}$\}
+= \{\Sexpr{round(cfs[1], 4)}, \Sexpr{round(cfs[2], 4)}\}. The fit
+was very good, with a residual standard deviation of \Sexpr{round(summary(sfm)$sigma, 2)}$^{\circ}$.
+For comparison, the standard values in the Technical Note on Processing
+Algorithms are \{0, 12.2115\}. As discussed in the Technical Note
+on Wind Uncertainty, it is difficult to separate an offset in sideslip
+from an offset in heading, so the difference in the first coefficient
+may instead apply to heading.\footnote{An offset of -0.1$^{\circ}$ applied to heading in the original processing
+has not been removed here.} The difference in offsets for these two calibrations is large, although
+the slope coefficients are in reasonable agreement. 
+
+The LAMS measurement of sideslip provides an alternate means of determining
+the slope parameter.\footnote{The appropriate offsets in sideslip and heading will still need to
+be found from analysis of circle maneuvers.} The reference value $\beta^{*}$ for the fit can be determined from
+the LAMS-based measurements of the relative wind, as discussed in
+the introductory section:\\
+\begin{equation}
+\beta^{*}=\arctan\left(\frac{\mathrm{RW}_{y}}{\mathrm{RW}_{x}}\right)\label{eq:ssref-LAMS}
+\end{equation}
+
+The LAMS-based measurements of sideslip bear little similarity to
+those from the radome for sideslip maneuvers \#2 and \#3, so there
+are evidently measurement problems that make those unreliable. Maneuver
+\#4 is good, and maneuver \#1 appears valid for the period 194130\textendash 194305,
+so those measurements were used for the fit. The LAMS-based fit gave
+coefficients \{$b_{0},\,b_{1}$\} = \{\Sexpr{round(cfls[1], 4)},
+\Sexpr{round(cfls[2], 4)}\}, with a residual standard deviation about
+the fit of \Sexpr{round(summary(fls)$sigma, 2)}$^{\circ}$. These
+values are close to those determined in the standard way, so this
+calibration provides support for the conventional approach, although
+the difference in slope is significant (with estimated standard uncertainty
+in $b_{1}$ of 0.05$^{\circ}$). The value for $b_{1}$ determined
+from the LAMS-based measurements, \Sexpr{round(cfls[2], 3)}$^{\circ}$,
+appears to be the best available, but the value of $b_{0}$ still
+needs to be determined from the circle maneuvers that can separate
+an offset in sideslip from an offset in heading.
+
+\section{Calibration of the pressure defect}
+
+\subsection{Previous LAMS-based calibration}
+
+A previous calibration of the C-130 pressure defect was published
+in Cooper et al., 2014. The key to this calibration is that LAMS provides
+a measurement of airspeed, from which the dynamic pressure can be
+calculated if the temperature and pressure are known. The result is
+relatively insensitive to temperature and pressure, so this is an
+accurate result despite the need to know the airspeed to calculate
+the temperature and the need to know the static defect to calculate
+the pressure. Because a pitot tube is thought to provide a valid measurement
+of the total pressure, subtracting the dynamic pressure from the total
+pressure gives the true ambient pressure. The difference between this
+value and the measured pressure is then the static defect. Furthermore,
+because the measured dynamic pressure is based on a measurement of
+the difference between the total and static pressures, the same correction
+represented by the static defect applies with reversed sign to the
+measured dynamic pressure.
+
+The equation published there, Eq.~11, was subsequently revised to
+avoid circularity in data processing by basing the empirical relationship
+on uncorrected quantities, as discussed in the Technical Note on Processing
+Algorithms {[}version as of June 2016{]}. For the C-130, the error
+in the measurement of ambient or static pressure ($\Delta p$) was
+found to be given by the following empirical representation, to an
+uncertainty of less than 0.3~hPa:\\
+\begin{equation}
+\frac{\Delta p}{p}=a_{0}+a_{1}\frac{\alpha}{a_{r}}+a_{2}M\label{eq:PCOR}
+\end{equation}
+where $p$ is the uncorrected measurement of pressure (PSFD or PSFRD),
+$\alpha$ is the angle of attack (AKRD), calculated from uncorrected
+measurements as described in the Algorithms document, $a_{r}$ is
+a constant with value 1$^{\circ}$ (included only to keep the equation
+dimensionless), and $M$ is the Mach number calculated from uncorrected
+measurements of static and dynamic pressure. The coefficients are
+\{$a_{0},\,a_{1},\,a_{2}$\} = \{$-$0.00637, 0.001366, 0.0149\} for
+PSFD and \{$-$0.00754, 0.000497, 0.0368\} for the alternate pressure
+measurement PSFRD. 
+
+<<PSA-FRAPPE, include=TRUE, fig.cap='The difference between the avionic-provided pressure (PS\\_A) and the standard pressure after the correction as expressed in (1) (PSFDC).', cache=TRUE>>=
+
+SaveRDataA <- sprintf ('%sA.Rdata', thisFileName)
+if (ReloadData) {
+  fname <- sprintf ('%sFRAPPE/FRAPPErf05.nc', Directory)
+  VList <- c('PS_A', 'PS_A2', 'PSFC', 'PSFDC', 'PSFD', 'PSFRD', 'QCF', 'AKRD', 'ROLL')
+  Data <- getNetCDF (fname, standardVariables (VList))
+  Data$PSC <- Data$PSFD + PCorFunction (Data$PSFD, Data$QCF, Data$AKRD, "C130")
+  save (Data, file=SaveRDataA)
+} else {
+  load (SaveRDataA)
+}
+Data <- Data[Data$TASX > 60 & abs(Data$ROLL) < 5,]
+with (Data, hist (PS_A-PSFDC, breaks=300, xlim=c(1,4)))
+dPA <- with (Data, mean (PS_A-PSFDC, na.rm=TRUE))
+dPC <- mean (Data$PSC - Data$PSFDC, na.rm=TRUE)
+# with (Data, plotWAC (data.frame (PS_A, PSFDC), xlab='PS_A', ylab='PSFDC', pch=20, type='p'))
+# lines(c(500,900), c(500,900), col='darkorange', lwd=3, lty=2)
+
+@
+
+<<TAS-comparison, include=FALSE, fig.cap='The conventional measurement of airspeed (TASX) plotted vs.\\ the LAMS-derived measurement of airspeed (TASL), for speed run \\#7.', cache=TRUE>>=
+
+with (DSR, plotWAC(data.frame(TASL, TASX), xlab='LAMS TAS', ylab='TASX', pch=20, type='p'))
+# with (DSR, hist (TASX-TASL, breaks=100, xlim=c(-2,2)))
+DTAS <-with(DSR, mean (TASX-TASL, na.rm=TRUE))
+SDTAS <- with(DSR, sd (TASX-TASL, na.rm=TRUE))
+
+@
+
+These coefficients were based on measurements collected during the
+IDEAS project of November 2011. However, this original parameterization
+did not lead to consistent differences when compared to the avionics-system
+pressure PS\_A in subsequent projects. A representative example from
+the FRAPPE measurements is shown in Fig.~\ref{fig:PSA-FRAPPE}. The
+mean offset between the avionics-supplied pressure and the research
+pressure is \Sexpr{round(dPA, 1)}~hPa, a value that is similar to
+the differences measured in other projects including NOMADSS, WINTER,
+and ARISTO-2015. However, this difference is significantly different
+from the $-1.08$~hPa offset found in the original IDEAS-4 study.
+Because it is expected that PS\_A has remained consistent, it appears
+that the pressure correction that is being applied is not consistent
+with the original calibration. 
+
+\subsection{Reason for repeating the calibration}
+
+A weakness in the available calibration, present also in ARISTO-2015,
+is that measurements at altitudes between sea level and about 850~hPa
+have not been available. Problems may arise with use of the PCOR function
+as expressed in (\ref{eq:PCOR}) to such low-level flight, so the
+following paragraphs will revisit the determination of the empirical
+relationship for the static defect using low-level measurements from
+ARISTO-2016 flight 6. 
+
+As discussed in Cooper et al., 2014, the key to the LAMS-based calibration
+of dynamic pressure is to find the airspeed $v$, from which the dynamic
+pressure $q$ is found from \\
+\begin{equation}
+q=p\left\{ \left(\frac{v^{2}}{2c_{p}T}+1\right)^{c_{p}/R_{a}}-1\right\} \equiv p\chi(v,T)\label{eq:dynamic-pressure}
+\end{equation}
+where $p$ is the ambient pressure, $c_{p}$ the specific heat of
+air at constant pressure, $T$ the absolute temperature, and $R_{a}$
+the gas constant for air, and $\chi(v,T)$ is defined by (\ref{eq:dynamic-pressure})
+to simplify terminology. Although the corrections for humidity are
+small, humidity-dependent value for $c_{p}$ and $R_{a}$ will be
+used in this equation.
+
+The error arising from the static defect $\Delta p$ that applies
+to the measured pressure $p_{m}$ should be included when (\ref{eq:dynamic-pressure})
+is used ($p=p_{M}-\Delta p$), although this normally makes little
+difference because the fractional error in $p$ is small. It was argued
+in Cooper et al. (2014) that the error in dynamic pressure $\Delta q$
+is the negative of the error in ambient pressure $\Delta p$. Then
+the errors in dynamic pressure and ambient pressure are given by\\
+\begin{equation}
+\Delta q=q_{m}-p\chi(v,T)\label{eq:delta-q}
+\end{equation}
+\begin{equation}
+\Delta p=-\Delta q=\frac{-q_{m}+p_{m}\chi(v,T)}{1+\chi(v,T)}\label{eq:delta-p}
+\end{equation}
+where $q_{m}$ is the measured dynamic pressure. Because LAMS provides
+an independent and low-uncertainty measurement of the airspeed $v$,
+it is possible to determine the errors in both $q_{m}$ and $p_{m}$.
+
+The procedure used in Cooper et al.\-(2014) and in the RAF Technical
+Note on Processing Algorithms was to determine parametric fits to
+the errors in terms of quantities like Mach number, angle of attack
+and sideslip angle. Such a parameterized fit can then be used to correct
+the measurements when LAMS is not present or not functioning. The
+approach described in the Processing Algorithms Technical Note led
+to the parameterization represented by (\ref{eq:PCOR}) above, However,
+here data spanning a larger range of flight conditions will be used. 
+
+<<aoa-rf6-2016, include=TRUE, fig.cap=' ', cache=TRUE>>=
+
+PCA <- FALSE   # use SG processing
+VarList2 <- c('PSFD', 'QCF', 'ATX', 'EWX', 'AKRD', 'SSRD', 'PSFRD', 'QCFR', 'ROLL', 'PITCH', 'THDG',
+             'CPITCH_LAMS', 'CROLL_LAMS', 'CTHDG_LAMS', 'CVEW_LAMS', 'CVNS_LAMS', 'CVSPD_LAMS',
+             'GGVEW', 'GGVNS', 'GGVSPD', 'ADIFR', 'PSXC', 'QCXC', 'GGALT', 'BDIFR',
+             'BEAM1speed', 'BEAM2speed', 'BEAM3speed', 'BEAM4speed', 'TASX', 'GGVSPD', 'CONCD_RWT',
+             'PS_A', 'PS_A2', 'QC_A', 'QC_A2', 'WIC', 'VEW', 'VNS')
+SaveRDataB <- sprintf ('%sB.Rdata', thisFileName)
+if (ReloadData) {
+  Directory <- 'ARISTO'
+  Project <- 'ARISTO2016'
+  Flight <- 'rf06LAMS'
+  fname <- sprintf ('%s%s/%s%s.nc', DataDirectory(), Directory, Project, Flight)
+  Data <- getNetCDF (fname, VarList2)
+  Data <- Data[setRange (Data, 190400, 264118),]  # use subset of the flight after landing/TO
+  save (Data, file=SaveRDataB)
+} else {
+  load (SaveRDataB)
+}
+Data$AOAREF <- Data$PITCH - (Data$GGVSPD / Data$TASX) * (180 / pi)
+Data$QR <- Data$ADIFR / Data$QCF
+Data$Mach <- MachNumber (Data$PSFD, Data$QCF, Data$EWX)
+Data$Valid <- Data$TASX > 60 & abs(Data$ROLL) < 5 & Data$PITCH < 20 & Data$CONCD_RWT < 10
+Data$Valid[is.na(Data$Valid)] <- FALSE
+DF <- Data[Data$Valid, ]
+f <- lm (AOAREF~QR+I(QR*Mach), data=DF)
+cf <- coefficients(f)
+Data$AKRD <- cf[1] + Data$QR * (cf[2] + cf[3] * Data$Mach)  # replace AKRD with new fit
+DW <- processWind (Data)  # get LAMS-based TAS, ATTACK, SSLIP, TASCSQ
+DW$Valid <- Data$Valid
+## now correct DW$ATTACK to match AKRD, assuming offset with linear-in-time change
+## NOTE that ATTACK then needs to be used with PITCH, not CPITCH_LAMS, to calc W
+DW$TE <- Data$TE <- as.vector (DW$Time-DW$Time[1])
+cff <- with (DW[DW$TASCSQ < 0.1 & DW$Valid,], coef(lm((AKRD-ATTACK) ~ (TE))))
+# cff <- with (Data[Valid,], coef(lm((PITCH-CPITCH_LAMS) ~ (TE)))) # didn't work as well
+DW$DA <- cff[1]+cff[2]*DW$TE
+DW$ATTACK <- DW$ATTACK + DW$DA
+# with (DW[DW$TASCSQ < 0.1 & DW$Valid,], plot(data.frame(PSFD, AKRD-ATTACK), type='p', pch=20, col='blue', ylim=c(-2,2)))
+# abline(h=0, col='red')
+DW$TASL <- DW$TASX  ## processWind returns LAMS-based TAS in TASX
+## transfer some other variables for convenience
+DW$TASX <- Data$TASX
+DW$QR <- Data$QR
+DW$Mach <- Data$Mach
+DW$AOAREF <- Data$AOAREF
+DW$PITCH <- Data$PITCH  # needed if W recalculated
+DW$ROLL <- Data$ROLL
+DW$THDG <- Data$THDG
+DW$WIL <- DW$WIN    ## this is the LAMS-only value
+DW$WIC <- Data$WIC
+DF <- DW     ## use a restricted data.frame to fit to LAMS-based ATTACK
+DF$ATTACK[DF$TASCSQ > 0.1] <- NA  ## only use good 4-beam measurements from LAMS
+DF$AKRD[DF$TASCSQ > 0.1] <- NA  
+## eliminate some additional ATTACK measurements that are obviously bad in this flight:
+dt <- DF$ATTACK - DF$AKRD
+dt <- dt - mean (dt, na.rm=TRUE)
+DF$ATTACK[abs(dt) > 0.8] <- NA
+DF$AKRD[abs(dt) > 0.8] <- NA
+DF <- DF[DF$Valid, ]
+fl <- lm (ATTACK ~ QR + I(QR*Mach), data=DF)
+cfl <- coef (fl)
+Data$AKRDL <- cfl[1] + Data$QR * (cfl[2] + cfl[3] * Data$Mach) 
+DW$AKRDL <- cfl[1] + DW$QR * (cfl[2] + cfl[3] * DW$Mach)
+sdl <- with(DW[DW$TASCSQ < 0.1 & DW$Valid, ], sd(AKRDL-ATTACK, na.rm=TRUE))
+# with(DW, hist(AKRDL-ATTACK, breaks=200))
+## replace AKRD with the new LAMS-based angle of attack for subsequent processing
+# Data$AKRD <- Data$AKRDL
+
+@
+
+\subsection{Revised angle of attack\label{subsec:aoa-r6-2016}}
+
+Because angle of attack ($\alpha$) is an important contributor to
+the parameterized representation (\ref{eq:PCOR}), and because there
+have been some problems representing angle of attack over the full
+operating range of the C-130 including near sea level, it is useful
+to determine the angle-of-attack relationship again using flight 6
+of ARISTO-2016, which included flight segments at low level. The evidence
+in the previous section on angle-of-attack coefficients indicated
+that there were flight-to-flight variations in sensitivity coefficients
+for ARISTO-2015 flights, so only this one flight will be used here,
+and the LAMS-provided angle of attack will be used as a calibration
+reference for determing the sensitivity coefficients. The same procedures
+were followed as in that earlier section, with the result that the
+sensitivity coefficients determined from the LAMS-based reference
+value were \{$c_{0},\,c_{1},\,c_{2}$\} = \{\Sexpr{round(cfl[1], 4)},
+\Sexpr{round(cfl[2], 4)}, \Sexpr{round(cfl[3], 4)}\}. These coefficients
+represented the LAMS-based measurements of angle of attack with standard
+deviation \Sexpr{round(sdl, 2)}$^{\circ}$ and, because the LAMS
+mean angle of attack differs from that relative to the fuselage, these
+coefficients have been adjusted to match the mean angle of attack
+provided by the conventional radome-based measurement and calibration.
+This LAMS-based angle of attack was then used for the following processing.
+Because there was unexplained variation in the characteristics of
+the radome-based measurement from flight to flight in ARISTO-2015,
+it may be necessary to develop a new calibration for each project
+or even each flight, but once that calibration of the radome is determined
+then the pressure corrections developed below should apply to new
+projects.
+
+Candidate variables for the parameterization include the measured
+dynamic pressure, measured ambient pressure, angle of attack, sideslip
+angle, Mach number (a function of dynamic and ambient pressure with
+minor dependence on humidity), so for the purpose of determining this
+parameterization a special R data.frame was constructed that contained
+these variables along with the LAMS-determined airspeed and the temperature
+and water vapor pressure for all cases where this could be determined
+reliably. With four-beam LAMS the measured airspeed is over-constrained
+so the chisquare for the airspeed measurement provides an indication
+of the quality of that measurement and can be used to identify suspect
+measurements. The formula used is listed later in this report, as
+(\ref{eq:chi-2}), and as defined there (with arbitrary specification
+of the expected standard deviation as 1~m/s) a limiting value of
+$\chi^{2}<0.1$\,m$^{2}$s$^{-2}$ appears to be a reasonable choice
+for excluding measurements. This test was therefore applied when compiling
+the data.frame, and it was also required that valid measurements (as
+determined by the Python processing program) be available for all
+four beams. The residual scatter for the fits was improved if the
+measured dynamic pressure $q_{m}$ was shifted earlier in time by
+about 105~ms, which is reasonable because the LAMS observes ahead
+of the aircraft so a time shift of about this magnitude between LAMS
+line-of-sight airspeeds and $q_{m}$ is expected.
+
+<<construct-dataframe, include=FALSE, cache=TRUE>>=
+
+Data$QCF <- ShiftInTime (Data$QCF, 1, -105)
+# Data$QCF <- SmoothInterp (Data$QCF, .Length=7)
+# DW <- processWind (Data)  ## this causes problems; leave commented
+DW$PSXC <- Data$PSXC
+DW$PSFD <- Data$PSFD
+DW$PSFRD <- Data$PSFRD
+DW$QCFR <- Data$QCFR
+DW$PS_A <- Data$PS_A
+DW$PS_A2 <- Data$PS_A2
+DW$QC_A <- Data$QC_A
+DW$QC_A2 <- Data$QC_A2
+DW$CONCD_RWT <- Data$CONCD_RWT
+DW$GGALT <- Data$GGALT
+DW$QCF <- Data$QCF
+DW$QCXC <- Data$QCXC
+DW$ATX <- Data$ATX
+DW$QR <- DW$ADIFR / DW$QCF
+Valid <- DW$TASCSQ < 0.1
+Valid <- Valid & DW$TASX > 60 & abs(DW$ROLL) < 5 & !is.na(DW$PITCH) & DW$PITCH < 20
+
+DW <- DW[Valid,]
+NV <- nrow(DW)
+CP <- SpecificHeats (DW$EWX / DW$PSFD)
+TK <- 273.15+DW$ATX
+Chi <- ( (1+DW$TASL^2 / (2*CP[,1]*TK))^(CP[,1]/CP[,3]) - 1)
+DW$DQ <- (DW$QCF - DW$PSFD * Chi) / (1 + Chi)
+DW$DQ2 <- (DW$QCFR - DW$PSFRD * Chi) / (1 + Chi)
+DW$DP <- -DW$DQ
+DW$DP2 <- -DW$DQ2
+## now have the errors DQ and DP, which are the negatives of the corrections, for Q and P
+## want to find a representation of those correction factors
+DW$QP <- DW$QCF / DW$PSFD
+DW$QP2 <- DW$QCFR / DW$PSFRD
+DW$M <- MachNumber (DW$PSFD, DW$QCF, DW$EWX)
+DW$M2 <- MachNumber (DW$PSFRD, DW$QCFR, DW$EWX)
+DW$DQP <- DW$DQ / DW$PSFD
+DW$DQP2 <- DW$DQ2 / DW$PSFRD
+summary(lm(DQ ~ AKRD, data=DW))
+summary(lm(DQP ~ I(AKRD*QP)+QP+M+I(AKRD*QP*M), data=DW))
+summary(lm(DQP ~ AKRD*M*QP*I(AKRD^2)*I(QP^2)*I(M^2), data=DW))
+fq23 <- lm(DQP ~ AKRD+M+QP+I(QP^2)+AKRD:M+M:QP+QP:I(AKRD^2)+M:I(QP^2)+QP:I(QP^2)
+           +I(AKRD^2):I(QP^2)+AKRD:I(M^2)+M:I(M^2)+QP:I(M^2)+I(QP^2):I(M^2)+M:QP:I(AKRD^2)
+           +AKRD:M:I(QP^2)+AKRD:QP:I(QP^2)+M:I(AKRD^2):I(QP^2)+AKRD:M:I(M^2)
+           +I(AKRD^2):I(QP^2):I(M^2)+AKRD:M:QP:I(QP^2)
+           +AKRD:M:QP:I(QP^2):I(M^2), data=DW)
+summary(fq23)
+cf <- coef(fq23)
+DQX23 <- with(DW, cf[1]+cf[2]*AKRD+cf[3]*M+cf[4]*QP+cf[5]*QP^2+cf[6]*AKRD*M
+      +cf[7]*M*QP+cf[8]*QP*AKRD^2+cf[9]*M*QP^2
+      +cf[10]*QP^3+cf[11]*QP^2*AKRD^2+cf[12]*AKRD*M^2
+      +cf[13]*M^3+cf[14]*QP*M^2+cf[15]*QP^2*M^2+cf[16]*M*QP*AKRD^2+cf[17]*AKRD*M*QP^2+cf[18]*AKRD*QP^3
+      +cf[19]*M*QP^2*AKRD^2+cf[20]*AKRD*M^3
+      +cf[21]*QP^2*AKRD^2*M^2+cf[22]*AKRD*M*QP^3+cf[23]*AKRD*M^3*QP^3)
+sd23 <- sd(DW$PSFD*(DW$DQP-DQX23), na.rm=TRUE)
+hist(DW$PSFD*(DW$DQP-DQX23), breaks=200, xlim=c(-1,1))
+
+fq <- lm(DQP ~ AKRD+M+QP+I(QP^2)+AKRD:M+M:QP+QP:I(AKRD^2)+M:I(QP^2)+QP:I(QP^2)
+         +I(AKRD^2):I(QP^2)+AKRD:I(M^2)+M:I(M^2)+QP:I(M^2)+I(QP^2):I(M^2)
+         +M:QP:I(AKRD^2)+AKRD:M:I(QP^2)+AKRD:QP:I(QP^2)+M:I(AKRD^2):I(QP^2)
+         +AKRD:M:I(M^2)+M:QP:I(M^2)+I(AKRD^2):I(QP^2):I(M^2)+AKRD:M:QP:I(QP^2)
+         +AKRD:M:QP:I(QP^2):I(M^2), data=DW)
+fq <- lm (DQP ~ AKRD+M+QP+I(QP^2)+AKRD:M+M:QP+QP:I(AKRD^2)+M:I(QP^2)+QP:I(QP^2), data=DW)
+summary(fq)
+fq <- lm (DQP ~ QP+AKRD+M+QP:I(AKRD^2), data=DW)
+fq2 <- lm (DQP2 ~ QP2+AKRD+M2+QP2:I(AKRD^2), data=DW)
+summary(fq)
+anova(fq)
+cf <- coef(fq)
+cf2 <- coef (fq2)
+DQX <- with(DW, cf[1]+cf[2]*QP+cf[3]*AKRD+cf[4]*M+cf[5]*QP*AKRD^2)
+DQX2 <- with(DW, cf2[1]+cf2[2]*QP2+cf2[3]*AKRD+cf2[4]*M2+cf2[5]*QP2*AKRD^2)
+sd5 <- sd(DW$PSFD*(DW$DQP-DQX), na.rm=TRUE)
+DQ <- DW$PSFD * DQX
+dmean <- mean (DQ, na.rm=TRUE)
+dsd <- sd(DQ, na.rm=TRUE)
+dmeanX <- mean (DQX, na.rm=TRUE)
+dsdX <- sd (DQX, na.rm=TRUE)
+DW$QC <- DW$QCF - DQ    # DQ is the error, so subtract it
+DW$PC <- DW$PSFD + DQ
+DQ2 <- DW$PSFRD * DQX2
+dmean2 <- mean (DQ2, na.rm=TRUE)
+dsd2 <- sd(DQ2, na.rm=TRUE)
+DW$QC2 <- DW$QCFR - DQ2
+DW$PC2 <- DW$PSFRD + DQ2
+PCor <- DW$PSFD * PCorFunction (DW$PSFD, DW$QCF, DW$AKRD, "C130")
+PCorMean <- mean (PCor, na.rm=TRUE)
+DPmean <- mean (DQ, na.rm=TRUE)
+
+@
+
+\subsection{New empirical fits}
+
+An overly complex fit with 23 coefficients, as listed in the R code,
+gave a parameterized representation of $\Delta q$ with standard deviation
+\Sexpr{round(sd23, 2)}~hPa about the values given by LAMS via (\ref{eq:delta-q}).
+This was based on about 15,600 1-Hz measurements that, in addition
+to the chisquare test, met the requirements that TASX > 90, |ROLL|<5,
+and PITCH<20$^{\circ}$(to eliminate some obviously bad measurements
+from the INS). The tests eliminated turns and times near takeoff and
+landing. This fit provides an indication of the approximate target
+standard deviation for the fit, but a much simpler fit is desirable
+because, even though all 23 coefficients meet tests of significance
+$p$<0.001, there could well be complex interactions dependent on
+the particular flight profile or other peculiarities of the data that
+could lead to problems when extrapolated beyond the range of the measurements
+or to new data. For that reason, a much simpler fit was sought that
+could give almost as small a standard deviation about the reference
+measurements from LAMS. The approach was to consider analysis-of-variance
+tables as guides to selecting the factors accounting for significant
+parts of the total variance. A five-coefficient fit gave a residual
+standard deviation of \Sexpr{round(sd5, 2)}~hPa with 15575 degrees
+of freedom and accounted for 85\% of the total variance (vs 90\% for
+the 23-coefficient fit), so this appeared to be an acceptable compromise.\footnote{The residual variance was reduced by shifting the measured sequence
+of QCF forward in time by 105~ms, a reasonable value to compensate
+for the displacement of the LAMS measurements ahead of the aircraft.}\\
+\begin{equation}
+\frac{\Delta q}{p_{m}}=b_{0}+b_{1}\frac{q_{m}}{p_{m}}+b_{2}\frac{\alpha}{a_{r}}+b_{3}M+b_{4}\frac{q_{m}}{p_{m}}\left(\frac{\alpha}{a_{r}}\right)^{2}\label{eq:dq-fit}
+\end{equation}
+with coefficients \{$b_{0-4}$\}=\{\Sexpr{round(cf[1],6)}, \Sexpr{round(cf[2],5)},
+\Sexpr{round(cf[3],8)}, \Sexpr{round(cf[4],5)}, \Sexpr{round(cf[5],6)}\}
+for the sensing pair producing PSFD and QCF. For that producing PSFRD
+and QCFR, the corresponding coefficients are \{\Sexpr{round(cf2[1],6)},
+\Sexpr{round(cf2[2],5)}, \Sexpr{round(cf2[3],8)}, \Sexpr{round(cf2[4],5)},
+\Sexpr{round(cf2[5],6)}\}.
+
+The mean deduced error in measured dynamic pressure is \Sexpr{round(dmean,2)}$\pm$\Sexpr{round(dsd,2)}
+for QCF, but it is much larger for QCFR, \Sexpr{round(dmean2,2)}$\pm$\Sexpr{round(dsd2,2)}.
+The mean error in ambient pressure (respectively PSFD and PSFRD) is
+therefore the negative of these values. These are the errors in the
+measurements, so to obtain corrected values these errors should be
+subtracted from the measured values; i.e., $q_{c}=q_{m}-\Delta q$
+and $p_{c}=p_{m}+\Delta q$.
+
+<<TAS-check, include=TRUE, fig.cap='Comparison of airspeed calculated from the corrected dynamic and ambient pressure to the airspeed measured by LAMS. The dashed orange line is a 1:1 reference line.'>>=
+# recalculate TAS using corrected pressures:
+
+TASQ <- TrueAirspeed (MachNumber (DW$PC, DW$QC, DW$EWX), DW$ATX, DW$EWX/DW$PC)
+plotWAC(data.frame(DW$TASL, TASQ), xlab='LAMS-based TAS [m/s]', ylab='corrected-pressure TAS [m/s]', type='p', pch=20, col='blue')
+lines(c(70,160), c(70,160), lwd=3, lty=2, col='darkorange')
+meanDTAS <- mean (TASQ-DW$TASL, na.rm=TRUE)
+sdDTAS <- sd (TASQ-DW$TASL, na.rm=TRUE)
+
+@
+
+A test for consistency is that airspeed calculated from the corrected
+dynamic pressure and ambient pressure should match the airspeed measured
+by LAMS. Figure~\ref{fig:TAS-check} shows that there is good agreement
+between these two measurements for cases where the LAMS-based airspeed
+meets the quality check discussed above, with mean difference of \Sexpr{round(meanDTAS,4)}$\pm$\Sexpr{round(sdDTAS,2)}~m/s.
+
+These corrections are significantly different from those obtained
+earlier by Cooper et al.~(2014) and as revised in the Technical Note
+on Processing Algorithms. For this flight, the average correction
+applied to pressure using the old parameterization in the Processing
+Algorithms document would be \Sexpr{round(mean(PCor, na.rm=TRUE), 2)}~hPa.
+This difference does not only occur at low level but also is present
+when measurements are restricted to those at pressure below 800~hPa.
+In comparison to the avionics-system pressure PS\_A, the new parameterization
+gives mean values about \Sexpr{round(mean(DW$PC-DW$PS_A, na.rm=TRUE),2)}~hPa
+lower than PS\_A, while the old parameterization gave mean values
+about \Sexpr{round(mean(DW$PSXC-DW$PS_A, na.rm=TRUE),2)}~hPa lower.
+The original values were based on flight 8 from the 2011 project IDEAS-4,
+and for that flight the difference between the corrected pressure
+and PS\_A was $-1.08$~hPa, close to the value found for this flight
+using the new parameterization. The larger difference obtained using
+the old parameterization suggests that the characteristics of the
+aircraft have changed, either affecting the static defect of the research
+static ports, the radome, the sensor calibrations, or some unknown
+change. It may be useful to use the new parameterization for intervening
+C-130 projects like WINTER and FRAPPE, but that needs further study.
+
+\section{LAMS-based measurement of temperature\label{sec:LAMS-based-measurement-of}}
+
+\subsection{Theory and data available}
+
+It was demonstrated in Cooper et al.~(2014) that the LAMS-measured
+airspeed $v_{L}$ can be used to measure the temperature in a way
+that is independent of any temperature sensor. One important aspect
+of this is that $v_{l}$, combined with the measurements of total
+pressure ($p_{t}$) and of ambient pressure ($p$), might provide
+a valid measurement of temperature in clouds. This independent measurement
+of temperature arises from the relationship between temperature and
+the speed of sound, because the Mach number ($M$) can be determined
+from the measurements $p_{t}$ and $p$ so the speed of sound can
+be found from $v_{L}/M$. That measurement of temeperature will be
+explored in this section.
+
+The equation leading to temperature, Eq.~(24) in Cooper et al.~(2014),
+is\\
+\begin{equation}
+T=\frac{v_{l}^{2}}{2c_{p}\left[\left(\frac{p_{t}}{p}\right)^{R_{a}/c_{p}}-1\right]}\label{eq:T-LAMS}
+\end{equation}
+where $T$ is the temperature on an absolute-temperature scale, $c_{p}$
+is the specific heat of air at constant pressure, and $R_{a}$ is
+the gas constant for air. For a selected region with strong LAMS signals
+in clear air, the resulting temperature (converted to $^{\circ}$C)
+was on average 1.4$^{\circ}$C lower than the standard temperature
+ATX. However, this result is very sensitive to $v_{L}$ and increasing
+$v_{l}$ by 0.35 m/s (the measured difference between $v_{L}$ and
+TASX) completely removed the offset. That may be an indication that
+the airspeed from LAMS shows a small effect from airflow distortion
+even though the beams are displaced XXX m ahead of the instrument.
+
+<<T-comparison, include=FALSE, fig.cap='LAMS-derived temperature (TL) vs the standard measurement (ATX) for ARISTO-2015 flight 4, 19:12:00--19:30:00 UTC.', cache=TRUE>>=
+
+SaveRDataC <- sprintf ('%sC.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf04_LAMS"
+  Project <- 'ARISTO'
+  Directory <- DataDirectory ()
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  save (Data, file=SaveRDataC)
+} else {
+  load (SaveRDataC)
+}
+DW <- processWind(Data)
+DW$PSXC <- Data$PSXC
+DW$QCXC <- Data$QCXC
+DW$ATX <- Data$ATX
+DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+r <- setRange (DW, 191200, 193000)
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSXC, DW$QCXC, DW$EWX)
+DW$TASL <- DW$TASX
+DW$TASX <- Data$TASX
+DW <- DW[r, ]
+CP <- SpecificHeats (DW$EWX / DW$PSXC)
+cpa <- CP[,1]
+Ra <- CP[,3]
+cva <- CP[,2]
+gamma <- cpa/cva
+Vs <- (DW$TASL) / DW$Mach
+TL <- Vs^2 / (gamma * Ra) - 273.15
+# TL <- DW$TASL^2 / (2*cpa * (((DW$PSXC+DW$QCXC)/DW$PSXC)^(Ra/cpa) - 1)) - 273.15
+plotWAC(data.frame(DW$ATX, TL), xlab='ATX', ylab='LAMS-based T', pch=20, type='p', xlim=c(-5,-2), ylim=c(-20,10))
+cflt <- coef (lm (TL ~ DW$ATX))
+xt <- c(-10,10)
+yt <- cflt[1] + cflt[2]*xt
+lines (xt, yt, col='darkorange', lwd=3, lty=2)
+
+@
+
+To investigate the performance of this measurement of temperature
+in cloud, the in-cloud measurements from ARISTO-2015 and ARISTO-2016
+(flight 6 only) were examined. The in-cloud measurements included
+those in the following table, along with a few other brief passes
+through rain, ice, or cloud. There were a large number of cloud passes
+(>27) in ARISTO-2016 flight 6, but only three examples are included
+in the table and discussed in this report. 
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline 
+\textbf{flight} & \textbf{start} & \textbf{end} & \textbf{nature of cloud} & \textbf{performance of LAMS}\tabularnewline
+\hline 
+\hline 
+1 & 173000 & 173800 & warm, no 2D & mostly NG\tabularnewline
+\hline 
+1 & 174145 & 174600 & warm, no 2D & maybe OK\tabularnewline
+\hline 
+1 & 184740 & 184830 & only 2D; cold & OK\tabularnewline
+\hline 
+2 & 173000 & 192000 & warm; high 2D & sporadic, weak\tabularnewline
+\hline 
+3 & 181000 & 182000 & repeated cloud, warm & questionable, maybe OK\tabularnewline
+\hline 
+3 & 200900 & 201000 & short, warm cloud & LAMS good\tabularnewline
+\hline 
+4 & 171500 & 172500 & cold, ice & LAMS mostly OK\tabularnewline
+\hline 
+4 & 173000 & 174500 & cold, ice & Beam1 NG, others weak\tabularnewline
+\hline 
+5 & 170600 & 171100 & near 0C, short & Beam2 OK; Beam1 gaps\tabularnewline
+\hline 
+5 & 182200 & 182400 & 2D only; cold & LAMS NG\tabularnewline
+\hline 
+2016-6 & 230510 & 230620 &  & \tabularnewline
+\hline 
+2016-6 & 240250 & 240415 &  & \tabularnewline
+\hline 
+2016-6 & 250040 & 250130 &  & \tabularnewline
+\hline 
+\end{tabular}
+\par\end{center}
+
+<<LAMST-1, include=TRUE, fig.cap='The temperature deduced from the measurement obtained using the LAMS-measured airspeed (magenta dots), adjusted as described in the text, and plotted with a smoothed version (TLS) and with the standard measurement of temperature (ATX). The measurements from periods where the CDP concentration exceeded 5\\_cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a different color.', fig.height=4, cache=TRUE>>=
+
+SaveRDataD <- sprintf ('%sD.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf03_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT")))
+  ## these points appear to be bad, beam 2:
+  Data$BEAM2speed[getIndex(Data, 200951)] <- NA
+  Data$BEAM2speed[getIndex(Data, 200948)] <- NA
+  Data$BEAM2speed[getIndex(Data, 200954)] <- NA
+  save (Data, file=SaveRDataD)
+} else {
+  load (SaveRDataD)
+}
+PCA <- FALSE    ## use SG polynomial solution
+# PCA <- TRUE     ## use PCA solution
+DW <- processWind(Data)
+DW$BEAM2speed <- Data$BEAM2speed
+DW$PSXC <- Data$PSXC
+DW$QCXC <- Data$QCXC
+DW$ATX <- Data$ATX
+DW$CONCD <- Data$CONCD_RPT
+DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+r <- setRange (DW, 200830, 201030)
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSXC, DW$QCXC, DW$EWX)
+DW$TASL <- DW$TASX
+## temporary: use beam 2 only
+# DW$TASL <- DW$BEAM2speed
+DW$TASL3 <- (Data$BEAM1speed + DW$BEAM3speed + DW$BEAM4speed) / (3 * cos (35*pi/180))
+DW$TASL1 <- Data$BEAM2speed
+DW$TASX <- Data$TASX
+DW <- DW[r, ]
+CP <- SpecificHeats (DW$EWX / DW$PSXC)
+cpa <- CP[,1]
+Ra <- CP[,3]
+cva <- CP[,2]
+gamma <- cpa/cva
+DTAS <- with(DW, mean (TASX-TASL, na.rm=TRUE))
+DTAS3 <- with (DW, mean (TASX-TASL3, na.rm=TRUE))
+DTAS1 <- with (DW, mean (TASX-TASL1, na.rm=TRUE))
+Vs <- (DW$TASL + DTAS) / DW$Mach
+Vs3 <- (DW$TASL3 + DTAS3) / DW$Mach
+Vs1 <- (DW$TASL1 + DTAS1) / DW$Mach
+TL <- Vs^2 / (gamma * Ra) - 273.15
+TL3 <- Vs3^2 / (gamma * Ra) - 273.15
+TL1 <- Vs1^2 / (gamma * Ra) - 273.15
+LS <- 13
+TLS <- SmoothInterp (TL, .Length=LS)
+TLS1 <- SmoothInterp (TL1, .Length=LS)
+TLS3 <- SmoothInterp (TL3, .Length=LS)
+# TL <- DW$TASL^2 / (2*cpa * (((DW$PSXC+DW$QCXC)/DW$PSXC)^(Ra/cpa) - 1)) - 273.15
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+ATX <- DW$ATX
+plotWAC(data.frame(DW$Time, ATX, TLS), ylab='Temperature [C]', 
+        ylim=c(5,17), lwd=c(2,2), lty=c(1,2), legend.position='topright')
+Excl <- DW$CONC < 5
+ATX[Excl] <- NA
+TLS[Excl] <- NA
+lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+lines (DW$Time+0.5, TLS, lwd=4, col='darkgreen')
+points (DW$Time, TL, pch=20, col='magenta')
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(subset(DW,, c(Time, CONCD)))
+
+@
+
+\subsection{Case studies}
+
+\subsubsection{Case 1: Flight 3, 20:09:00 to 20:10:00}
+
+Flight 3, 20:09:00 to 20:10:00, is a short pass through a warm cloud
+with no ice or rain. Close inspection of the forward-pointing beam
+(beam 2) indicates that there are a few bad points in the center of
+this cloud, at times 20:09:48, 20:09:51. and 20:09:54, so these were
+set missing and then interpolation was used to fill in missing points
+in this time period.\footnote{Beam 2 appeared to be affected in cloud more than the other beams,
+perhaps because of water striking and remaining on the forward-pointing
+aperture more than on the other beams pointing 35$^{\circ}$ from
+the forward direction.} The mean difference between airspeed determined in the conventional
+way and airspeed from LAMS was \Sexpr{round(DTAS, 2)}~m/s, consistent
+with the value found in the clear-air flight segment used in the preceding
+paragraph. To make it easier to judge differences produced by the
+cloud, this mean value was added to the LAMS-measured airspeeds and
+then smoothing over approximately a 5-s period was applied to the
+temperature calculated from the LAMS airspeed. The resulting temperature
+measurement for the cloud pass is shown in Fig.~\ref{fig:LAMST-1},
+where the magenta-colored points are the unsmoothed measurements of
+temperature. The unsmoothed measurement is quite noisy, so smoothing
+is important in order to see trends.\footnote{ATX is not smoothed, but it is thought to have a response time between
+2 and 3 s.} 
+
+\clearpage
+
+Despite the noisy signal, particularly in the vicinity of the clouds,
+the LAMS-based temperature shows good correlation with the standard
+temperature. There is also a suggestion of a trend in the cloud passes:
+As the cloud pass proceeds, ATX tends to become lower relative to
+TLS. Because of the variability present, this is only suggestive,
+but there is some match to what would be expected if the ATX sensor
+(in this case, a HARCO anti-iced sensor) becomes wet in cloud because
+in that case evaporative cooling from the element in the dynamically
+heated and therefore <100\%-humidity air in the housing causes an
+error of negative sign.
+
+\subsubsection{Case 2: Flight 2, 17:30:00\textendash 19:20:00 }
+
+Next, the long cloud pass from flight 2 was examined. These measurements
+were from a low-level flight leg (near 7000 ft) at high temperature,
+>10$^{\circ}$C, and there were high concentrations of particles measured
+by the 2DC. The LAMS-measured line-of-sight speeds were not always
+reliable,but it was possible to select regions of strong and apparently
+consistent signals from this long cloud pass. CDP-measured concentrations
+were often several hundred cm$^{-3}$, and 2D-measured concentrations
+ranged from 1\textendash 100~L$^{-1}$. 
+
+As was the case for the flight-3 case examined above, beam 2 appears
+to be more noisy than the other beams, and there are some cases where
+beam 1 (looking downward) appears to be affected by returns from the
+ground. Because the measurement of airspeed is over-constrained in
+the case of valid measurements from four beams, it is possible to
+use a chisquare test of consistency among the four beams as a test
+of validity of the solution. The chisquare for the solution was developed
+in the LAMSprocessing4Bwind.pdf memo:\\
+\begin{equation}
+\chi^{2}=\sum_{i}\frac{(a_{i}^{\prime}-a_{i})^{2}}{\sigma^{2}}\label{eq:chisquare}
+\end{equation}
+where $a_{i}^{\prime}$ are the line-of-sight airspeeds measured in
+the four beams and $a_{i}$ are the corresponding airspeeds determined
+using the direction-cosine matrix for the four beams and the best-fit
+result for the vector wind. For the four-beam case, the solution for
+the vector wind is \\
+\begin{equation}
+\mathbf{v}=\mathbf{Ma^{\prime}}\label{eq:4beamsoln}
+\end{equation}
+and\\
+\begin{equation}
+\mathbf{a}=\mathbf{Sv}\label{eq:DCMeq}
+\end{equation}
+where $\mathbf{M}$ and $\mathbf{S}$ are given by Eqs.~9 and 2 from
+that earlier memo. The solution to (\ref{eq:chisquare}) is then given
+by\\
+\begin{equation}
+\chi^{2}=\frac{1}{\sigma^{2}}\sum_{i}(a_{i}^{\prime}-S_{ij}v_{j})^{2}\label{eq:chi-2}
+\end{equation}
+Code to calculate this value, using $\sigma$=1, is included in the
+``ProcessWind()'' function in this code. For the region from flight
+3 shown in Fig.~\ref{fig:LAMST-1}, the mean value was 0.16~m$^{2}$s$^{-2}$,
+so these 4-beam measurements were reasonably consistent, but there
+were five outliers with values exceeding 1~m$^{2}$s$^{-2}$ that
+should be excluded as being inconsistent among the four beams. The
+value of $\chi^{2}$ can thus be used to identify regions where the
+4-beam solution is questionable, and a requirement that it be smaller
+than about 0.5~m$^{2}$s$^{-2}$appears reasonable on the basis of
+values from good flight segments.
+
+<<LAMST-2, include=TRUE, fig.cap='(top) The difference between the LAMS-derived airspeed (TASL) and the conventional airspeed (TASX), for the period from 17:39:00--17:46:00 from ARISTO-2015 flight 2. (bottom) The RMS error for the fit to the four measured line-of-sight beam speeds, for the same flight segment.', cache=TRUE>>=
+
+SaveRDataE <- sprintf ('%sE.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf02_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT", "PLWCD_RPT")))
+  ## these points appear to be bad, beam 2:
+  # Data$BEAM2speed[getIndex(Data, 200951)] <- NA
+  # Data$BEAM2speed[getIndex(Data, 200948)] <- NA
+  # Data$BEAM2speed[getIndex(Data, 200954)] <- NA
+  save (Data, file=SaveRDataE)
+} else {
+  load (SaveRDataE)
+}
+PCA <- FALSE    ## use SG polynomial solution
+PCA <- TRUE     ## use PCA solution
+DW <- processWind(Data)
+DW$RMS <- sqrt (DW$TASCSQ / 4)
+DW$BEAM2speed <- Data$BEAM2speed
+DW$PSXC <- Data$PSXC
+DW$QCXC <- Data$QCXC
+DW$ATX <- Data$ATX
+DW$CONCD <- Data$CONCD_RPT
+DW$PLWCD <- Data$PLWCD_RPT
+DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+r <- setRange (DW, 173000, 192000)
+rt <- setRange (DW$Time, 173900, 174500)
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSXC, DW$QCXC, DW$EWX)
+DW$TASL <- DW$TASX
+## temporary: use beam 2 only
+# DW$TASL <- DW$BEAM2speed
+DW$TASL3 <- (Data$BEAM1speed + DW$BEAM3speed + DW$BEAM4speed) / (3 * cos (35*pi/180))
+DW$TASL1 <- Data$BEAM2speed
+DW$TASX <- Data$TASX
+## reject and interpolate at points with high RMS
+RMStest <- 0.3
+DW$TASL[DW$RMS > 0.2] <- NA
+DW$TASL <- zoo::na.approx(DW$TASL, na.rm=FALSE)
+# DW <- DW[r, ]
+CP <- SpecificHeats (DW$EWX / DW$PSXC)
+cpa <- CP[,1]
+Ra <- CP[,3]
+cva <- CP[,2]
+gamma <- cpa/cva
+DTAS <- with(DW[rt, ], mean (TASX-TASL, na.rm=TRUE))
+DTAS3 <- with (DW[rt, ], mean (TASX-TASL3, na.rm=TRUE))
+DTAS1 <- with (DW[rt, ], mean (TASX-TASL1, na.rm=TRUE))
+Vs <- (DW$TASL + DTAS) / DW$Mach
+Vs3 <- (DW$TASL3 + DTAS3) / DW$Mach
+Vs1 <- (DW$TASL1 + DTAS1) / DW$Mach
+TL <- Vs^2 / (gamma * Ra) - 273.15
+TL3 <- Vs3^2 / (gamma * Ra) - 273.15
+TL1 <- Vs1^2 / (gamma * Ra) - 273.15
+LS <- 13
+TLS <- SmoothInterp (TL, .Length=LS)
+TLS1 <- SmoothInterp (TL1, .Length=LS)
+TLS3 <- SmoothInterp (TL3, .Length=LS)
+# TL <- DW$TASL^2 / (2*cpa * (((DW$PSXC+DW$QCXC)/DW$PSXC)^(Ra/cpa) - 1)) - 273.15
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+ATX <- DW$ATX
+# plotWAC(data.frame(DW$Time, ATX, TLS), ylab='Temperature [C]', 
+#         ylim=c(5,17), lwd=c(2,2), lty=c(1,2), legend.position='topright')
+# Excl <- DW$CONC < 5
+# ATX[Excl] <- NA
+# TLS[Excl] <- NA
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+# lines (DW$Time+0.5, TLS, lwd=4, col='darkgreen')
+# points (DW$Time, TL, pch=20, col='magenta')
+# op <- par (mar=c(5,4,1,1)+0.1)
+# plotWAC(subset(DW,, c(Time, CONCD)))
+plotWAC (data.frame (DW$Time, DW$TASL-DW$TASX)[rt, ], ylab='TASL-TASX', ylim=c(-1,1))
+op <- par (mar=c(5,4,1,1)+0.1)
+with (DW[rt, ], plotWAC (Time, RMS, ylim=c(0,0.5), ylab='RMS [m/s]'))
+
+@
+
+<<LAMST-3, include=TRUE, fig.cap='For the same flight period shown in the previous figure, the temperature deduced from the measurement obtained using the LAMS-measured airspeed (dark green line), adjusted as described in the text, plotted with the standard measurement of temperature (ATX). The measurements from periods where the CDP concentration exceeded 5\\ cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a different color.', cache=TRUE>>=
+
+DW$TLS <-TLS
+rt1 <- setRange (DW, 173900, 174200)
+rt2 <- setRange (DW, 174300, 174500)
+meanC <- with (DW[rt1, ], mean (TLS-ATX, na.rm=TRUE))
+meanE <- with (DW[rt2, ], mean (TLS-ATX, na.rm=TRUE))
+DW <- DW[rt, ]
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(data.frame(DW$Time, DW$ATX, DW$TLS), ylab='Temperature [C]', 
+        ylim=c(5,17), lwd=c(2,2), lty=c(1,2), legend.position='topright')
+Excl <- DW$CONC < 5
+DW$ATXE <- DW$ATX
+DW$TLSE <- DW$TLS
+DW$ATXE[Excl] <- NA
+DW$TLSE[Excl] <- NA
+lines (DW$Time+0.5, DW$ATXE, lwd=4, col='cyan')
+lines (DW$Time+0.5, DW$TLSE, lwd=4, col='darkgreen')
+# points (DW$Time, TL, pch=20, col='magenta')
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(subset(DW,, c(Time, CONCD)))
+
+@
+
+<<LAMST-4, include=TRUE, fig.cap='Dependence of the difference between the LAMS-derived temperature (TLS) and the standard temperature (ATX) as a function of the liquid water content measured by the CDP (PLWCD), for the same flight period shown in the preceding two plots.', cache=TRUE>>=
+
+layout(matrix(1:1, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(5,4,1,1))
+plot(DW$PLWCD, DW$TLS-DW$ATX, pch=20, col='blue')
+cflw <- coef (lm (DW$TLS-DW$ATX ~ DW$PLWCD))
+xx <- c(0,0.3)
+yy <- cflw[1] + cflw[2] * xx
+lines (xx, yy, col='darkorange', lty=2, lwd=3)
+
+
+@
+
+Figure \ref{fig:LAMST-2} shows a segment from this flight for which
+the measurements appear consistent among the four beams, especially
+for the last 2-min period that is not in cloud. This flight segment
+was selected because the LAMS measurements are mostly consistent with
+the standard airspeed and have low RMS. Figure \ref{fig:LAMST-3}
+shows the corresponding measurements of temperature from the two sources
+and also the droplet concentration. The in-cloud LAMS temperature
+is on average slightly lower than the standard temperature, by about
+\Sexpr{round(meanC,2)}$^{\circ}$C, while the out-of-cloud measurements
+are offset in the other direction, with a mean difference of \Sexpr{round(meanE,2)}$^{\circ}$C.
+There is some correlation between the temperature difference and the
+liquid water content, as shown in Fig.~\ref{fig:LAMST-4}. The observed
+difference is in the opposite direction to that expected if ATX is
+cooled as a result of wetting of the sensor, so this result is not
+an indication of sensor wetting. An alternate explanation might be
+that the returned signal has greater contributions from locations
+closer to the LAMS in the high-backscatter of a cloud, so that the
+airspeed and hence temperature is biased low in such a region, with
+the bias increasing with the density of the cloud.
+
+\clearpage
+
+\subsubsection{Case 3: Flight 3, 18:10:00\textendash 18:20:00}
+
+<<LAMST-5, include=TRUE, fig.cap='(top) The difference between the LAMS-derived airspeed (TASL) and the conventional airspeed (TASX), for the period from 18:10:00--18:20:00 from ARISTO-2015 flight 3. (bottom) The RMS error for the fit to the four measured line-of-sight beam speeds, for the same flight segment.', cache=TRUE>>=
+
+SaveRDataF <- sprintf ('%sF.Rdata', thisFileName)
+if (ReloadData) {
+  Flight <- "rf03_LAMS"
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT", "PLWCD_RPT")))
+  save (Data, file=SaveRDataF)
+} else {
+  load (SaveRDataF)
+}
+## these points appear to be bad, beam 2:
+# Data$BEAM2speed[getIndex(Data, 200951)] <- NA
+# Data$BEAM2speed[getIndex(Data, 200948)] <- NA
+# Data$BEAM2speed[getIndex(Data, 200954)] <- NA
+PCA <- FALSE    ## use SG polynomial solution
+PCA <- TRUE     ## use PCA solution
+DW <- processWind(Data)
+DW$RMS <- sqrt (DW$TASCSQ / 4)
+DW$BEAM2speed <- Data$BEAM2speed
+DW$PSXC <- Data$PSXC
+DW$QCXC <- Data$QCXC
+DW$ATX <- Data$ATX
+DW$CONCD <- Data$CONCD_RPT
+DW$PLWCD <- Data$PLWCD_RPT
+DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+rt <- setRange (DW$Time, 181000, 182000)
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSXC, DW$QCXC, DW$EWX)
+DW$TASL <- DW$TASX
+## temporary: use beam 2 only
+# DW$TASL <- DW$BEAM2speed
+DW$TASL3 <- DW$TASX3  ## (Data$BEAM1speed + DW$BEAM3speed + DW$BEAM4speed) / (3 * cos (35*pi/180))
+DW$TASL1 <- Data$BEAM2speed
+DW$TASX <- Data$TASX
+## reject and interpolate at points with high RMS
+RMStest <- 0.3
+DW$TASL[DW$RMS > 0.2] <- NA
+DW$TASL <- zoo::na.approx(DW$TASL, na.rm=FALSE)
+CP <- SpecificHeats (DW$EWX / DW$PSXC)
+cpa <- CP[,1]
+Ra <- CP[,3]
+cva <- CP[,2]
+gamma <- cpa/cva
+DTAS <- with(DW[rt, ], mean (TASX-TASL, na.rm=TRUE))
+DTAS3 <- with (DW[rt, ], mean (TASX-TASL3, na.rm=TRUE))
+DTAS1 <- with (DW[rt, ], mean (TASX-TASL1, na.rm=TRUE))
+Vs <- (DW$TASL + DTAS) / DW$Mach
+Vs3 <- (DW$TASL3 + DTAS3) / DW$Mach
+Vs1 <- (DW$TASL1 + DTAS1) / DW$Mach
+TL <- Vs^2 / (gamma * Ra) - 273.15
+TL3 <- Vs3^2 / (gamma * Ra) - 273.15
+TL1 <- Vs1^2 / (gamma * Ra) - 273.15
+LS <- 13
+TLS <- SmoothInterp (TL, .Length=LS)
+TLS1 <- SmoothInterp (TL1, .Length=LS)
+TLS3 <- SmoothInterp (TL3, .Length=LS)
+# TL <- DW$TASL^2 / (2*cpa * (((DW$PSXC+DW$QCXC)/DW$PSXC)^(Ra/cpa) - 1)) - 273.15
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+ATX <- DW$ATX
+# plotWAC(data.frame(DW$Time, ATX, TLS), ylab='Temperature [C]', 
+#         ylim=c(5,17), lwd=c(2,2), lty=c(1,2), legend.position='topright')
+# Excl <- DW$CONC < 5
+# ATX[Excl] <- NA
+# TLS[Excl] <- NA
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+# lines (DW$Time+0.5, TLS, lwd=4, col='darkgreen')
+# points (DW$Time, TL, pch=20, col='magenta')
+# op <- par (mar=c(5,4,1,1)+0.1)
+# plotWAC(subset(DW,, c(Time, CONCD)))
+plotWAC (data.frame (DW$Time, DW$TASL-DW$TASX)[rt, ], ylab='TASL-TASX', ylim=c(-5,5))
+op <- par (mar=c(5,4,1,1)+0.1)
+with (DW[rt, ], plotWAC (Time, RMS, ylim=c(0,0.5), ylab='RMS [m/s]'))
+
+@
+
+<<LAMST-6, include=TRUE, fig.cap='For the subset of the flight period shown in the previous figure from 18:12:30--18:14:00, the temperature deduced from the measurement obtained using the LAMS-measured airspeed (TLS, dark green line), adjusted as described in the text, plotted with the standard measurement of temperature (ATX). The measurements from periods where the CDP concentration exceeded 5\\_cm$^{-3}$ are shown as thicker lines. The red line on this plot (TLSG) shows the periods where TLS was based on measurements with RMS smaller than 0.2 m/s. The cyan line (TLS1) is the result based only on the forward-pointing beam 2, and the orange line (TLS3) is the result based on the 3-beam result using beams 1, 3, and 4.', cache=TRUE>>=
+
+DW$TLS <-TLS
+DW$TLS1 <- TLS1
+DW$TLS3 <- TLS3
+DW$TLSG <- TLS
+DW$TLSG[DW$RMS > 0.2] <- NA
+# rt1 <- setRange (DW, 173900, 174200)
+# rt2 <- setRange (DW, 174300, 174500)
+# meanC <- with (DW[rt1, ], mean (TLS-ATX, na.rm=TRUE))
+# meanE <- with (DW[rt2, ], mean (TLS-ATX, na.rm=TRUE))
+rt <- setRange (DW, 181230, 181400)
+DW1 <- DW[rt, ]
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(subset(DW1,, c(Time, ATX, TLS, TLSG, TLS1, TLS3)), ylab='Temperature [C]', 
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,1), legend.position='topleft')
+Excl <- DW1$CONC < 5
+DW1$ATXE <- DW1$ATX
+DW1$TLSE <- DW1$TLS
+DW1$ATXE[Excl] <- NA
+DW1$TLSE[Excl] <- NA
+lines (DW1$Time+0.5, DW1$ATXE, lwd=4, col='blue')
+lines (DW1$Time+0.5, DW1$TLSE, lwd=4, col='darkgreen')
+# points (DW1$Time, TL, pch=20, col='magenta')
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(subset(DW1,, c(Time, CONCD)))
+
+@
+
+The third case examined here is a series of passes through clouds
+at temperatures near freezing. Droplet concentrations were often several
+100/cm$^{3}$, and there were 2D particles often in concentrations
+of 1\textendash 10/L. The cloud pass near 18:13 was a more dense cloud
+than those presented above, with droplet concentrations around 400~cm$^{-3}$
+and liquid water content above 0.6~g\,m$^{-3}$. It serves as a
+good illustration of the problems with LAMS that occur in a dense
+cloud. The measurements of airspeed and the associated RMS for this
+flight period is shown in Fig.~\ref{fig:LAMST5}, and the associated
+measuirement of temperature for the pass through particularly dense
+cloud is shown in Fig.~\ref{fig:LAMST-6}. In this dense cloud, the
+RMS for the four-beam measurements became >0.5 inside the cloud, the
+LAMS-measured airspeed was about 2~m/s below the conventional measurement,
+and as a result the LAMS-measured temperature was as much as 10$^{\circ}$C
+below the standard temperature ATX. However, this large error arose
+mostly from beam 2, which alone would give an error of more than 30$^{\circ}$C.
+If instead airspeed is determined using the three beams slanted into
+the wind by about 35$^{\circ}$, the result (plotted as TLS3, the
+orange line in Fig.~\ref{fig:LAMST-6}) shows a smaller but still
+significant negative bias relative to ATX. This shows the value of
+using four beams and applying an RMS test to exclude bad measurements,
+because the measurements were quite seriously biased in this dense
+cloud and only this RMS test was able to identify the regions where
+measurements are unreliable.
+
+\clearpage
+
+<<LAMST-7, include=TRUE, fig.cap='Same as in the previous plot, but for a later portion of the flight segment. See the caption for the previous plot.', cache=TRUE>>=
+
+rt <- setRange (DW, 181500, 182000)
+DW1 <- DW[rt, ]
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+plotWAC(subset(DW1,, c(Time, ATX, TLS, TLSG, TLS1, TLS3)), ylab='Temperature [C]', 
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,1), legend.position='topleft')
+Excl <- DW1$CONC < 5
+DW1$ATXE <- DW1$ATX
+DW1$TLSE <- DW1$TLS
+DW1$ATXE[Excl] <- NA
+DW1$TLSE[Excl] <- NA
+lines (DW1$Time+0.5, DW1$ATXE, lwd=4, col='blue')
+lines (DW1$Time+0.5, DW1$TLSE, lwd=4, col='darkgreen')
+# points (DW1$Time, TL, pch=20, col='magenta')
+op <- par (mar=c(5,4,1,1)+0.1)
+plotWAC(subset(DW1,, c(Time, CONCD)))
+meanE <- with(DW1[DW1$CONCD < 5,], mean(TLS3-ATX, na.rm=TRUE))
+meanC <- with(DW1[DW1$CONCD >= 5,], mean(TLS3-ATX, na.rm=TRUE))
+
+@
+
+Figure \ref{fig:LAMST-7} shows a similar plot for a subsequent period
+of flight through this sequence of small clouds. The temperature based
+only on beam 2 is again strongly affected and evidently too low in
+this sequence of weaker clouds. However, it has less influence on
+the 4-beam solution, and both the 4-beam and the 3-beam solution appear
+reasonable. The difference between the 3-beam solution (TLS3) and
+ATX is \Sexpr{round(meanE,2)}$^{\circ}$C for locations out-of-cloud
+but \Sexpr{round(meanC, 2)}$^{\circ}$C for in-cloud measurements.
+Because errors in the LAMS-derived temperature are negative when influenced
+by cloud, these differences suggest possible evaporative-cooling influence
+on the standard temperature probes.
+
+\clearpage
+
+\subsubsection{Case 4: Flight 2016-6, 23:05:00 \textendash{} 23:06:20}
+
+<<ARISTO2016-T, include=TRUE, cache=TRUE>>=
+
+Flight <- "rf06"
+Directory <- DataDirectory ()
+ProjectDir <- 'ARISTO'
+Project <- 'ARISTO2016'
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
+VarList16 <- c(VarList[-9:-12], 'WIC')
+SaveRDataG <- sprintf ('%sG.Rdata', thisFileName)
+if (ReloadData) {
+  Data <- getNetCDF (fname, standardVariables(c(VarList16, "CONCD_RWT")))
+  save (Data, file=SaveRDataG)
+} else {
+  load (SaveRDataG)
+}
+PCA <- FALSE    ## use SG polynomial solution
+# PCA <- TRUE     ## use PCA solution
+DW <- processWind(Data)
+DW$BEAM2speed <- Data$BEAM2speed
+DW$PSXC <- Data$PSXC
+DW$QCXC <- Data$QCXC
+DW$ATX <- Data$ATX
+DW$CONCD <- Data$CONCD_RWT
+# DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF, DW$QCF, DW$EWX))
+DW$QR <- DW$ADIFR / DW$QCF
+DW$Mach <- MachNumber (DW$PSXC, DW$QCXC, DW$EWX)
+DW$TASL <- DW$TASX
+## temporary: use beam 2 only
+# DW$TASL <- DW$BEAM2speed
+DW$TASL3 <- (Data$BEAM1speed + DW$BEAM3speed + DW$BEAM4speed) / (3 * cos (35*pi/180))
+DW$TASL1 <- Data$BEAM2speed
+DW$TASX <- Data$TASX
+CP <- SpecificHeats (DW$EWX / DW$PSXC)
+cpa <- CP[,1]
+Ra <- CP[,3]
+cva <- CP[,2]
+gamma <- cpa/cva
+DTAS <- with(DW, mean (TASX-TASL, na.rm=TRUE))
+DTAS3 <- with (DW, mean (TASX-TASL3, na.rm=TRUE))
+DTAS1 <- with (DW, mean (TASX-TASL1, na.rm=TRUE))
+Vs <- (DW$TASL + DTAS) / DW$Mach
+Vs3 <- (DW$TASL3 + DTAS3) / DW$Mach
+Vs1 <- (DW$TASL1 + DTAS1) / DW$Mach
+TL <- Vs^2 / (gamma * Ra) - 273.15
+TL3 <- Vs3^2 / (gamma * Ra) - 273.15
+TL1 <- Vs1^2 / (gamma * Ra) - 273.15
+LS <- 9
+DW$TLS <- SmoothInterp (TL, .Length=LS)
+DW$TLS1 <- SmoothInterp (TL1, .Length=LS)
+DW$TLS3 <- SmoothInterp (TL3, .Length=LS)
+DW$TLSG <- DW$TLS
+# TL <- DW$TASL^2 / (2*cpa * (((DW$PSXC+DW$QCXC)/DW$PSXC)^(Ra/cpa) - 1)) - 273.15
+DWsave <- DW
+
+@
+
+<<LAMST-8, include=TRUE, fig.cap='The temperature deduced from the measurement obtained using the LAMS-measured airspeed (TLS, dashed green line), adjusted as described in the text, plotted with the standard measurement of temperature (ATX). Where the chisquare of the fit (as defined in the text) was larger than 0.1, the line is plotted as a solid line (TLSG). Also shown is the temperature determined using only the three off-axis beams (TLS3, red line). Data from ARISTO-2016 flight 6, 23:05:00 -- 24:06:20 UTC.', fig.height=4.5>>=
+
+# r <- setRange (DW, 205500, 212000)
+# r <- setRange (DW, 212000, 213500)
+# r <- setRange (DW, 225700, 230000)
+# r <- setRange (DW, 230000, 230100)
+# r <- setRange (DW, 230200, 230300)
+r <- setRange (DW, 230500, 230620)
+# r <- setRange (DW, 230830, 230900)
+# r <- setRange (DW, 230940, 231030)
+# r <- setRange (DW, 231100, 231130)
+# r <- setRange (DW, 231145, 231210)
+# r <- setRange (DW, 240250, 240415)
+# r <- setRange (DW, 240445, 240510)
+# r <- setRange (DW, 240555, 240620)
+# r <- setRange (DW, 240730, 240755)
+# r <- setRange (DW, 240925, 240950)
+# r <- setRange (DW, 240950, 241020)
+# r <- setRange (DW, 241405, 241445)
+# r <- setRange (DW, 241930, 242300)
+# r <- setRange (DW, 242140, 242245)
+# r <- setRange (DW, 244520, 244630)
+# r <- setRange (DW, 244830, 244940)
+# r <- setRange (DW, 245010, 245045)
+# r <- setRange (DW, 245240, 245350)
+# r <- setRange (DW, 250040, 250130)
+# r <- setRange (DW, 250400, 250530)
+# r <- setRange (DW, 250750, 250915)
+# r <- setRange (DW, 250750, 250830)
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+ATX <- DW$ATX
+DW$TLSG[DW$TASCSQ > 0.1] <- NA
+r2 <- r[DW$CONC[r] < 5]
+DW$TLS3 <- DW$TLS3+mean (DW$ATX[r2]-DW$TLS3[r2],  na.rm=TRUE)
+DW$TLS <- DW$TLS+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+DW$TLSG <- DW$TLSG+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+plotWAC (subset(DW[r,],,c(Time, ATX, TLS, TLS3, TLSG)), ylab='Temperature [C]', 
+         col=c('blue', 'darkgreen', 'red', 'darkgreen', 'darkorange'), # ylim=c(-15,-20),
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,2), legend.position='topright')
+Excl <- DW$CONC < 5
+Excl[is.na(DW$CONC)] <- TRUE
+# ATX[Excl] <- NA
+# TLS3[Excl] <- NA
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+# lines (DW$Time+0.5, TLS3, lwd=4, col='darkorange')
+# points (DW$Time, TL, pch=20, col='magenta')
+# plotWAC (subset( DW[r,],, c(Time, WIC)))
+op <- par (mar=c(5,4,1,1)+0.1)
+DW$WW <- 400 + DW$WIC * 100
+# plotWAC(subset(DW[r,],, c(Time, CONCD, WW)))
+plotWAC(subset(DW[r,],, c(Time, CONCD)))
+
+@
+
+Figure \ref{fig:LAMST-8} shows the conventional temperature ATX and
+the LAMS-derived temperatures TLS and TLS3, the first found from the
+four-beam solution and the second from the three-beam solution excluding
+the forward beam. Portions of the TLS3 line where the chisquare as
+defined above is larger than 0.1 are shown as dashed lines. In this
+very dense cloud, with droplet concentrations as measured by the CDP
+exceeding 1000~cm$^{-3}$, the forward beam (not plotted) shows departures
+of many degrees and this appears to bias the four-beam solution toward
+low values. Even the three-beam solution (red line) appears to be
+affected. The measurement appears to recover in the gap between clouds,
+but this appears to be a case where the temperature from the LAMS
+is affected by the presence of the cloud droplets to such an extent
+that it is not reliable.
+
+\clearpage
+
+<<LAMST-9, include=TRUE, fig.cap='See the caption for the preceding figure. Data from ARISTO-2016 flight 6, 24:02:50 -- 24:04:15 UTC.', fig.height=4.5>>=
+
+DW <- DWsave
+r <- setRange (DW, 240250, 240415)
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+ATX <- DW$ATX
+DW$TLSG[DW$TASCSQ > 0.1] <- NA
+r2 <- r[DW$CONC[r] < 5]
+DW$TLS3 <- DW$TLS3+mean (DW$ATX[r2]-DW$TLS3[r2],  na.rm=TRUE)
+DW$TLS <- DW$TLS+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+DW$TLSG <- DW$TLSG+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+plotWAC (subset(DW[r,],,c(Time, ATX, TLS, TLS3, TLSG)), ylab='Temperature [C]', 
+         col=c('blue', 'darkgreen', 'red', 'darkgreen', 'darkorange'), # ylim=c(-15,-20),
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,2), legend.position='topright')
+Excl <- DW$CONC < 5
+Excl[is.na(DW$CONC)] <- TRUE
+ATX[Excl] <- NA
+TLS3[Excl] <- NA
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+# lines (DW$Time+0.5, TLS3, lwd=4, col='darkorange')
+# points (DW$Time, TL, pch=20, col='magenta')
+# plotWAC (subset( DW[r,],, c(Time, WIC)))
+op <- par (mar=c(5,4,1,1)+0.1)
+DW$WW <- 400 + DW$WIC * 100
+# plotWAC(subset(DW[r,],, c(Time, CONCD, WW)))
+plotWAC(subset(DW[r,],, c(Time, CONCD)))
+
+@
+
+<<LAMST-10, include=TRUE, fig.cap='See the caption for the preceding two figures. Data from ARISTO-2016 flight 6, 25:00:40 -- 25:01:30 UTC.', fig.height=4.5>>=
+
+r <- setRange (DW, 250040, 250130)
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+ATX <- DW$ATX
+DW$TLSG[DW$TASCSQ > 0.1] <- NA
+r2 <- r[DW$CONC[r] < 5]
+DW$TLS3 <- DW$TLS3+mean (DW$ATX[r2]-DW$TLS3[r2],  na.rm=TRUE)
+DW$TLS <- DW$TLS+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+DW$TLSG <- DW$TLSG+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+plotWAC (subset(DW[r,],,c(Time, ATX, TLS, TLS3, TLSG)), ylab='Temperature [C]', 
+         col=c('blue', 'darkgreen', 'red', 'darkgreen', 'darkorange'), # ylim=c(-15,-20),
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,2), legend.position='topright')
+Excl <- DW$CONC < 5
+Excl[is.na(DW$CONC)] <- TRUE
+ATX[Excl] <- NA
+TLS3[Excl] <- NA
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+# lines (DW$Time+0.5, TLS3, lwd=4, col='darkorange')
+# points (DW$Time, TL, pch=20, col='magenta')
+# plotWAC (subset( DW[r,],, c(Time, WIC)))
+op <- par (mar=c(5,4,1,1)+0.1)
+DW$WW <- 400 + DW$WIC * 100
+# plotWAC(subset(DW[r,],, c(Time, CONCD, WW)))
+plotWAC(subset(DW[r,],, c(Time, CONCD)))
+
+@
+
+\subsubsection{Case 5: Flight 2016-6, 24:02:50 \textendash{} 24:04:15}
+
+See Fig.~\ref{fig:LAMST-9}. In this case the 3-beam solution (red
+line) appears reasonable except for two possible errors toward low
+temperature in regions of very high cloud droplet concentration. The
+4-beam solution shows pronounced errors in those locations, and the
+high chisquare confirms inconsistency among the line-of-sight airspeeds.
+
+\subsubsection{Case 6: Flight 2016-6, 25:00:40 \textendash{} 25:01:30}
+
+See Fig.~\ref{fig:LAMST-10}. The LAMS-based temperature shows higher
+values on the edges of the cloud and lower values inside the cloud
+in comparison to the conventional measurement. The slow time response
+of the sensor measuring ATX, with around 3-s time constant, may smooth
+the measurements from that sensor. The agreement between 3-beam and
+4-beam results lends some support to the LAMS-based measurements,
+as does the mostly low chisquare for the 4-beam measurements, even
+in cloud.
+
+\clearpage
+
+\subsection{Conclusions, LAMS-measured temperature\label{subsec:Conclusions,-LAMS-measured-tempe}}
+
+The three cloud regions discussed in the first three case studies
+are the best measurements from ARISTO-2015 for this study, and the
+last three appear to be the best from ARISTO-2016. The following assessment
+is based on those studies:
+\begin{enumerate}
+\item The temperature deduced from LAMS is mostly valid out-of-cloud. Because
+it is only dependent on the LAMS-deduced airspeed and on the Mach
+number that is in turn based on ambient and dynamic pressure, themselves
+calibrated by the LAMS measurements, and it does not rely on any temperature
+sensor beyond that needed for the initial calibration. The LAMS-derived
+temperature therefore can be a useful check on the performance of
+standard temperature sensors and may be useful in flagging problems
+with those sensors. However, the LAMS-based measurement of temperature
+is noisy, especially in turbulence, so averaging over periods of at
+least 10~s or more appears necessary.
+\item When in cloud, beam 2 is often strongly biased toward negative temperature
+because the measured airspeed appears to be too low. The problem does
+not appear as strongly in the other three beams, perhaps because they
+are at a 35$^{\circ}$ angle to the relative wind. Possible causes
+are water on the forward surface that causes defocusing of the beam
+or strong scattering or multiple scattering that displaces the effective
+sample volume closer to the aircraft into distorted airflow. The temperature
+measurement based on a single forward-pointing beam therefore is not
+useful in cloud.
+\item The RMS for the four-beam solution for airspeed is a valuable indicator
+of quality, and it often flags regions with bad measurements when
+both available processing schemes for the LAMS line-of-sight velocities
+otherwise indicate good measurements. This benefit from the 4-beam
+configuration was not anticipated but appears to be a particularly
+important reason for using that configuration.
+\item The airspeed based on the three off-axis beams is much less affected
+by cloud and appears to provide a valid measurement except in very
+dense cloud. The temperature deduced from that measurement of airspeed
+tends to be slightly higher than the standard measurement in warm
+cloud, as would be expected if there is evaporative cooling as a result
+of wetting of the temperature sensor. However, this conclusion is
+based on only a few case studies and is not applicable to all cases,
+so no strung conclusion can be drawn.
+\item It would be especially useful to operate a 4-beam LAMS with the in-cloud
+radiometer and perhaps an unheated temperature sensor to obtain further
+tests of the LAMS-based temperature measurement.
+\end{enumerate}
+\clearpage
+
+\section{Transient effects on wind measurements, C-130}
+
+Transient effects on measurements of vertical wind were discussed
+for the GV in \href{https://drive.google.com/open?id=0B1kIUH45ca5AVEJrbElxWmQzRnc}{this earlier memo}.
+The conclusion of that memo was that effects, while detectable and
+correctable, were at the margin of uncertainty for wind measurements
+and so had little significant effect on wind measurements from the
+GV. A similar study is not possible with ARISTO-2015 fights because
+there wasn't a good pitch maneuver to use for this purpose. Two good
+maneuvers were flown in flight 4, 18:21:00\textendash 18:26:00 and
+18:58:00\textendash 19:01:00, but in each case the LAMS signals were
+inadequate to provide a good measurement of vertical wind, as needed
+for this study. Other pitch maneuvers were flown, but some were compromised
+by times when the LAMS IRU was not working or, in the last 2015 flight,
+when LAMS signals were too weak. 
+
+<<revised-netcdf, include=TRUE>>=
+
+## this treats 50-Hz LAMS specially, without producing a full 50-Hz file
+#' @title getNetCDF
+#' @description Loads selected variables in a specified netCDF data file into a data.frame.
+#' @details 'Time' is converted to a POSIXct variable, and other variables specified in 
+#' VarList are included in the data.frame. By default, the entire file is loaded, but 
+#' optional arguments Start and End can limit the time range. After reading the data, the 
+#' netCDF file is closed before returning the data.frame to the calling program.
+#' The global attributes in the netCDF file are loaded as attributes of the returned 
+#' data.frame, and attributes of each requested variable are also assigned to that column 
+#' in the data.frame from the variable attributes in the netCDF file.
+#' When working with attributes, it is a feature of R data.frames that subsetting loses 
+#' all the assigned variable attributes. To preserve them, copy them via 
+#' A <- attributes (Data$VAR), remove A$dim (e.g., A$dim <- NULL),
+#' and re-assign via attributes (DataNew$VAR) <- A. The function does not handle 
+#' multi-dimensional variables (e.g., CCDP, the size distribution measured by a cloud
+#' droplet probe) yet; it does work for 25-Hz files, and returns with fractional-second times.
+#' @aliases getnetcdf GetNetCDF
+#' @author William Cooper
+#' @import ncdf4
+#' @importFrom signal filter sgolay
+#' @importFrom stats approx
+#' @export getNetCDF
+#' @param fname string, full-path file name, e.g., "/scr/raf_data/PREDICT/PREDICTrf01.nc"
+#' @param VarList vector of variable names to load from the netCDF file. Use "ALL" to load 
+#' everything. (May produce quite large data.frames.) The default is the list given by
+#' standardVariables (). 
+#' SPECIAL NOTE: Some variable names
+#' have a suffix indicating the location on the aircraft, like _LWI (left-wing inboard).
+#' To avoid having to supply these, a partial name can be supplied, like "CONCD_", and
+#' the routine will find the first matching variable and use that variable name. These
+#' can always be overridden by providing the full name; this is just a convenience to
+#' avoid having to look up where a particular measurement was installed in a given project.
+#' @param Start An optional numeric giving the desired start time in HHMMSS format
+#' @param End An optional numeric giving the desired end time in HHMMSS format
+#' @param F An optional numeric entered in the data.frame as a column 'RF' all set to 
+#' this integer. This may be useful when the resulting data.frame is combined with others, 
+#' to have a variable distinguishing different flights.
+#' @return data.frame containing the specified variables as columns, along with 'Time' 
+#' and optionally the flight number 'RF'. The netCDF-file attributes and variable
+#' attributes are assigned to the data.frame and columns, respectively.
+#' @examples 
+#' \dontrun{D <- getNetCDF ("PathToFile.nc", c("Var1", "Var2", "Var3"))}
+#' \dontrun{D <- getNetCDF ("PathToFile.nc", c("Var1", "Var2"), 133000, 143000, 5)}
+getNetCDF <- function (fname, VarList=standardVariables(), Start=0, End=0, F=0) {
+  # This function reads the netCDF file 'fname' and extracts 
+  # the variables specified in 'VarList', returning the
+  # results in a data.frame. It includes the flight number F
+  # in the data.frame, as variable RF. It converts "Time",
+  # seconds after a reference time in the netCDF files, to
+  # a POSIXct date/time variable.
+  
+  ## get the header information
+  netCDFfile = nc_open (fname)
+  if ("ALL" %in% VarList) {
+    VarList <- names (netCDFfile$var)
+  }
+  ## check that requested variables are present in netCDF file; fail otherwise
+  namesCDF <- names (netCDFfile$var)
+  for (V in VarList) {
+    if (is.na(V)) {next}
+    if (length (which (grepl (V, namesCDF)))) {next}
+    cat (sprintf ("requested variable %s not in netCDF file;\n ----> getNetCDF returning with error", V))
+    return (-1)
+  }
+  Time <- ncvar_get (netCDFfile, "Time")
+  DL <- length (Time)
+  ## set the maximum data rate (but not above 100 Hz):
+  Rate <- 1
+  nms <- names(netCDFfile$dim)
+  if ("sps25" %in% nms) {Rate <- 25}
+  # if ("sps50" %in% nms) {Rate <- 50}  ## limit to max 25 Hz (special for BEAMn_LAMS)
+  ## comment next line when LAMS 100-Hz vector present but no others
+  # if ("sps100" %in% nms) {Rate <- 100}
+  # print (sprintf ("output rate for this data.frame is %d", Rate))
+  # Expand Time to be high-rate if necessary
+  if (Rate > 1) {
+    T <- vector ("numeric", Rate*length(Time))
+    for (i in 1:length(Time)) {
+      for (j in 0:(Rate-1)) {
+        T[(i-1)*Rate+j+1] <- Time[i] + j/Rate
+      }  
+    }
+    Time <- T
+  }
+  time_units <- ncatt_get (netCDFfile, "Time", "units")
+  tref <- sub ('seconds since ', '', time_units$value)
+  Time <- as.POSIXct (as.POSIXct (tref, tz='UTC')+Time, tz='UTC')
+  # see if limited time range wanted:
+  i1 <- ifelse ((Start != 0), getIndex (Time, Start), 1)
+  i2 <- ifelse ((End != 0), getIndex (Time, End) + Rate - 1, length (Time))
+  # if (End != 0) {
+  #   i2 <- getIndex (Time, End) + Rate - 1
+  # } else {
+  #   i2 <- length (Time)
+  # }
+  r <- i1:i2
+  # r is the appropriate index for any rate, but also need
+  # the 1-Hz and 5-Hz indices for interpolation:
+  r1 <- ((i1-1)/Rate+1):((i2-1)/Rate+1)
+  DL <- length (r1)
+  Time <- Time[r]
+  SE <- getStartEnd (Time)
+  ## save 'Time' attributes:
+  ATT <- ncatt_get (netCDFfile, "Time")   # get list of Time attributes
+  for (A in names (ATT)) {
+    attr(Time, A) <- ATT[[A]]
+  }
+  d <- data.frame(Time)
+  ## save the dimensions, useful for archiving or re-writing to netCDF:-------------
+  ##    but, to save space, omit the list of times
+  nf <- netCDFfile
+  nf$dim[1]$Time$vals <- NULL
+  attr (d, "Dimensions") <- nf$dim
+  ## Save all the global attributes in the netCDF file as 'd' attributes:----------
+  ATT <- ncatt_get (netCDFfile, 0)   # get list of global attributes
+  for (A in names (ATT)) {
+    attr(d, A) <- ATT[[A]]
+  }
+  attr (d, "R_dataframe_created") <- date()    # add one global attribute
+  
+  ######------------------------------------------------------------------
+  IntFilter <- function (X, inRate, outRate) {
+    if (inRate == outRate) {return (X)}
+    ratio <- as.integer(outRate/inRate)    ## expected to be an integer
+    ## beware of missing values
+    z <- zoo::na.approx (as.vector(X), maxgap=1000, na.rm = FALSE)
+    z[is.na(z)] <- 0
+    x <- 0:(length(X)-1)
+    A <- stats::approx (x, z, n=length(X)*ratio-ratio+1)
+    T <- A$y
+    T <- signal::filter(signal::sgolay(4,75),T)
+    ## now shift to match 25-Hz:
+    n <- as.integer (ratio / 2)
+    NL = length(T)
+    T <- c(rep(T[1],n), T, rep(T[NL],ratio-n-1))  ## OK, even or odd ratio
+    return (T)
+  }
+  ######------------------------------------------------------------------
+  
+  ## Add the requested variables:------------------------------------------------
+  for (V in VarList) {
+    if (is.na(V)) {next}
+    ## fill in location-tag for variable name if needed:
+    if (substr(V, nchar(V), nchar(V)) == '_') {
+      for (ncn in namesCDF) {
+        if (grepl (V, ncn)) {V <- ncn; break}   ## note, takes 1st match
+      }
+    }
+    ## save dimensions for the variable:
+    datt <- list()
+    for (dd in netCDFfile$var[[V]]$dim) {
+      datt[[length(datt)+1]] <- dd$name
+    }    ## later, save datt as an attribute of V
+    X <- ncvar_get (netCDFfile, V)
+    ATT <- ncatt_get (netCDFfile, V)
+    ## for Rate == 1, nothing special is needed:
+    if (Rate == 1) {
+      X <- X[r1]
+    } else { ## other rates require flattening and possibly interpolation and filtering
+      DM <- length(dim(X))           
+      if (DM == 2) {    # flatten
+        X <- X[,r1]
+        inputRate <- dim(X)[1]
+        needFilter <- ifelse ((dim(X)[1] != Rate), TRUE, FALSE)
+        dim(X) <- dim(X)[1]*dim(X)[2]
+        ## see if adjustment to max rate is needed
+        if (needFilter) {X <- IntFilter(X, inputRate, Rate)}
+      } else {  ## single-dimension (1 Hz) in high-rate file
+        X <- X[r1]
+        X <- IntFilter (X, 1, Rate)
+      }
+    } 
+    ## add variable attributes as in netCDF file
+    for (A in names (ATT)) {
+      attr (X, A) <- ATT[[A]]
+    }
+    attr (X, "Dimensions") <- datt
+    d[V] <- X
+  }
+  if (F != 0) {    # if specified, include the flight number
+    RF <- rep (F, times=length(Time))    # label flight number
+    d["RF"] <- RF
+  }
+  nc_close (netCDFfile)
+  return (d)
+}
+
+@
+
+<<Transient-1, include=TRUE, fig.height=4.5, fig.cap=c('A flight segment with pitch variations from flight 6 or ARISTO-2016. The blue line shows the difference between the LAMS-based vertical wind (WIL) and the conventional measurement (WIC). Also shown are the rate-of-climb divided by 10 (GGVSPD/10, dashed green line), the angle of attack (AKRD, dotted red line), and the normal component of aircraft acceleration (BNORMA, magenta line).', 'As in the preceding figure but for the vertical wind error after correction for the assumed dependence on normal acceleration, as described in the text.')>>=
+
+Directory <- DataDirectory ()
+Flight <- "rf06hr" 		
+Project = "AR16"		
+ProjectDir <- 'ARISTO'
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+SaveRData2 <- sprintf("%s2.Rdata", thisFileName)
+VarList2 <- VarList2[-32]    ## there is a problem with CONCD_RWT in this file
+if (ReloadData) {
+  Data2 <- getNetCDF (fname, c(VarList2, 'BNORMA'))
+  Data2$QR <- Data2$ADIFR / Data2$QCF
+  Data2$Mach <- MachNumber (Data2$PSFD, Data2$QCF, Data2$EWX)
+  Data2$AKRD <- cfl[1] + Data2$QR * (cfl[2] + cfl[3] * Data2$Mach) 		
+  Data2$SSLIP <- Data2$SSRD
+  Data2$ATTACK <- Data2$AKRD
+  save(Data2, file=SaveRData2)
+} else {
+  load(SaveRData2)
+}
+SampleRate <- 25  
+DW <- processWind (Data2)
+DW$BNORMA <- Data2$BNORMA
+DW$WIL <- ShiftInTime (DW$WIN, 25, 100)  ## shift LAMS wind backward
+## recalculate the vertical wind, for reference and to include the GPS-to-IRU distance:
+DS <- WindProcessor (Data2)
+DW$WIN <- DS$WIN
+DW$WIC <- Data2$WIC
+layout(matrix(1:1, ncol = 1), widths = 1,  heights = c(6))
+op <- par (mar=c(5,4,1,1)+0.1, oma=c(1.1,0,0,0))
+r <- setRange(DW, 205720, 205815)
+# summary(lm((WIL-WIN)~AKRD, data=DW[r,]))$sigma
+with(DW[r,], plotWAC(data.frame(Time, WIL-WIN, GGVSPD/10, AKRD, BNORMA), ylab='WIL-WIC', col=c('blue', 'darkgreen', 'red', 'magenta'), lty=c(1,2,3,1)))
+fw <- lm((WIL-WIN)~BNORMA, data=DW[r,])
+cfw <- coef (fw)
+DW$WIX <- DW$WIN + cfw[1] + cfw[2]*DW$BNORMA
+with(DW[r,], plotWAC(data.frame(Time, WIL-WIX, GGVSPD/10, AKRD, BNORMA), ylab='WIL-WIX', col=c('blue', 'darkgreen', 'red', 'magenta'), lty=c(1,2,3,1)))
+
+@
+
+There were two good maneuvers with rapid pitch changes on flight 6
+of ARISTO-2016, at 20:57:00\textendash 20:59:00 and 21:15:00\textendash 21:17:00
+UTC. The same approach was taken to these maneuvers as for the earlier
+study of the GV:
+\begin{enumerate}
+\item Produce a high-rate (25 Hz) netCDF file for the period of the two
+maneuvers. This was saved as /scr/raf/cooperw/AR16rf06hr.nc on the
+EOL file system. Note that there is an apparent bug in nimbus that
+prevents production of the beam-speed histograms (BEAM1\_LAMS, etc)
+at 25 Hz, giving all-zero values, so these variables were produced
+at 50 Hz instead and the next processing step was modified to average
+those to 25 Hz before proceeding. The 
+\item Process this file using the Python program LAMS\_ARISTO.py. This was
+modified from the one used for other data files to include the averaging
+of the 50-Hz beam-speed histograms to 25 Hz before proceeding. That
+program produced a new netCDF file named AR16rf06hrLAMS.nc with added
+variables BEAM{[}1-4{]}speed, needed for the present R program.
+\item This program (ARISTO-LAMS.Rnw) then read a subset of variables from
+that file and calculated WIL, the LAMS-based vertical wind. The conventional
+wind (WIC) was also recalculated using the sensitivity coefficients
+recommended in this report. To compensate for the displacement between
+the LAMS-based vertical wind and that based on the radome, the LAMS-based
+value was delayed by 100~ms after some study of how the difference
+between WIL and WIC varied with this choice.
+\end{enumerate}
+The resulting difference between WIL and WIC then was used to investigate
+if there appeared to be a false signal in the vertical wind and, if
+so, to search for its source. Figure~\ref{fig:Transient-11} shows
+that this difference shows clear dependence on angle-of-attack, rate-of-climb,
+and normal acceleration of the aircraft. The dependence on angle of
+attack is surprising because this flight was used to determine the
+sensitivity coefficients in use, so residual dependence on angle-of-attack
+indicates that this region has a different dependence in comparison
+to the entire flight. The variable showing the strongest correlation
+to the error, however, is BNORMA, as was also found in the study of
+the GV. In the interval plotted, the correlation between (WIL-WIC)
+and BNORMA is 0.82. As in the case of the GV, the correlation with
+rate-of-change of pitch was almost identical to that with BNORMA,
+and the correlation to angle-of-attack was 0.77, but other variables
+(GGVSPD, rate of change of angle of attack, PITCH) gave significantly
+lower correlation to the error.
+
+As for the GV, a suggested correction for this effect is to add $g_{0}+g_{1}(\mathrm{BNORM})$
+to WIC, where \{$g_{0},\,g_{1}$\} = \{\Sexpr{round(cfw[1], 3)},
+\Sexpr{round(cfw[2], 3)}\}.\footnote{Perhaps better would be to make the equivalent correction to AKRD
+before calculation of the vertical wind.} When this correction is made, the new variable (WIX), shown in Fig.~{fig:Transient-12},
+no longer appears to depend on any of the other plotted variables.
+With this correction, the standard deviation in the difference between
+the LAMS-based and corrected vertical wind was 0.34~m/s, similar
+to the standard deviation for a similar 30-s period just before the
+maneuver (0.49~m/s). The applied correction had a standard deviation
+of 0.37~m/s, so about half of the observed variance between WIL and
+WIC is removed by this correction. 
+
+The second pitch maneuver (21:15:00 \textendash{} 21:17:00 UTC) was
+a little more turbulent, but the results were consistent with those
+from the first.
+
+\subsection*{Summary - Transient Effects}
+\begin{enumerate}
+\item The pitch maneuver revealed that the difference between the LAMS-derived
+vertical wind and that from the radome-based system varied with the
+vertical acceleration. The estimated magnitude of the combined effects,
+however, is modest, leading to typical errors in WIC of about 0.4~m/s
+when the vertical acceleration was in the range $\pm2\thinspace$m\,s$^{-2}$,
+as is typical of all but the most extreme flight conditions.
+\item A correction can be used to remove this error in vertical wind. After
+application of that regression correction based on the pitch maneuver,
+the measurements of vertical wind from the radome-based system agree
+with those from the LAMS with a standard deviation between the two
+measurements of about 0.4~m/s during that pronounced maneuver. This
+was significantly larger than that obtained for the GV, but this maneuver
+was flown in more turbulent conditions where the true fluctuations
+in wind were about of this magnitude.
+\end{enumerate}
+
+\section{Summary and Conclusions}
+\begin{enumerate}
+\item The four-beam LAMS produced useful measurements in all four beams
+for major parts of the ARISTO flights.
+\begin{enumerate}
+\item The overconstrained solution for airspeed using all four beams provided
+a useful measure of consistency that can be used to avoid instances
+where the algorithm providing the line-of-sight airspeeds produced
+erroneous results. A proposed limit on the chisquare from the fit
+appeared to be useful, as described in Section 2.
+\item The airspeed from the forward beam usually measured an airspeed that
+was within about 0.3~m/s of the airspeed determined from the other
+three off-axis beams.
+\item Dense cloud appeared to affect the measurements, especially for the
+forward beam. The three off-axis beams were less affected, but very
+dense cloud produced erroneous measurements in all four beams.
+\item The downward-slanted beam occasionally was contaminated by return
+from the surface during low-level flight.
+\item One flight (flight 6 of ARISTO-2016) included a wide range of conditions
+spanning the altitude range of the C-130 and gave a good basis for
+determining the fitted coefficients for the radome sensitivity and
+the static defect based on the the range of conditions normally encountered
+by the C-130, including for flight near sea level.
+\end{enumerate}
+\item New sensitivity coefficients were determined for the radome:
+\begin{enumerate}
+\item For angle of attack, new suggested sensitivity coefficients based
+on calibration to match LAMS-based measurements are \{$c_{0},\,c_{1},\,c_{2}$\}
+= \{\Sexpr{round(cfl[1], 4)}, \Sexpr{round(cfl[2], 4)}, \Sexpr{round(cfl[3], 4)}\}.
+Cf.~Equation~(\ref{eq:akrd-fit}). These coefficients have been
+adjusted to account for the offset in vertical alignment between the
+LAMS IRU and the upward axis normal to the longitudinal axis of the
+aircraft.
+\item For sideslip, the suggested coefficients are \{$b_{0},\,b_{1}$\}
+= \{\Sexpr{round(cfs[1], 4)}, \Sexpr{round(cfls[2], 4)}\}. (Cf.~Eq.~(\ref{eq:ssrd}).
+The second coefficient is based on the LAMS-based calibration, while
+the first was determined from a conventional calibration using yaw
+maneuvers; the justification is that the relative offset in installation
+orientation between the LAMS and the longitudinal axis of the aircraft
+is uncertain so this coefficient is chosen to match the conventional-calibration
+value. (The value determined from the LAMS calibration is only about
+0.05$^{\circ}$ larger than the coefficient listed.) The first coefficient
+(i.e., the offset in sideslip) still needs to be determined from good
+circle maneuvers, which can separate an offset in heading from one
+in sideslip. It is significant, though, that these calibrations suggest
+a change in offset of about 1.6$^{\circ}$ from the standard coefficients.
+This will have a significant effect on calculated horizontal wind.
+\item Because the LAMS provides reference values for calibrations such as
+these that are superior to those obtained in the conventional way
+(dependent on zero vertical wind), it will be useful to include LAMS-based
+calibration in future projects where the measurement of vertical wind
+is needed with low uncertainty.
+\end{enumerate}
+\item A new parameterized correction to static and dynamic pressure was
+determined using a wide range of flight conditions spanning the altitude
+range of the C-130. The suggested formula is (\ref{eq:dq-fit}) with
+coefficients \{$b_{0-4}$\}=\{\Sexpr{round(cf[1],6)}, \Sexpr{round(cf[2],5)},
+\Sexpr{round(cf[3],8)}, \Sexpr{round(cf[4],5)}, \Sexpr{round(cf[5],6)}\}
+for the sensing pair producing PSFD and QCF and \{\Sexpr{round(cf2[1],6)},
+\Sexpr{round(cf2[2],5)}, \Sexpr{round(cf2[3],8)}, \Sexpr{round(cf2[4],5)},
+\Sexpr{round(cf2[5],6)}\} for the sensor pair producing PSFRD and
+QCFR. This correction provides a consistent offset from the avionics-provided
+pressure (PS\_A) for recent C-130 projects since IDEAS-4-C130 in 2011,
+where a different correction is needed.
+\item The LAMS-based measurement of temperature provides measurements out-of-cloud
+in good agreement with the conventional temperature sensors. In cloud,
+the measurements are sometimes compromised, especially in very dense
+cloud, but sometimes suggest possibly real differences from the conventional
+sensors. This portion of the study was mostly inconclusive. See Sect.~\ref{subsec:Conclusions,-LAMS-measured-tempe}
+for a more extensive summary.
+\item As was found for the GV, there are indications of transient effects
+on the measured angle-of-attack of the C-130 when the pitch changes
+rapidly. The best correction appeared to be to apply an empirical
+correction based on the measured upward acceleration of the aircraft,
+as was also the case for the GV. The correction based on a linear
+fit to the measured normal acceleration BNORMA made corrections of
+typically about 0.4~m/s to the vertical wind, a value considerably
+larger than the typical correction of about 0.1~m/s that applied
+to the GV. However, except for this increased magnitude of the correction,
+the features of the transient effects appeared similar for the two
+aircraft.
+\end{enumerate}
+\begin{center}
+\textsf{\textcolor{blue}{\textendash{} End of Memo \textendash{}}}
+\par\end{center}
+
+\clearpage
+
+Reproducibility: 
+
+\begin{tabular}{ll}
+\textsf{\textsc{\textcolor{blue}{Project:}}} & \Sexpr{thisFileName}\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Archive package:}}} & \Sexpr{thisFileName}.zip\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Contains:}}} & attachment list below\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Program:}}} & \Sexpr{thisFileName}.Rnw\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Python:}}} & /h/eol/cooperw/RStudio/LAMS3D/LAMS\_ARISTO.py\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Original Data:}}} & /scr/raf\_data/ARISTO\{2015,2016\}/rfxx.nc\tabularnewline
+ & /scr/raf/cooperw/AR16rf06hr.nc\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Workflow:}}} & Workflow\Sexpr{thisFileName}.pdf\tabularnewline
+\textsf{\textsc{\textcolor{blue}{Git:}}} & https://github.com/WilliamCooper/\Sexpr{thisFileName}.git\tabularnewline
+\end{tabular}
+
+\attachm{\Sexpr{thisFileName}.Rnw\\LAMS\_ARISTO.py\\\Sexpr{thisFileName}.pdf\\SessionInfo\\WorkflowARISTO-LAMS.pdf\\SaveRData.zip}
+%\cc{first attachment\\second\\3rd att}
+%\attach{attachment}
+%\attachm{first\\second} %\cc{first attachment\\second\\3rd att}
+<<save-system-info, echo=FALSE>>= 
+cat (toLatex(sessionInfo()), file="SessionInfo")
+
+@ 
+<<make-zip-archive, echo=TRUE, INCLUDE=TRUE>>=
+system (sprintf ('zip SaveRData.zip %s*Rdata', thisFileName))
+system (sprintf("zip %s.zip %s.Rnw %s.pdf LAMS_ARISTO.py Workflow%s.pdf SessionInfo SaveRData.zip", thisFileName, thisFileName, thisFileName, thisFileName))
+
+@ 
+
+% \attach{attachment}
+
+% \attachm{ProgramFile\\Document.pdf\\SaveRData}
+
+%\cc{first attachment\\second\\3rd att}
+\end{document}
