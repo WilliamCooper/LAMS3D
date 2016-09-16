@@ -1,0 +1,1214 @@
+#LyX 2.2 created this file. For more info see http://www.lyx.org/
+\lyxformat 508
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+\input colordvi
+\usepackage{color}
+\fancyhead{}
+\fancyfoot[CE,CO]{}
+\newtoks{\addressee} \global\addressee={}
+\newdimen\longindent \longindent=3.5truein
+\fancyhead[L]{Memo to: \the\addressee \\ \datetoday \\ Page \thepage \hfill}
+\renewcommand{\headrulewidth}{0.0pt}
+\newenvironment{lyxlist}[1]
+{\begin{list}{}
+{\settowidth{\labelwidth}{#1}
+\setlength{\leftmargin}{\labelwidth}
+\addtolength{\leftmargin}{\labelsep}
+\renewcommand{\makelabel}[1]{##1\hfil}}}
+{\end{list}}
+\newcommand{\datetoday}{\number\day\space
+     \ifcase\month\or January\or February\or March\or April\or May\or
+     June\or July\or August\or September\or October\or November\or
+     December\fi
+     \space\number\year}
+\newcommand{\EOLmemo}{\null \vskip-1.5truein
+{\raggedright \textsf{\textsc{\large \textcolor{blue}{Earth Observing Laboratory}}}}\par
+{\raggedright \textsf{\textsl{\textcolor{blue}{Memorandum:}}}} \par \vskip6pt
+{\color{blue}{\hrule}}\par
+\vskip0.3truein \leftline{\hskip \longindent \datetoday} \vskip0.2truein
+\thispagestyle{empty}}
+\newcommand{\attachm}[1]{\begin{lyxlist}{Attachments:00}
+\item [Attachments:] {#1}
+\end{lyxlist}}
+\newcommand{\cc}[1]{\begin{lyxlist}{Attachments:00}
+\item [cc:] {#1}
+\end{lyxlist}}
+\newcommand{\attach}[1]{\begin{lyxlist}{Attachments:00}
+\item [Attachment:] {#1}
+\end{lyxlist}}
+%usage: \encl{A\\B\\C} or \cc{ma,e1\\name2\\name3}
+\end_preamble
+\use_default_options false
+\begin_modules
+knitr
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package auto
+\inputencoding default
+\fontencoding global
+\font_roman "times" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize 12
+\spacing single
+\use_hyperref false
+\papersize letterpaper
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 0
+\use_package mathdots 0
+\use_package mathtools 1
+\use_package mhchem 0
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine natbib
+\cite_engine_type authoryear
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\leftmargin 2.54cm
+\topmargin 3.54cm
+\rightmargin 2.54cm
+\bottommargin 2.54cm
+\headheight 1cm
+\headsep 2cm
+\footskip 0.5cm
+\secnumdepth 2
+\tocdepth 2
+\paragraph_separation skip
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle fancy
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+EOLmemo 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+global
+\backslash
+addressee={ARISTO-LAMS archive}  % >>change "File" to the "To:" name desired
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Tabular
+<lyxtabular version="3" rows="3" columns="2">
+<features tabularvalignment="middle">
+<column alignment="left" valignment="top" width="0pt">
+<column alignment="left" valignment="top" width="0pt">
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+\shape smallcaps
+\color blue
+To:
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+the
+\backslash
+addressee
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+\shape smallcaps
+\color blue
+From:
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+William Cooper
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+\shape smallcaps
+\color blue
+Subject:
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+workflow for generating this report
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+XXX or comments flag changes needing attention
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status collapsed
+
+\begin_layout Plain Layout
+
+
+\backslash
+bigskip
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<initialization,echo=FALSE,include=FALSE>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+library(knitr)
+\end_layout
+
+\begin_layout Plain Layout
+
+opts_chunk$set(echo=FALSE, include=FALSE, fig.lp="fig:")
+\end_layout
+
+\begin_layout Plain Layout
+
+opts_chunk$set(fig.width=6, fig.height=5, fig.pos="center", digits=4)
+\end_layout
+
+\begin_layout Plain Layout
+
+thisFileName <- "WorkflowAttitudeAngleNote"
+\end_layout
+
+\begin_layout Plain Layout
+
+require(Ranadu, quietly = TRUE, warn.conflicts=FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+require(ggplot2)
+\end_layout
+
+\begin_layout Plain Layout
+
+require(grid)
+\end_layout
+
+\begin_layout Plain Layout
+
+require(ggthemes)
+\end_layout
+
+\begin_layout Plain Layout
+
+Directory <- DataDirectory ()
+\end_layout
+
+\begin_layout Plain Layout
+
+Flight <- "rf01" 				# XXX change this
+\end_layout
+
+\begin_layout Plain Layout
+
+Project = "DEEPWAVE"			 # XXX change this
+\end_layout
+
+\begin_layout Plain Layout
+
+ProjectDir <- "DEEPWAVE"
+\end_layout
+
+\begin_layout Plain Layout
+
+fname = sprintf("%s%s/%s%s.nc", Directory,ProjectDir,Project,Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+Data <- getNetCDF (fname, standardVariables())		#XXX set variables needed
+ here
+\end_layout
+
+\begin_layout Plain Layout
+
+SaveRData <- sprintf("%s.Rdata", thisFileName)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Purpose
+\end_layout
+
+\begin_layout Standard
+This workflow description documents the steps leading to the code in 
+\begin_inset Quotes eld
+\end_inset
+
+ARISTO-LAMS.Rnw
+\begin_inset Quotes erd
+\end_inset
+
+ and provides additional detail not in the associated report 
+\begin_inset Quotes eld
+\end_inset
+
+ARISTO-LAMS.pdf.
+\begin_inset Quotes erd
+\end_inset
+
+ ARISTO-LAMS.Rnw contains both text (in \SpecialChar LaTeX
+ format) and R processing code for
+ the analyses in the resulting report that describes some studies of the
+ measurements from the LAMS on the C-130 in the 2015 and 2016 ARISTO project.
+ The description of workflow provided here includes the process of collecting
+ the observations and processing them to data files, the data archives used,
+ the steps required to generate the plots and other results including the
+ instances where manual intervention is required to identify appropriate
+ subsets of the data, the relevant R code and \SpecialChar LaTeX
+ documents, and all the steps
+ leading to the generation of the text in the manuscript.
+ "ARISTO-LAMS.Rnw" is the authoritative reference, but this overview may
+ help explain the workflow at a general level and so could substitute for
+ or supplement reading the R and \SpecialChar LaTeX
+ code in most cases.
+ The intent is to describe the workflow in sufficient detail to support
+ replication of the analysis and figures presented in the report, to facilitate
+ changes based on new data or new analysis approaches, and to make it practical
+ to apply the proposed algorithms to data collected by research aircraft
+ used in atmospheric studies.
+\end_layout
+
+\begin_layout Standard
+The description provided here is not complete because many aspects of the
+ workflow have already been included in the main document.
+ This is indended to supplement those descriptions but not provide a complete
+ substitute for them.
+\end_layout
+
+\begin_layout Section
+Acquisition of the primary data
+\end_layout
+
+\begin_layout Standard
+The measurements used in this report were collected using the NSF/NCAR C-130
+ research aircraft during the ARISTO projects of 2015 and 2016.
+ The onboard data-acquisition program 'aeros' recorded the data in digital
+ format, and those data files were then processed by the program 'nimbus'
+ to produce an archive in NetCDF format.
+ The software management group of NCAR/EOL maintains a version-controlled
+ archive of these programs, so if they are of interest they can be obtained
+ by contacting the data-management group of EOL (
+\begin_inset CommandInset href
+LatexCommand href
+name "at this "
+target "raf-dm@eol.ucar.edu"
+type "mailto:"
+
+\end_inset
+
+ or 
+\begin_inset CommandInset href
+LatexCommand href
+name "this"
+target "datahelp@eol.ucar.edu"
+type "mailto:"
+
+\end_inset
+
+ address).
+ The data files available from NCAR/EOL can be found at links on 
+\begin_inset CommandInset href
+LatexCommand href
+name "this URL"
+target "https://www.eol.ucar.edu/all-field-projects-and-deployments"
+
+\end_inset
+
+.
+ The details of the processing algorithms are documented here: 
+\begin_inset CommandInset href
+LatexCommand href
+name "Processing Algorithms"
+target "https://drive.google.com/open?id=0B1kIUH45ca5Ab2Z6cld1M1cydjA"
+
+\end_inset
+
+.
+ Some procedures as they pertain to the measurement of wind are also documented
+ in 
+\begin_inset CommandInset citation
+LatexCommand cite
+key "Cooper2016ncartn"
+
+\end_inset
+
+, and there is supplemental material on the LAMS there also.
+ The resulting data files contain measurements in scientific units and brief
+ descriptions of each measurement, included as netCDF attributes for the
+ files and for each variable.
+\end_layout
+
+\begin_layout Standard
+One special file was generated and used in ARISTO-LAMS.Rnw, a netCDF file
+ named AR16rf06hr.nc.
+ It was generated by the program nimbus (version of June 2016) by specifying
+ a 25-Hz data rate, with LAMS histograms at 50 Hz.
+ At the time of this run, the 25-Hz option for the beam histogram variables
+ (BEAM[1-4]_LAMS) did not work so it was necessary to produce those variables
+ at 50-Hz and then average to 25 Hz during processing.
+ That netCDF file is not part of the standard project archives and so must
+ be obtained separately, as described in the 
+\begin_inset Quotes eld
+\end_inset
+
+Reproducibility
+\begin_inset Quotes erd
+\end_inset
+
+ appendix to the report.
+\end_layout
+
+\begin_layout Section
+The ARISTO-LAMS.Rnw file
+\end_layout
+
+\begin_layout Standard
+The .Rnw file is basically \SpecialChar LaTeX
+ text, generated for simplicity using \SpecialChar LyX
+ and exported
+ to .Rnw format and then processed in RStudio (
+\begin_inset CommandInset citation
+LatexCommand citet
+key "RStudio2012"
+
+\end_inset
+
+).
+ The .lyx file (ARISTO-LAMS.lyx) will run equivalently and produce a PDF-format
+ version of the manuscript.
+ The .Rnw file was produced by exporting in 'Rnw (knitr)' format from LyX.
+ Within the .Rnw file or within the .lyx file there are 
+\begin_inset Quotes eld
+\end_inset
+
+chunks
+\begin_inset Quotes erd
+\end_inset
+
+ of R code (
+\begin_inset CommandInset citation
+LatexCommand citet
+key "Rlanguage"
+
+\end_inset
+
+), delineated by a header having this format:
+\end_layout
+
+\begin_layout LyX-Code
+\begin_inset Box Boxed
+position "t"
+hor_pos "c"
+has_inner_box 1
+inner_pos "t"
+use_parbox 0
+use_makebox 0
+width "100col%"
+special "none"
+height "1in"
+height_special "totalheight"
+thickness "0.4pt"
+separation "3pt"
+shadowsize "4pt"
+framecolor "black"
+backgroundcolor "none"
+status open
+
+\begin_layout LyX-Code
+<<title, var=setting, ...>>=
+\end_layout
+
+\begin_layout LyX-Code
+...R code...
+\end_layout
+
+\begin_layout LyX-Code
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+These chunks generate plots and other results of analyses that are incorporated
+ into the manuscript using 'knitr' (
+\begin_inset CommandInset citation
+LatexCommand citet
+key "Xie2014a,Xie2014b"
+
+\end_inset
+
+).
+ In RStudio, the chunks appear as gray sections in the file when it is edited.
+ Where tasks involve execution of R code, the chunk containing the code
+ is referenced in the discussion below.
+ Any results from the processing can be incorporated into the \SpecialChar LaTeX
+ text via
+ 
+\begin_inset Quotes eld
+\end_inset
+
+
+\backslash
+Sexpr{}
+\begin_inset Quotes erd
+\end_inset
+
+ calls embedded in the \SpecialChar LaTeX
+ portion of the file.
+\end_layout
+
+\begin_layout Standard
+Two 
+\begin_inset Quotes eld
+\end_inset
+
+switches
+\begin_inset Quotes erd
+\end_inset
+
+ serve to speed execution of the code: (1) 
+\begin_inset Quotes eld
+\end_inset
+
+ReloadData,
+\begin_inset Quotes erd
+\end_inset
+
+ which when TRUE causes the original archive data files to be read; and
+ the option 
+\begin_inset Quotes eld
+\end_inset
+
+cache
+\begin_inset Quotes erd
+\end_inset
+
+ which, when true, causes previously generated subsets of the results to
+ be re-used as saved in a subdirectory 
+\begin_inset Quotes eld
+\end_inset
+
+cache.
+\begin_inset Quotes erd
+\end_inset
+
+ Both are provided to speed execution in cases where small changes are made.
+ When ReloadData is FALSE subsets of data files previously saved as 
+\begin_inset Quotes eld
+\end_inset
+
+Rdata
+\begin_inset Quotes erd
+\end_inset
+
+ files are restored to R data.frames, a process that is much faster than
+ re-reading the original archive data file.
+ If cache is FALSE all calculations are performed, but using 
+\begin_inset Quotes eld
+\end_inset
+
+cache=TRUE
+\begin_inset Quotes erd
+\end_inset
+
+ is usually much faster after the first run.
+ 
+\end_layout
+
+\begin_layout Standard
+The file and the report are organized into seven sections, each of which
+ is discussed in this workflow document.
+ This document was in turn generated by a \SpecialChar LyX
+ file (
+\begin_inset Quotes eld
+\end_inset
+
+WorkflowARISTO-LAMS.lyx
+\begin_inset Quotes erd
+\end_inset
+
+).
+ 
+\end_layout
+
+\begin_layout Section
+Required R packages including Ranadu
+\end_layout
+
+\begin_layout Standard
+The R code used for analysis reported in this paper relies heavily on a
+ package of routines for R called 
+\begin_inset Quotes eld
+\end_inset
+
+Ranadu.
+\begin_inset Quotes erd
+\end_inset
+
+ This is a set of R scripts for working with the NetCDF archive data files
+ produced by NCAR/EOL/RAF, and it includes some convenience routines for
+ generating plots and performing other data-analysis tasks with the archived
+ data.
+ The Ranadu package is available at this 
+\begin_inset CommandInset href
+LatexCommand href
+name "GitHub address"
+target "https://github.com/WilliamCooper/Ranadu.git"
+
+\end_inset
+
+.
+ To run the R code referenced here, that package should be included in the
+ R installation.
+ The KalmanFilter.Rnw routine requires that package and also some others
+ referenced in the file, including 
+\begin_inset Quotes eld
+\end_inset
+
+knitr
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+ggplot2
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+grid
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+ggthemes
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+zoo
+\begin_inset Quotes erd
+\end_inset
+
+ and 
+\begin_inset Quotes eld
+\end_inset
+
+signal
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In addition, Ranadu requires 
+\begin_inset Quotes eld
+\end_inset
+
+ncdf4
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+tcltk
+\begin_inset Quotes erd
+\end_inset
+
+, 
+\begin_inset Quotes eld
+\end_inset
+
+stats
+\begin_inset Quotes erd
+\end_inset
+
+, and 
+\begin_inset Quotes eld
+\end_inset
+
+reshape2
+\begin_inset Quotes erd
+\end_inset
+
+.Some parts of 
+\begin_inset Quotes eld
+\end_inset
+
+Ranadu
+\begin_inset Quotes erd
+\end_inset
+
+ reference additional packages as needed, but they are not used in ARISTO-LAMS.Rn
+w so do not need to be available for this routine to run.
+\end_layout
+
+\begin_layout Standard
+The netCDF files sometimes have mixed rates, e.g., 5_Hz for GPS-provided measureme
+nts and 25
+\begin_inset space ~
+\end_inset
+
+Hz for some others including interpolation to 25
+\begin_inset space ~
+\end_inset
+
+Hz from 13
+\begin_inset space ~
+\end_inset
+
+Hz for IRS-provided measurements.
+ In 
+\begin_inset Quotes eld
+\end_inset
+
+Ranadu
+\begin_inset Quotes erd
+\end_inset
+
+, this is handled appropriately in the 
+\begin_inset Quotes eld
+\end_inset
+
+getNetCDF()
+\begin_inset Quotes erd
+\end_inset
+
+ routine, sometimes with the 
+\begin_inset Quotes eld
+\end_inset
+
+ShiftInTime()
+\begin_inset Quotes erd
+\end_inset
+
+ routine to adjust for delays among the variables and the 
+\begin_inset Quotes eld
+\end_inset
+
+SmoothInterp()
+\begin_inset Quotes erd
+\end_inset
+
+ routine to interpolate for missing values and apply smoothing of signals.
+ Most of the plots are generated using 
+\begin_inset Quotes eld
+\end_inset
+
+plotWAC()
+\begin_inset Quotes erd
+\end_inset
+
+, which is a convenience routine that sets various options preferred by
+ the author when using the R 
+\begin_inset Quotes eld
+\end_inset
+
+plot()
+\begin_inset Quotes erd
+\end_inset
+
+ routine.
+\end_layout
+
+\begin_layout Section
+Discussion of Sections 1 and 2
+\end_layout
+
+\begin_layout Standard
+Section 1 includes a table listing the flights used in this study.
+ The data files are netCDF-format files located in the directories /scr/raf_data
+/ARISTO2015 and /scr/raf_data/ARISTO2016 as of Sept.
+ 2016.
+ These files may change if the project is reprocessed, so they are not guarantee
+d to remain as they were used.
+ To ensure reproducibility, the R data.frames containing the data as read
+ from these files and used in this program were saved separately in a set
+ of files contained in SaveRData.zip, which is part of the archive for this
+ document.
+ This set of files should be restored to the working directory containing
+ ARISTO-LAMS.Rnw before running that program.
+\end_layout
+
+\begin_layout Standard
+Section 2 is a description of the data-processing required to run this program.
+ That section describes the workflow for that step in the process, so it
+ does not need further discussion here.
+ It also includes links to further discussion of the processing algorithm
+ incorporated into the Python program LAMS-ARISTO.py that is included as
+ part of the archive named ARISTO-LAMS.zip for this project.
+\end_layout
+
+\begin_layout Section
+Discussion of Section 3
+\end_layout
+
+\begin_layout Standard
+There is some further discussion of the 
+\begin_inset Quotes eld
+\end_inset
+
+standard
+\begin_inset Quotes erd
+\end_inset
+
+ approach to determining the sensitivity coefficients in past analysis-project
+ archives such as discussed in 
+\begin_inset CommandInset href
+LatexCommand href
+name "this link"
+target "https://drive.google.com/open?id=0B1kIUH45ca5AbjlGQWtrQVRPNVU"
+
+\end_inset
+
+, a workflow description for a previous program.
+ The key change used here is to use the LAMS-measured angle of attack as
+ the reference for the fits, as described in the text.
+ The discussion of angle of attack is unfortunately separated into two sections
+ because of the history of how the analysis was performed, and the second
+ section (Sect.
+\begin_inset space ~
+\end_inset
+
+4.3 in the report) should be considered the preferable determination of sensitivi
+ty coefficients for angle of attack because the data used span a larger
+ range of flight conditions.
+\end_layout
+
+\begin_layout Section
+Section 4: Corrections to ambient and dynamic pressure
+\end_layout
+
+\begin_layout Standard
+The original reference for this approach is 
+\begin_inset CommandInset citation
+LatexCommand citet
+key "CooperEtAl2014"
+
+\end_inset
+
+.
+ The standard discussion of processing algorithms is in this 
+\begin_inset CommandInset href
+LatexCommand href
+name "technical note"
+target "https://drive.google.com/open?id=0B1kIUH45ca5Ab2Z6cld1M1cydjA"
+
+\end_inset
+
+.
+ Because the parameterization relies on the measured angle of attack, the
+ sensitivity coefficients for this measurement were revised based on the
+ extensive range of flight conditions present in flight 6 of ARISTO-2016,
+ and that discussion is presented in Sect.
+\begin_inset space ~
+\end_inset
+
+4.3 of the report.
+ Workflow for that section follows the same approach as in Sect.
+\begin_inset space ~
+\end_inset
+
+3, so the references there can be consulted for additional detail.
+\end_layout
+
+\begin_layout Standard
+The change in approach from previous work is in how the empirical terms
+ in the fitted equation were selected.
+ Candidate terms expected to contribute were the ratio of dynamic to static
+ pressure, the Mach number (also dependent on dynamic and static pressure
+ but not in a linear way), the angle of attack (potentially changing the
+ static defect), the rate of climb, the pitch angle, and the sideslip angle.
+ Several of these, including sideslip angle, rate of climb, and pitch angle
+ (separate from angle of attack) were eliminated in preliminary checks.
+ Then a combination of these factors was defined by this R equation in ARISTO-LA
+MS.Rnw line 1279:
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\mathrm{lm(DQP\sim AKRD*M*QP*I(AKRD\mathcircumflex2)*I(QP\mathcircumflex2)*I(M\mathcircumflex2),data=DW)}
+\]
+
+\end_inset
+
+Here DQP is the ratio of the error in dynamic pressure to the measured (uncorrec
+ted) ambient pressure, AKRD is the angle of attack, QP is the ratio of uncorrect
+ed dynamic to uncorrected ambient pressure, M is the Mach number calculated
+ from the uncorrected pressures, and DW is a subset of the measurements
+ qualified by meeting the defined chisquare test with some additional retriction
+s on airspeed and roll angle to eliminate turns and periods near takeoff
+ and landing.
+ When defined in this way, the R routine 'lm()' constructs terms involving
+ all the factors multiplied together in the argument and also all possible
+ products of those terms; i.e., AKRD, M, and QP but also AKRD*M, AKRD*M_QP
+\begin_inset Formula $^{2}$
+\end_inset
+
+, etc., for a total of 64 candidate terms.
+ Next, those that did not meet a significance test of <0.001 in the t-test
+ for that coefficient in the fit were eliminated, leaving 23 coefficients.
+ From that point, analysis of variance (provided by the R routine 'anova()')
+ was used to eliminate the least significant contributing terms repeatedly
+ while monitoring the change in the standard deviation of the fit about
+ the reference values DQP.
+ This led to the terms listed in Eq.
+\begin_inset space ~
+\end_inset
+
+(10) in the primary document, at which point elimination of any additional
+ terms caused the standard deviation to increase by 10% above that for the
+ 23-coefficient fit.
+ The only surprise in this approach was the significance of the final term,
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\[
+b_{4}\frac{q_{m}}{p_{m}}\left(\frac{\alpha}{a_{r}}\right)^{2}\,\,,
+\]
+
+\end_inset
+
+which was the least significant remaining term but still had a F value in
+ the analysis of variance almost as large as the second-least-significant
+ term 
+\begin_inset Formula $M$
+\end_inset
+
+.
+ It therefore appeared best not to eliminate that term, particularly because
+ the increase in standard deviation started to weaken the representation
+ of the pressure correction near the limits of the flight envelope without
+ this term.
+\end_layout
+
+\begin_layout Standard
+For the alternate pair of measurements on the C-130, PSFRD and QCFR, the
+ same five-coefficient fit was used rather than going through the full eliminati
+on of terms as for the primary measurement pair (PSFD and QCF).
+ The standard deviation about the reference values was almost as low for
+ the alternate sensor pair as for the primary pair, so the selected parameteriza
+tion appeared to provide a satisfactory calibration for both.
+\end_layout
+
+\begin_layout Standard
+At the time this study was conducted, the primary processing scheme for
+ the LAMS measurements (Scott Spuler's PCA method as modified by Matt Hayman)
+ was not yet available for ARISTO-2016 flights, so all identification of
+ peaks in the LAMS histograms was based on the SG-polynomial method.
+ It may be useful to repeat this one day with the reprocessed data using
+ the PCA method, because that likely will add additional measurements to
+ the dataset used for the calibration.
+\end_layout
+
+\begin_layout Section
+Discussion of Sect.
+\begin_inset space ~
+\end_inset
+
+5, LAMS-based measurement of temperature
+\end_layout
+
+\begin_layout Standard
+This section led to incomplete results with mixed success, so this section
+ won't receive extensive discussion here.
+ The approach was to examine many cloud passes from ARISTO-2015 and ARISTO-2016,
+ calculate the temperature based on LAMS measurements of airspeed and the
+ LAMS-corrected measurement of Mach number, and compare the resulting temperatur
+e to the conventional measurement ATX.
+ Plots were generated using Ranadu::plotWAC(), after some smoothing of the
+ LAMS-based measurement to reduce noise.
+ Figures 11, 13, and 16–20 showing some of the cloud passes were constructed
+ in two-panel plots using this function.
+\end_layout
+
+\begin_layout Section
+Discussion of Sect.
+\begin_inset space ~
+\end_inset
+
+6 (Transient effects)
+\end_layout
+
+\begin_layout Standard
+There is an earlier study related to this section but for the GV, discussed
+ in 
+\begin_inset CommandInset href
+LatexCommand href
+name "this report"
+target "https://drive.google.com/open?id=0B1kIUH45ca5AVEJrbElxWmQzRnc"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset href
+LatexCommand href
+name "this presentation"
+target "https://drive.google.com/open?id=0B1kIUH45ca5AZ1JUY1hORWpqUkk"
+
+\end_inset
+
+.
+ Those documents provide additional details on the approach taken here,
+ but that study did not have a separate workflow document so some of the
+ details are missing.
+ An important aspect of this study is that the normal acceleration of the
+ aircraft in the upward direction, BNORMA, is used, and that is often not
+ present in standard files.
+ The earlier study showed that this measurement can be deduced with sufficient
+ accuracy by differentiating the ground-speed components of the aircraft
+ (GGVNS, GGVEW, GGVSPD) to find the accelerations and then transforming
+ those accelerations to the aircraft reference frame.
+ That was not done in the present study because BNORMA was available, but
+ it might be useful in future work.
+\end_layout
+
+\begin_layout Standard
+An additional special step was needed for this section of the study.
+ The standard routine for access to the netCDF files, Ranadu::getNetCDF(),
+ constructs a data.frame where all variables have the highest rate present
+ in the input file.
+ Because in this case the input file still has the beam-histogram data (BEAM[1-4
+]_LAMS) present at 50 Hz, it would produce 50-Hz data without a special
+ step, so just before this section of the report a redefined version of
+ that routine is defined that forces the sample rate to 25 Hz.
+ 
+\end_layout
+
+\begin_layout Section
+Comments on reproducibility
+\end_layout
+
+\begin_layout Standard
+The publicly accessible archive for this document is the github file listed
+ at the end of the report, in the section on reproducibility.
+ However, the special data.file records (SaveRData.zip) are omitted from that
+ archive because that file is relatively large.
+ The file is present on this EOL location: /h/eol/cooperw/RStudio/LAMS3D/SaveRDa
+ta.zip.
+ That file contains almost all the data needed to reproduce the report.
+ The exceptions are a few ancillary plots, like the pressure difference
+ plot for FRAPPE (Fig.
+\begin_inset space ~
+\end_inset
+
+9), which can be regenerated from the processed files for that project.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+clearpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset bibtex
+LatexCommand bibtex
+bibfiles "../AMTD-AAC/WAC"
+options "copernicus"
+
+\end_inset
+
+
+\lang british
+
+\begin_inset Separator latexpar
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\align center
+
+\family sans
+\color blue
+– End of Memo –
+\end_layout
+
+\end_body
+\end_document

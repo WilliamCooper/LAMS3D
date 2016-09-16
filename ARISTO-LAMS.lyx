@@ -120,6 +120,24 @@ knitr
 \begin_body
 
 \begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+global
+\backslash
+addressee={ARISTO-LAMS archive} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
 \begin_inset Tabular
 <lyxtabular version="3" rows="3" columns="2">
 <features tabularvalignment="middle">
@@ -205,17 +223,7 @@ Subject:
 \begin_inset Text
 
 \begin_layout Plain Layout
-Studies of the measurements of wind using LAMS
-\begin_inset Note Note
-status open
-
-\begin_layout Plain Layout
-XXX or comments flag changes needing attention
-\end_layout
-
-\end_inset
-
-
+Studies of the measurements of wind using LAMS – C130 ARISTO2015/2016
 \end_layout
 
 \end_inset
@@ -264,7 +272,7 @@ library(knitr)
 
 \begin_layout Plain Layout
 
-opts_chunk$set(echo=FALSE, include=FALSE, fig.lp="fig:")
+opts_chunk$set(echo=FALSE, include=FALSE, fig.lp="fig:", cache=FALSE)
 \end_layout
 
 \begin_layout Plain Layout
@@ -274,7 +282,7 @@ opts_chunk$set(fig.width=6, fig.height=5, fig.pos="center", digits=4)
 
 \begin_layout Plain Layout
 
-thisFileName <- "ARISTO2015-LAMS"
+thisFileName <- "ARISTO-LAMS"
 \end_layout
 
 \begin_layout Plain Layout
@@ -362,7 +370,47 @@ VarList <- c(VarList, 'PSFD', 'QCF', 'ADIFR', 'GGVSPD', 'EWX')
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList)))
+ReloadData <- TRUE
+\end_layout
+
+\begin_layout Plain Layout
+
+ReloadData <- FALSE
+\end_layout
+
+\begin_layout Plain Layout
+
+SaveRData1 <- sprintf("%s1.Rdata", thisFileName)
+\end_layout
+
+\begin_layout Plain Layout
+
+if (ReloadData) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRData1)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRData1)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -372,12 +420,7 @@ PCA <- FALSE
 
 \begin_layout Plain Layout
 
-PCA <- TRUE  ## if set true, will use Spuler's PCA-algorithm beam speeds		
-\end_layout
-
-\begin_layout Plain Layout
-
-SaveRData <- sprintf("%s.Rdata.gz", thisFileName)
+PCA <- TRUE  ## if set true, will use Spuler's PCA-algorithm beam speeds
 \end_layout
 
 \begin_layout Plain Layout
@@ -430,13 +473,13 @@ SummarizeFit <- function(ft) {
 
 \end_layout
 
-\begin_layout Section*
+\begin_layout Section
 Introduction
 \end_layout
 
 \begin_layout Standard
-During the 2015 ARISTO project on the C-130, the LAMS was flown in a 4-beam
- configuration.
+During the 2015 and 2016 ARISTO projects on the C-130, the LAMS was flown
+ in a 4-beam configuration.
  The beam assignments were non-standard, though, with beam 2 forward, beam
  1 downward, beam 3 outboard and upward, and beam 4 inboard and upward.
  Beams 1, 3 and 4 were approximately 35
@@ -457,9 +500,12 @@ During the 2015 ARISTO project on the C-130, the LAMS was flown in a 4-beam
 \end_layout
 
 \begin_layout Standard
-There were five research flights.
- All had some degree of measurement problems, so data for this study have
- been selected from the periods that appear to provide the best measurements.
+There were five research flights in ARISTO-2015 and six in ARISTO-2016.
+ Data from both projects are included in this memo, which is somewhat disorganiz
+ed in that the discussions have not been merged well except in the conclusions.
+ All flights had some degree of measurement problems, so data for this study
+ have been selected from the periods that appear to provide the best measurement
+s.
  The following table provides a few of the characteristics of these flights:
 \end_layout
 
@@ -467,13 +513,13 @@ There were five research flights.
 \noindent
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="6" columns="5">
+<lyxtabular version="3" rows="12" columns="5">
 <features tabularvalignment="middle">
 <column alignment="center" valignment="top">
 <column alignment="center" valignment="top">
 <column alignment="center" valignment="top">
 <column alignment="left" valignment="top" width="5cm">
-<column alignment="center" valignment="top" width="5cm">
+<column alignment="left" valignment="top" width="5cm">
 <row>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
@@ -519,7 +565,7 @@ profile
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -568,7 +614,7 @@ climb->20kft, level, stepped descent to BL, no maneuvers
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -616,7 +662,7 @@ mostly low level until near end; LAMS reasonable, although weak; some speed
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -664,7 +710,7 @@ both upper and lower-level legs; speed runs, some turbulence
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -712,7 +758,7 @@ good pitch and yaw maneuvers; also a partial speed run.
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -724,7 +770,7 @@ Beams 1 and 4 problematic before 1915 in high-level leg; beam 2 probably
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -733,7 +779,7 @@ Beams 1 and 4 problematic before 1915 in high-level leg; beam 2 probably
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -742,7 +788,7 @@ Beams 1 and 4 problematic before 1915 in high-level leg; beam 2 probably
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -751,7 +797,7 @@ Beams 1 and 4 problematic before 1915 in high-level leg; beam 2 probably
 
 \end_inset
 </cell>
-<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -760,12 +806,307 @@ upper-level pitches and lower-level turbulence
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 LAMS beam peaks look very weak to me, questionable although SMS processing
  seems reasonable.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+160802
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+162500
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+183500
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+profiles; no sign.
+ cloud, no low-level & max ca.
+ 7 km
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+LAMS mostly good; some brief gaps.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+160808
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+150500
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+160000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+brief flight at low level
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+some beam-1 problems at low level
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+160809
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+160000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+183235
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+some cold cloud near max altitude ca.
+ 7km; LAMS appears bad there.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+some LAMS-beam gaps at upper level.
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+160810
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+134539
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+184016
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+only brief cold cloud; up to 5-6km.
+ 
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+LAMS good
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+160812
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+190000
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+203616
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+smoke-plume study; high CDP conc.
+ in plumes.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+LAMS good
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+160816
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+130138
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+264829
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+long flight with near-sea-level leg for PCOR study; refueling stop at about
+ 1800–1900.
+ Some low-level cloud near 1900–1930, with shorter cloud passes during return
+ leg.
+ Good short maneuvers also.
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="left" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+LAMS problems early after refueling and some also prior to descent for refueling
+, esp.
+ beam 2.
+ Looks OK for critical part near 2100–0100.
+ 
 \end_layout
 
 \end_inset
@@ -779,7 +1120,7 @@ LAMS beam peaks look very weak to me, questionable although SMS processing
 \end_layout
 
 \begin_layout Standard
-The line-of-sight beam speeds were determined in two ways.
+For ARISTO-2015, the line-of-sight beam speeds were determined in two ways.
  Scott Spuler used principal-component analysis to find the beam speeds,
  and usually this worked very well, although there are some suspicious times.
  For example, the peaks in Flight 5 look very weak, yet the PCA method continued
@@ -800,6 +1141,13 @@ The line-of-sight beam speeds were determined in two ways.
 
  was required for a valid measurement.) Results from both these peak-detecting
  algorithms will be discussed in this memo.
+ 
+\end_layout
+
+\begin_layout Standard
+For ARISTO-2016, only the second method of processing was available at the
+ time of this study, so results will all be based on the second method for
+ that portion of the project.
 \end_layout
 
 \begin_layout Standard
@@ -824,6 +1172,12 @@ nt it is possible to determine the expected dynamic pressure.
  the avionic value changed.
  This has an important effect on the longitudinal component of the measured
  wind as well.
+ ARISTO-2016, esp.
+\begin_inset space ~
+\end_inset
+
+the last flight, provided an opportunity to extend the fit conditions to
+ cover low-altitude flight of the C-130.
 \end_layout
 
 \begin_layout Enumerate
@@ -833,9 +1187,9 @@ The paper by Cooper et al.
 
 (2014) developed a method for measuring temperature using the LAMS, which
  might have potential to provide a valid measurement of temperature in clouds.
- However, only a small sample of measurements were available, so it will
- be useful to explore if further measurements from ARISTO-2015 help characterize
- this measurement.
+ However, only a small sample of measurements were available for use in
+ that paper, so it will be useful to explore if further measurements from
+ ARISTO help characterize this measurement.
 \end_layout
 
 \begin_layout Enumerate
@@ -848,23 +1202,27 @@ The method used to calibrate the radome is based primarily on slowly varying
  should not appear in the LAMS-based measurements, so a comparison of the
  LAMS-based and radome-based measurements might either identify transient-respon
 se problems or place limits on how large such effects might be.
+ Some rapid changes in pitch were included in the last flight of ARISTO-2016
+ that can be used for this study.
 \end_layout
 
-\begin_layout Section*
+\begin_layout Section
 Data processing
 \end_layout
 
 \begin_layout Standard
 The original netCDF files, with names like ARISTOrf01.nc, contain histograms
  of the LAMS frequency measurements, with names like BEAM{1–4}_LAMS.
- Scott Spuler has processed these to produce files like ARISTOrf01_LAMS.nc
- with new variables Beam{1–4}_LAMS containing the line-of-sight speeds measured
- in each beam.
+ For ARISTO-2015, Scott Spuler has processed these to produce files like
+ ARISTOrf01_LAMS.nc with new variables Beam{1–4}_LAMS containing the line-of-sigh
+t speeds measured in each beam.
  In addition, the Python program LAMS_ARISTO.py has been used to process
  these further to files ARISTOrfxx_LAMSLAMS.nc, which contain additional
  variables BEAM{1–4}speed also representing the line-of-sight speeds.
- Both sets of variables, Beam{1–4}_LAMS and BEAM{1–4}speed, will be used,
- but they appear to have different strengths:
+ Only the latter processing has been performed for ARISTO-2016, for which
+ the resulting files have names like ARISTO2016rfxxLAMS.nc.
+ Both sets of variables, Beam{1–4}_LAMS and BEAM{1–4}speed, will be used
+ below when available but they appear to have different strengths:
 \end_layout
 
 \begin_layout Enumerate
@@ -897,9 +1255,10 @@ The Python routine also produced new variables named WD_LAMS, WS_LAMS, WI_LAMS,
  ATTACK_L and SSLIP_L, using the processing algorithms for a 4-beam LAMS
  that were discussed in the documents LAMSprocessing4Bwind.pdf and LAMSprocessing
 3Dwind.pdf.
- These variables were also used in the present R routine (this file) to
- generate measurements of vertical and horizontal wind, airspeed, and angles
- of attack and sideslip.
+ However, these variables were not used in the study reported here.
+ Instead, all variables derived from the line-of-sight LAMS measurements
+ were recalculated in the present R routine (this file) to generate measurements
+ of vertical and horizontal wind, airspeed, and angles of attack and sideslip.
  For airspeed, angle of attack, and sideslip, these steps were used:
 \end_layout
 
@@ -946,6 +1305,141 @@ The angle of attack is
 \end_layout
 
 \begin_layout Standard
+For measurements of wind, the Ranadu routine Ranadu::WindProcessor() was
+ used to calculate the wind based on LAMS-based variables for airspeed,
+ angle of attack, and sideslip and the INS-provided attitude angles, with
+ complementary-filter adjustment of the INS-provided groundspeed components
+ based on the corresponding GPS-provided measurements.
+\end_layout
+
+\begin_layout Standard
+For completeness, here are suggested procedures for using the Python routine
+ LAMS_ARISTO.py, with comments regarding future use with new data files:
+\end_layout
+
+\begin_layout Enumerate
+On tikal, copy the routine ~cooperw/LAMS/LAMS_ARISTO.py to another directory
+ where you have write permission.
+\end_layout
+
+\begin_layout Enumerate
+On lines 252 and 253, change the names of the data file and the directory
+ containing the file to be processed.
+ Do not include the trailing 
+\begin_inset Quotes eld
+\end_inset
+
+.nc
+\begin_inset Quotes erd
+\end_inset
+
+ in the file name, and if the file already contains Scott Spuler's processing
+ add 
+\begin_inset Quotes eld
+\end_inset
+
+_LAMS
+\begin_inset Quotes erd
+\end_inset
+
+ to the file name as on line 251.
+ Save the edited file.
+ CAUTION: This routine will create a new file in that same directory with
+ 
+\begin_inset Quotes eld
+\end_inset
+
+LAMS
+\begin_inset Quotes erd
+\end_inset
+
+ appended to the name supplied, and if that file is present it will overwrite
+ the file.
+ This won't overwrite Scott's files because it adds 
+\begin_inset Quotes eld
+\end_inset
+
+LAMS
+\begin_inset Quotes erd
+\end_inset
+
+ instead of 
+\begin_inset Quotes eld
+\end_inset
+
+_LAMS
+\begin_inset Quotes erd
+\end_inset
+
+, but if Scott's files are used the new file will end in 
+\begin_inset Quotes eld
+\end_inset
+
+_LAMSLAMS
+\begin_inset Quotes erd
+\end_inset
+
+.
+ In that case, the new file will contain the line-of-sight speeds obtained
+ by both algorithms, in Scott's case with the names Beam1_LAMS – Beam4_LAMS
+ and in the case of the Python program with names BEAM1speed – BEAM4speed.
+\end_layout
+
+\begin_layout Enumerate
+Run the program using the command 
+\begin_inset Quotes eld
+\end_inset
+
+python LAMS_ARISTO.py
+\begin_inset Quotes erd
+\end_inset
+
+.
+ There will be regular messages during processing, ending (if successful)
+ with the message 
+\begin_inset Quotes eld
+\end_inset
+
+Reached end of routine ...
+\begin_inset Quotes erd
+\end_inset
+
+.
+ This will typically take a few minutes.
+ If this fails immediately, there may be a problem with the available python
+ packages that need updating or changing.
+\end_layout
+
+\begin_layout Enumerate
+On successful completion, there should then be a new file with a name ending
+ in 
+\begin_inset Quotes eld
+\end_inset
+
+LAMS.nc
+\begin_inset Quotes erd
+\end_inset
+
+ in the prescribed working directory.
+ It should be slightly larger than the original file because a few variables
+ are added containing the line-of-sight LAMS speeds and some derived quantities.
+ These are then the netCDF files that are read by the next routine to produce
+ the final document,.
+\end_layout
+
+\begin_layout Standard
+The next step is then to run the present routine, 
+\begin_inset Quotes eld
+\end_inset
+
+ARISTO-LAMS.Rnw
+\begin_inset Quotes erd
+\end_inset
+
+, in RStudio to generate the PDF document.
+\end_layout
+
+\begin_layout Standard
 \begin_inset ERT
 status open
 
@@ -954,7 +1448,7 @@ status open
 <<beam-processing, echo=FALSE, include=TRUE, fig.cap='Wind measurements:
  conventional (blue), PCA-based (green), SG-based (red).
  The time period is restricted to 19:23--21:30 UTC because the LAMS IRU
- produced erronous values for the attitude angles at other times.'>>=
+ produced erronous values for the attitude angles at other times.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -1504,7 +1998,8 @@ op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
 
 \begin_layout Plain Layout
 
-plotWAC(DW[c("Time", "WDC", "WDN", 'WD_LAMS')])  #, ylim=c(250,360))
+plotWAC(DW[c("Time", "WDC", "WDN", 'WD_LAMS')], legend.position='bottom')
+  #, ylim=c(250,360)
 \end_layout
 
 \begin_layout Plain Layout
@@ -1514,7 +2009,8 @@ title(fname)
 
 \begin_layout Plain Layout
 
-plotWAC(DW[c("Time", "WSC", "WSN", 'WS_LAMS')], ylim=c(0,40))
+plotWAC(DW[c("Time", "WSC", "WSN", 'WS_LAMS')], ylim=c(0,40), legend.position='to
+pright')
 \end_layout
 
 \begin_layout Plain Layout
@@ -1524,7 +2020,8 @@ op <- par (mar=c(5,4,1,1)+0.1)
 
 \begin_layout Plain Layout
 
-plotWAC(DW[c("Time", "WIC", "WIN", 'WI_LAMS')], ylim=c(-5,5))
+plotWAC(DW[c("Time", "WIC", "WIN", 'WI_LAMS')], ylim=c(-5,5), legend.position='to
+p')
 \end_layout
 
 \begin_layout Plain Layout
@@ -1542,7 +2039,7 @@ plotWAC(DW[c("Time", "WIC", "WIN", 'WI_LAMS')], ylim=c(-5,5))
 \end_layout
 
 \begin_layout Standard
-The results for the various processing schemes are shown in Fig.
+Some results for the various processing schemes are shown in Fig.
 \begin_inset space ~
 \end_inset
 
@@ -1579,12 +2076,19 @@ clearpage
 
 \end_layout
 
-\begin_layout Section*
+\begin_layout Section
 Sensitivity coefficients
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Subsection
 Angle of attack
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Angle-of-attack"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -2056,9 +2560,9 @@ ts to use as a radome calibration.
 
 
 \begin_inset Formula 
-\[
-\mathrm{AOAREF}=\theta+\frac{w_{p}}{V}\frac{180}{\pi}
-\]
+\begin{equation}
+\mathrm{AOAREF}=\theta+\frac{w_{p}}{V}\frac{180}{\pi}\label{eq:aoaref}
+\end{equation}
 
 \end_inset
 
@@ -2081,9 +2585,9 @@ where
 
 
 \begin_inset Formula 
-\[
-\mathrm{AOAREF}=c_{0}+\frac{\mathrm{ADIFR}}{\mathrm{QCF}}\left(c_{1}+c_{2}\thinspace\mathrm{MACH}\right)
-\]
+\begin{equation}
+\mathrm{AOAREF}=c_{0}+\frac{\mathrm{ADIFR}}{\mathrm{QCF}}\left(c_{1}+c_{2}\thinspace\mathrm{MACH}\right)\label{eq:akrd-fit}
+\end{equation}
 
 \end_inset
 
@@ -2108,7 +2612,7 @@ status open
 
 \begin_layout Plain Layout
 
-<<All-flight-cal, include=TRUE, fig.cap=''>>=
+<<All-flight-cal, include=TRUE, fig.cap='', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -2117,45 +2621,75 @@ status open
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (sprintf ('%sARISTO/ARISTOrf02_LAMSLAMS.nc', Directory),
+SaveRData3 <- sprintf ('%s3.Rdata', thisFileName)
+\end_layout
+
+\begin_layout Plain Layout
+
+if (ReloadData) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (sprintf ('%sARISTO/ARISTOrf02_LAMSLAMS.nc', Directory),
  VarList, F=2)
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- rbind(Data, getNetCDF (sprintf ('%sARISTO/ARISTOrf03_LAMSLAMS.nc',
+  Data <- rbind(Data, getNetCDF (sprintf ('%sARISTO/ARISTOrf03_LAMSLAMS.nc',
  Directory), VarList, F=3))
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- rbind(Data, getNetCDF (sprintf ('%sARISTO/ARISTOrf04_LAMSLAMS.nc',
+  Data <- rbind(Data, getNetCDF (sprintf ('%sARISTO/ARISTOrf04_LAMSLAMS.nc',
  Directory), VarList, F=4))
 \end_layout
 
 \begin_layout Plain Layout
 
-rej <- (Data$TASX < 90) | (abs(Data$ROLL) > 5) | (abs(Data$GGVSPD) > 5)
+  rej <- (Data$TASX < 90) | (abs(Data$ROLL) > 5) | (abs(Data$GGVSPD) > 5)
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- Data[!rej,]
+  Data <- Data[!rej,]
 \end_layout
 
 \begin_layout Plain Layout
 
-Data$AOAREF <- Data$PITCH - (Data$GGVSPD / Data$TASX) * (180./pi)
+  Data$AOAREF <- Data$PITCH - (Data$GGVSPD / Data$TASX) * (180./pi)
 \end_layout
 
 \begin_layout Plain Layout
 
-Data$QR <- Data$ADIFR / Data$QCF
+  Data$QR <- Data$ADIFR / Data$QCF
 \end_layout
 
 \begin_layout Plain Layout
 
-Data$Mach <- MachNumber (Data$PSFD, Data$QCF, Data$EWX)
+  Data$Mach <- MachNumber (Data$PSFD, Data$QCF, Data$EWX)
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRData3)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRData3)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -2190,7 +2724,7 @@ status open
 
 <<ConventionalCoef, include=TRUE, fig.cap='Angle of attack from the new calibrati
 on vs.
- the corresponding value of the reference variable AOAREF.'>>=
+ the corresponding value of the reference variable AOAREF.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -2199,130 +2733,160 @@ on vs.
 
 \begin_layout Plain Layout
 
-Flight <- "rf02_LAMS"
+SaveRData4 <- sprintf ('%s4.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD <- getNetCDF (fname, standardVariables(c(VarList)), Start=183200, End=185500
-, F=2)
+  Flight <- "rf02_LAMS"
 \end_layout
 
 \begin_layout Plain Layout
 
-SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=192100, End=193800
-, F=2)
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD <- rbind (SRD, SR)
+  SRD <- getNetCDF (fname, standardVariables(c(VarList)), Start=183200,
+ End=185500, F=2)
 \end_layout
 
 \begin_layout Plain Layout
 
-Flight <- "rf03_LAMS"
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=192100,
+ End=193800, F=2)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  SRD <- rbind (SRD, SR)
 \end_layout
 
 \begin_layout Plain Layout
 
-SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=171300, End=173800
-, F=3)
+  Flight <- "rf03_LAMS"
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD <- rbind (SRD, SR)
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
 \end_layout
 
 \begin_layout Plain Layout
 
-SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=183400, End=185700
-, F=3)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=171300,
+ End=173800, F=3)
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD <- rbind (SRD, SR)
+  SRD <- rbind (SRD, SR)
 \end_layout
 
 \begin_layout Plain Layout
 
-SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=205500, End=210000
-, F=3)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=183400,
+ End=185700, F=3)
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD <- rbind (SRD, SR)
+  SRD <- rbind (SRD, SR)
 \end_layout
 
 \begin_layout Plain Layout
 
-Flight <- "rf04_LAMS"
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=205500,
+ End=210000, F=3)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  SRD <- rbind (SRD, SR)
 \end_layout
 
 \begin_layout Plain Layout
 
-SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=174300, End=180700
-, F=4)
+  Flight <- "rf04_LAMS"
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD <- rbind (SRD, SR)
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
 \end_layout
 
 \begin_layout Plain Layout
 
-SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=191200, End=193000
-, F=4)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=174300,
+ End=180700, F=4)
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD <- rbind (SRD, SR)
+  SRD <- rbind (SRD, SR)
 \end_layout
 
 \begin_layout Plain Layout
 
-SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=202500, End=203900
-, F=4)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=191200,
+ End=193000, F=4)
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD <- rbind (SRD, SR)
+  SRD <- rbind (SRD, SR)
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD$AOAREF <- SRD$PITCH - (SRD$GGVSPD / SRD$TASX) * (180 / pi)
+  SR  <- getNetCDF (fname, standardVariables(c(VarList)), Start=202500,
+ End=203900, F=4)
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD$QR <- SRD$ADIFR / SRD$QCF
+  SRD <- rbind (SRD, SR)
 \end_layout
 
 \begin_layout Plain Layout
 
-SRD$Mach <- MachNumber (SRD$PSFD, SRD$QCF, SRD$EWX)
+  SRD$AOAREF <- SRD$PITCH - (SRD$GGVSPD / SRD$TASX) * (180 / pi)
+\end_layout
+
+\begin_layout Plain Layout
+
+  SRD$QR <- SRD$ADIFR / SRD$QCF
+\end_layout
+
+\begin_layout Plain Layout
+
+  SRD$Mach <- MachNumber (SRD$PSFD, SRD$QCF, SRD$EWX)
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (SRD, file=SaveRData4)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRData4)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -3043,7 +3607,7 @@ status open
 \backslash
 
 \backslash
-#2.'>>=
+#2.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -3052,17 +3616,47 @@ status open
 
 \begin_layout Plain Layout
 
-Flight <- "rf02_LAMS"
+SaveRData5 <- sprintf ('%s5.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  Flight <- "rf02_LAMS"
+\end_layout
+
+\begin_layout Plain Layout
+
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRData5)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRData5)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -3189,7 +3783,7 @@ status open
 \backslash
 
 \backslash
-#4.'>>=
+#4.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -3198,17 +3792,47 @@ status open
 
 \begin_layout Plain Layout
 
-Flight <- "rf03_LAMS"
+SaveRData6 <- sprintf ('%s6.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  Flight <- "rf03_LAMS"
+\end_layout
+
+\begin_layout Plain Layout
+
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRData6)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRData6)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -3312,7 +3936,7 @@ status open
 \backslash
 #7.
  Some additional outlier points having difference between the measurements
- larger than 1 degree have been excluded from the plot.'>>=
+ larger than 1 degree have been excluded from the plot.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -3321,17 +3945,47 @@ status open
 
 \begin_layout Plain Layout
 
-Flight <- "rf04_LAMS"
+SaveRData7 <- sprintf ('%s7.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  Flight <- "rf04_LAMS"
+\end_layout
+
+\begin_layout Plain Layout
+
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRData7)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRData7)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -4003,7 +4657,7 @@ status open
 \backslash
 
 \backslash
-#7.">>=
+#7.", cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -4177,6 +4831,20 @@ ref{fig:SR6}
 \end_layout
 
 \begin_layout Standard
+See also Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:aoa-r6-2016"
+
+\end_inset
+
+, where sensitivity coefficients are determined from the last ARISTO-2016
+ flight.
+ These are based on the widest range of flight conditions and are suggested
+ as the best for general use for C-130 projects since 2011.
+\end_layout
+
+\begin_layout Standard
 \begin_inset ERT
 status open
 
@@ -4188,7 +4856,7 @@ s (green line), for speed run
 \backslash
 
 \backslash
-#6.'>>=
+#6.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -4197,17 +4865,47 @@ s (green line), for speed run
 
 \begin_layout Plain Layout
 
-Flight <- "rf04_LAMS"
+SaveRData8 <- sprintf ('%s8.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  Flight <- "rf04_LAMS"
+\end_layout
+
+\begin_layout Plain Layout
+
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRData8)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRData8)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -4302,7 +5000,7 @@ plotWAC(subset(DW[r,],,c(Time,AKRDF, ATTACK)))
 
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Subsection
 Sideslip angle
 \end_layout
 
@@ -4533,9 +5231,9 @@ First, for completeness, the conventional fit will be used:
 
 
 \begin_inset Formula 
-\[
-\beta^{*}=-\Psi+\arctan\frac{u_{p}-u}{v_{p}-v}
-\]
+\begin{equation}
+\beta^{*}=-\Psi+\arctan\frac{u_{p}-u}{v_{p}-v}\label{eq:SSREF}
+\end{equation}
 
 \end_inset
 
@@ -4588,9 +5286,9 @@ and then finding the sideslip angle from
 
 
 \begin_inset Formula 
-\[
-\mathrm{SSRD}=b_{0}+b_{1}\frac{\mathrm{BDIFR}}{\mathrm{QCXC}}\,\,\,.
-\]
+\begin{equation}
+\mathrm{SSRD}=b_{0}+b_{1}\frac{\mathrm{BDIFR}}{\mathrm{QCXC}}\,\,\,.\label{eq:ssrd}
+\end{equation}
 
 \end_inset
 
@@ -4624,21 +5322,11 @@ status open
 <<sslip-cal, include=TRUE, fig.cap='Sideslip angle calculated using new fit
  coefficients (SSRD) as a function of the reference value for sideslip (SSREF).
  The relationship determined by regression is shown as the dashed orange
- line.'>>=
+ line.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
 
-\end_layout
-
-\begin_layout Plain Layout
-
-Flight <- "rf02_LAMS"
-\end_layout
-
-\begin_layout Plain Layout
-
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
 \end_layout
 
 \begin_layout Plain Layout
@@ -4648,113 +5336,153 @@ VarList <- c(VarList, 'VEW', 'VNS')
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList)), Start=194100, End=19433
-0, F=1)
+SaveRData9 <- sprintf ('%s9.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-DW <- processWind (Data)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$RF <- rep(1, nrow(DW))
+  Flight <- "rf02_LAMS"
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$BQR <- Data$BDIFR / Data$QCXC
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
 \end_layout
 
 \begin_layout Plain Layout
 
-Flight <- 'rf04_LAMS'
+  Data <- getNetCDF (fname, standardVariables(c(VarList)), Start=194100,
+ End=194330, F=1)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+  DW <- processWind (Data)
 \end_layout
 
 \begin_layout Plain Layout
 
-D <- getNetCDF (fname, standardVariables(c(VarList)), F=2)
+  DW$RF <- rep(1, nrow(DW))
 \end_layout
 
 \begin_layout Plain Layout
 
-DW2 <- processWind (D)
+  DW$BQR <- Data$BDIFR / Data$QCXC
 \end_layout
 
 \begin_layout Plain Layout
 
-DW2$RF <- rep (2, nrow(DW2))
+  Flight <- 'rf04_LAMS'
 \end_layout
 
 \begin_layout Plain Layout
 
-DW2$BQR <- D$BDIFR / D$QCXC
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- rbind (Data, D[setRange(D, 182800, 183100),])
+  D <- getNetCDF (fname, standardVariables(c(VarList)), F=2)
 \end_layout
 
 \begin_layout Plain Layout
 
-DW <- rbind (DW, DW2[setRange(D, 182800, 183100),])
+  DW2 <- processWind (D)
 \end_layout
 
 \begin_layout Plain Layout
 
-r <- setRange(D, 190130, 190400)
+  DW2$RF <- rep (2, nrow(DW2))
 \end_layout
 
 \begin_layout Plain Layout
 
-D$RF[r] <- 3
+  DW2$BQR <- D$BDIFR / D$QCXC
 \end_layout
 
 \begin_layout Plain Layout
 
-DW2$RF[r] <- 3
+  Data <- rbind (Data, D[setRange(D, 182800, 183100),])
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- rbind (Data, D[r,])
+  DW <- rbind (DW, DW2[setRange(D, 182800, 183100),])
 \end_layout
 
 \begin_layout Plain Layout
 
-DW <- rbind (DW, DW2[r,])
+  r <- setRange(D, 190130, 190400)
 \end_layout
 
 \begin_layout Plain Layout
 
-r <- setRange(D, 201830, 202130)
+  D$RF[r] <- 3
 \end_layout
 
 \begin_layout Plain Layout
 
-D$RF[r] <- 4
+  DW2$RF[r] <- 3
 \end_layout
 
 \begin_layout Plain Layout
 
-DW2$RF[r] <- 4
+  Data <- rbind (Data, D[r,])
 \end_layout
 
 \begin_layout Plain Layout
 
-DW <- rbind (DW, DW2[r,])
+  DW <- rbind (DW, DW2[r,])
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- rbind (Data, D[r,])
+  r <- setRange(D, 201830, 202130)
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$RF[r] <- 4
+\end_layout
+
+\begin_layout Plain Layout
+
+  DW2$RF[r] <- 4
+\end_layout
+
+\begin_layout Plain Layout
+
+  DW <- rbind (DW, DW2[r,])
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- rbind (Data, D[r,])
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, DW, file=SaveRData9)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRData9)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -4961,9 +5689,9 @@ The appropriate offsets in sideslip and heading will still need to be found
 
 
 \begin_inset Formula 
-\[
-\beta^{*}=\arctan\left(\frac{\mathrm{RW}_{y}}{\mathrm{RW}_{x}}\right)
-\]
+\begin{equation}
+\beta^{*}=\arctan\left(\frac{\mathrm{RW}_{y}}{\mathrm{RW}_{x}}\right)\label{eq:ssref-LAMS}
+\end{equation}
 
 \end_inset
 
@@ -5048,7 +5776,7 @@ status open
 
 
 \backslash
-Sexpr{round(cfls[2], 2)}
+Sexpr{round(cfls[2], 3)}
 \end_layout
 
 \end_inset
@@ -5065,8 +5793,12 @@ Sexpr{round(cfls[2], 2)}
  an offset in sideslip from an offset in heading.
 \end_layout
 
-\begin_layout Section*
+\begin_layout Section
 Calibration of the pressure defect
+\end_layout
+
+\begin_layout Subsection
+Previous LAMS-based calibration
 \end_layout
 
 \begin_layout Standard
@@ -5156,28 +5888,7 @@ where
 \end_inset
 
 0.00754, 0.000497, 0.0368} for the alternate pressure measurement PSFRD.
- These coefficients were based on measurements collected during the IDEAS
- project of November 2011.
- They appeared to work well for many subsequent projects, as judged by consisten
-cy with the avionics-provided pressure PS_A.
- A representative example from the FRAPPE measurements is shown in Fig.
-\begin_inset space ~
-\end_inset
-
-
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-ref{fig:PSA-FRAPPE}
-\end_layout
-
-\end_inset
-
-.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -5191,8 +5902,8 @@ status open
 \backslash
 
 \backslash
-_A) and the standard pressure after the correction as expressed in (1) (PSFDC).'>
->=
+_A) and the standard pressure after the correction as expressed in (1) (PSFDC).',
+ cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -5201,22 +5912,59 @@ _A) and the standard pressure after the correction as expressed in (1) (PSFDC).'
 
 \begin_layout Plain Layout
 
-fname <- sprintf ('%sFRAPPE/FRAPPErf05.nc', Directory)
+SaveRDataA <- sprintf ('%sA.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-VList <- c('PS_A', 'PS_A2', 'PSFC', 'PSFDC', 'PSFD', 'PSFRD', 'QCF', 'AKRD')
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables (VList))
+  fname <- sprintf ('%sFRAPPE/FRAPPErf05.nc', Directory)
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- Data[Data$TASX > 80,]
+  VList <- c('PS_A', 'PS_A2', 'PSFC', 'PSFDC', 'PSFD', 'PSFRD', 'QCF', 'AKRD',
+ 'ROLL')
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables (VList))
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data$PSC <- Data$PSFD + PCorFunction (Data$PSFD, Data$QCF, Data$AKRD,
+ "C130")
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRDataA)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRDataA)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+Data <- Data[Data$TASX > 60 & abs(Data$ROLL) < 5,]
 \end_layout
 
 \begin_layout Plain Layout
@@ -5227,6 +5975,11 @@ with (Data, hist (PS_A-PSFDC, breaks=300, xlim=c(1,4)))
 \begin_layout Plain Layout
 
 dPA <- with (Data, mean (PS_A-PSFDC, na.rm=TRUE))
+\end_layout
+
+\begin_layout Plain Layout
+
+dPC <- mean (Data$PSC - Data$PSFDC, na.rm=TRUE)
 \end_layout
 
 \begin_layout Plain Layout
@@ -5260,7 +6013,7 @@ status open
 
 \begin_layout Plain Layout
 
-<<TAS-comparison, include=TRUE, fig.cap='The conventional measurement of
+<<TAS-comparison, include=FALSE, fig.cap='The conventional measurement of
  airspeed (TASX) plotted vs.
 \backslash
 
@@ -5269,7 +6022,7 @@ status open
 \backslash
 
 \backslash
-#7.'>>=
+#7.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -5312,7 +6065,29 @@ SDTAS <- with(DSR, sd (TASX-TASL, na.rm=TRUE))
 \end_layout
 
 \begin_layout Standard
-The mean offset between the avionics-supplied pressure and the research
+These coefficients were based on measurements collected during the IDEAS
+ project of November 2011.
+ However, this original parameterization did not lead to consistent differences
+ when compared to the avionics-system pressure PS_A in subsequent projects.
+ A representative example from the FRAPPE measurements is shown in Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+ref{fig:PSA-FRAPPE}
+\end_layout
+
+\end_inset
+
+.
+ The mean offset between the avionics-supplied pressure and the research
  pressure is 
 \begin_inset ERT
 status open
@@ -5330,11 +6105,26 @@ Sexpr{round(dPA, 1)}
 \begin_inset space ~
 \end_inset
 
-hPa, a value that is similar to those measured in other projects including
- NOMADSS, WINTER, and ARISTO-2015.
- It appears that the pressure correction is providing consistent results
- for recent C-130 projects.
- Further evidence is provided by a comparison of airspeed as measured by
+hPa, a value that is similar to the differences measured in other projects
+ including NOMADSS, WINTER, and ARISTO-2015.
+ However, this difference is significantly different from the 
+\begin_inset Formula $-1.08$
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+hPa offset found in the original IDEAS-4 study.
+ Because it is expected that PS_A has remained consistent, it appears that
+ the pressure correction that is being applied is not consistent with the
+ original calibration.
+ 
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+Further evidence is provided by a comparison of airspeed as measured by
  the LAMS and the conventional system employing the above PCOR function,
  as shown in Fig.
 \begin_inset space ~
@@ -5396,11 +6186,18 @@ m/s.
  There is some additional evidence for this in the next section.
 \end_layout
 
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Reason for repeating the calibration
+\end_layout
+
 \begin_layout Standard
-These checks indicate that the usual PCOR function is working well for this
- C-130 project.
- The weakness is the available calibrations, present also in ARISTO-2015,
- is that measurements at altitudes between sea level and about 850
+A weakness in the available calibration, present also in ARISTO-2015, is
+ that measurements at altitudes between sea level and about 850
 \begin_inset space ~
 \end_inset
 
@@ -5412,16 +6209,2261 @@ reference "eq:PCOR"
 
 \end_inset
 
-) to such low-level flight, so it will be important to revisit the determination
- of the empirical relationship for the static defect once such low-level
- measurements are available.
+) to such low-level flight, so the following paragraphs will revisit the
+ determination of the empirical relationship for the static defect using
+ low-level measurements from ARISTO-2016 flight 6.
+ 
 \end_layout
 
-\begin_layout Section*
+\begin_layout Standard
+As discussed in Cooper et al., 2014, the key to the LAMS-based calibration
+ of dynamic pressure is to find the airspeed 
+\begin_inset Formula $v$
+\end_inset
+
+, from which the dynamic pressure 
+\begin_inset Formula $q$
+\end_inset
+
+ is found from 
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\begin{equation}
+q=p\left\{ \left(\frac{v^{2}}{2c_{p}T}+1\right)^{c_{p}/R_{a}}-1\right\} \equiv p\chi(v,T)\label{eq:dynamic-pressure}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $p$
+\end_inset
+
+ is the ambient pressure, 
+\begin_inset Formula $c_{p}$
+\end_inset
+
+ the specific heat of air at constant pressure, 
+\begin_inset Formula $T$
+\end_inset
+
+ the absolute temperature, and 
+\begin_inset Formula $R_{a}$
+\end_inset
+
+ the gas constant for air, and 
+\begin_inset Formula $\chi(v,T)$
+\end_inset
+
+ is defined by (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:dynamic-pressure"
+
+\end_inset
+
+) to simplify terminology.
+ Although the corrections for humidity are small, humidity-dependent value
+ for 
+\begin_inset Formula $c_{p}$
+\end_inset
+
+ and 
+\begin_inset Formula $R_{a}$
+\end_inset
+
+ will be used in this equation.
+\end_layout
+
+\begin_layout Standard
+The error arising from the static defect 
+\begin_inset Formula $\Delta p$
+\end_inset
+
+ that applies to the measured pressure 
+\begin_inset Formula $p_{m}$
+\end_inset
+
+ should be included when (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:dynamic-pressure"
+
+\end_inset
+
+) is used (
+\begin_inset Formula $p=p_{M}-\Delta p$
+\end_inset
+
+), although this normally makes little difference because the fractional
+ error in 
+\begin_inset Formula $p$
+\end_inset
+
+ is small.
+ It was argued in Cooper et al.
+ (2014) that the error in dynamic pressure 
+\begin_inset Formula $\Delta q$
+\end_inset
+
+ is the negative of the error in ambient pressure 
+\begin_inset Formula $\Delta p$
+\end_inset
+
+.
+ Then the errors in dynamic pressure and ambient pressure are given by
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\begin{equation}
+\Delta q=q_{m}-p\chi(v,T)\label{eq:delta-q}
+\end{equation}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{equation}
+\Delta p=-\Delta q=\frac{-q_{m}+p_{m}\chi(v,T)}{1+\chi(v,T)}\label{eq:delta-p}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $q_{m}$
+\end_inset
+
+ is the measured dynamic pressure.
+ Because LAMS provides an independent and low-uncertainty measurement of
+ the airspeed 
+\begin_inset Formula $v$
+\end_inset
+
+, it is possible to determine the errors in both 
+\begin_inset Formula $q_{m}$
+\end_inset
+
+ and 
+\begin_inset Formula $p_{m}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The procedure used in Cooper et al.\SpecialChar softhyphen
+(2014) and in the RAF Technical Note on
+ Processing Algorithms was to determine parametric fits to the errors in
+ terms of quantities like Mach number, angle of attack and sideslip angle.
+ Such a parameterized fit can then be used to correct the measurements when
+ LAMS is not present or not functioning.
+ The approach described in the Processing Algorithms Technical Note led
+ to the parameterization represented by (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:PCOR"
+
+\end_inset
+
+) above, However, here data spanning a larger range of flight conditions
+ will be used.
+ 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<aoa-rf6-2016, include=TRUE, fig.cap=' ', cache=TRUE>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+PCA <- FALSE   # use SG processing
+\end_layout
+
+\begin_layout Plain Layout
+
+VarList2 <- c('PSFD', 'QCF', 'ATX', 'EWX', 'AKRD', 'SSRD', 'PSFRD', 'QCFR',
+ 'ROLL', 'PITCH', 'THDG',
+\end_layout
+
+\begin_layout Plain Layout
+
+             'CPITCH_LAMS', 'CROLL_LAMS', 'CTHDG_LAMS', 'CVEW_LAMS', 'CVNS_LAMS'
+, 'CVSPD_LAMS',
+\end_layout
+
+\begin_layout Plain Layout
+
+             'GGVEW', 'GGVNS', 'GGVSPD', 'ADIFR', 'PSXC', 'QCXC', 'GGALT',
+ 'BDIFR',
+\end_layout
+
+\begin_layout Plain Layout
+
+             'BEAM1speed', 'BEAM2speed', 'BEAM3speed', 'BEAM4speed', 'TASX',
+ 'GGVSPD', 'CONCD_RWT',
+\end_layout
+
+\begin_layout Plain Layout
+
+             'PS_A', 'PS_A2', 'QC_A', 'QC_A2', 'WIC', 'VEW', 'VNS')
+\end_layout
+
+\begin_layout Plain Layout
+
+SaveRDataB <- sprintf ('%sB.Rdata', thisFileName)
+\end_layout
+
+\begin_layout Plain Layout
+
+if (ReloadData) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  Directory <- 'ARISTO'
+\end_layout
+
+\begin_layout Plain Layout
+
+  Project <- 'ARISTO2016'
+\end_layout
+
+\begin_layout Plain Layout
+
+  Flight <- 'rf06LAMS'
+\end_layout
+
+\begin_layout Plain Layout
+
+  fname <- sprintf ('%s%s/%s%s.nc', DataDirectory(), Directory, Project,
+ Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, VarList2)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- Data[setRange (Data, 190400, 264118),]  # use subset of the flight
+ after landing/TO
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRDataB)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRDataB)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+Data$AOAREF <- Data$PITCH - (Data$GGVSPD / Data$TASX) * (180 / pi)
+\end_layout
+
+\begin_layout Plain Layout
+
+Data$QR <- Data$ADIFR / Data$QCF
+\end_layout
+
+\begin_layout Plain Layout
+
+Data$Mach <- MachNumber (Data$PSFD, Data$QCF, Data$EWX)
+\end_layout
+
+\begin_layout Plain Layout
+
+Data$Valid <- Data$TASX > 60 & abs(Data$ROLL) < 5 & Data$PITCH < 20 & Data$CONCD
+_RWT < 10
+\end_layout
+
+\begin_layout Plain Layout
+
+Data$Valid[is.na(Data$Valid)] <- FALSE
+\end_layout
+
+\begin_layout Plain Layout
+
+DF <- Data[Data$Valid, ]
+\end_layout
+
+\begin_layout Plain Layout
+
+f <- lm (AOAREF~QR+I(QR*Mach), data=DF)
+\end_layout
+
+\begin_layout Plain Layout
+
+cf <- coefficients(f)
+\end_layout
+
+\begin_layout Plain Layout
+
+Data$AKRD <- cf[1] + Data$QR * (cf[2] + cf[3] * Data$Mach)  # replace AKRD
+ with new fit
+\end_layout
+
+\begin_layout Plain Layout
+
+DW <- processWind (Data)  # get LAMS-based TAS, ATTACK, SSLIP, TASCSQ
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$Valid <- Data$Valid
+\end_layout
+
+\begin_layout Plain Layout
+
+## now correct DW$ATTACK to match AKRD, assuming offset with linear-in-time
+ change
+\end_layout
+
+\begin_layout Plain Layout
+
+## NOTE that ATTACK then needs to be used with PITCH, not CPITCH_LAMS, to
+ calc W
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TE <- Data$TE <- as.vector (DW$Time-DW$Time[1])
+\end_layout
+
+\begin_layout Plain Layout
+
+cff <- with (DW[DW$TASCSQ < 0.1 & DW$Valid,], coef(lm((AKRD-ATTACK) ~ (TE))))
+\end_layout
+
+\begin_layout Plain Layout
+
+# cff <- with (Data[Valid,], coef(lm((PITCH-CPITCH_LAMS) ~ (TE)))) # didn't
+ work as well
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$DA <- cff[1]+cff[2]*DW$TE
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$ATTACK <- DW$ATTACK + DW$DA
+\end_layout
+
+\begin_layout Plain Layout
+
+# with (DW[DW$TASCSQ < 0.1 & DW$Valid,], plot(data.frame(PSFD, AKRD-ATTACK),
+ type='p', pch=20, col='blue', ylim=c(-2,2)))
+\end_layout
+
+\begin_layout Plain Layout
+
+# abline(h=0, col='red')
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TASL <- DW$TASX  ## processWind returns LAMS-based TAS in TASX
+\end_layout
+
+\begin_layout Plain Layout
+
+## transfer some other variables for convenience
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TASX <- Data$TASX
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QR <- Data$QR
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$Mach <- Data$Mach
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$AOAREF <- Data$AOAREF
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PITCH <- Data$PITCH  # needed if W recalculated
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$ROLL <- Data$ROLL
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$THDG <- Data$THDG
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WIL <- DW$WIN    ## this is the LAMS-only value
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WIC <- Data$WIC
+\end_layout
+
+\begin_layout Plain Layout
+
+DF <- DW     ## use a restricted data.frame to fit to LAMS-based ATTACK
+\end_layout
+
+\begin_layout Plain Layout
+
+DF$ATTACK[DF$TASCSQ > 0.1] <- NA  ## only use good 4-beam measurements from
+ LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+DF$AKRD[DF$TASCSQ > 0.1] <- NA  
+\end_layout
+
+\begin_layout Plain Layout
+
+## eliminate some additional ATTACK measurements that are obviously bad
+ in this flight:
+\end_layout
+
+\begin_layout Plain Layout
+
+dt <- DF$ATTACK - DF$AKRD
+\end_layout
+
+\begin_layout Plain Layout
+
+dt <- dt - mean (dt, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DF$ATTACK[abs(dt) > 0.8] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+DF$AKRD[abs(dt) > 0.8] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+DF <- DF[DF$Valid, ]
+\end_layout
+
+\begin_layout Plain Layout
+
+fl <- lm (ATTACK ~ QR + I(QR*Mach), data=DF)
+\end_layout
+
+\begin_layout Plain Layout
+
+cfl <- coef (fl)
+\end_layout
+
+\begin_layout Plain Layout
+
+Data$AKRDL <- cfl[1] + Data$QR * (cfl[2] + cfl[3] * Data$Mach) 
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$AKRDL <- cfl[1] + DW$QR * (cfl[2] + cfl[3] * DW$Mach)
+\end_layout
+
+\begin_layout Plain Layout
+
+sdl <- with(DW[DW$TASCSQ < 0.1 & DW$Valid, ], sd(AKRDL-ATTACK, na.rm=TRUE))
+\end_layout
+
+\begin_layout Plain Layout
+
+# with(DW, hist(AKRDL-ATTACK, breaks=200))
+\end_layout
+
+\begin_layout Plain Layout
+
+## replace AKRD with the new LAMS-based angle of attack for subsequent processin
+g
+\end_layout
+
+\begin_layout Plain Layout
+
+# Data$AKRD <- Data$AKRDL
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Revised angle of attack
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:aoa-r6-2016"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Because angle of attack (
+\begin_inset Formula $\alpha$
+\end_inset
+
+) is an important contributor to the parameterized representation (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:PCOR"
+
+\end_inset
+
+), and because there have been some problems representing angle of attack
+ over the full operating range of the C-130 including near sea level, it
+ is useful to determine the angle-of-attack relationship again using flight
+ 6 of ARISTO-2016, which included flight segments at low level.
+ The evidence in the previous section on angle-of-attack coefficients indicated
+ that there were flight-to-flight variations in sensitivity coefficients
+ for ARISTO-2015 flights, so only this one flight will be used here, and
+ the LAMS-provided angle of attack will be used as a calibration reference
+ for determing the sensitivity coefficients.
+ The same procedures were followed as in that earlier section, with the
+ result that the sensitivity coefficients determined from the LAMS-based
+ reference value were {
+\begin_inset Formula $c_{0},\,c_{1},\,c_{2}$
+\end_inset
+
+} = {
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfl[1], 4)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfl[2], 4)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfl[3], 4)}
+\end_layout
+
+\end_inset
+
+}.
+ These coefficients represented the LAMS-based measurements of angle of
+ attack with standard deviation 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(sdl, 2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula $^{\circ}$
+\end_inset
+
+ and, because the LAMS mean angle of attack differs from that relative to
+ the fuselage, these coefficients have been adjusted to match the mean angle
+ of attack provided by the conventional radome-based measurement and calibration.
+ This LAMS-based angle of attack was then used for the following processing.
+ Because there was unexplained variation in the characteristics of the radome-ba
+sed measurement from flight to flight in ARISTO-2015, it may be necessary
+ to develop a new calibration for each project or even each flight, but
+ once that calibration of the radome is determined then the pressure corrections
+ developed below should apply to new projects.
+\end_layout
+
+\begin_layout Standard
+Candidate variables for the parameterization include the measured dynamic
+ pressure, measured ambient pressure, angle of attack, sideslip angle, Mach
+ number (a function of dynamic and ambient pressure with minor dependence
+ on humidity), so for the purpose of determining this parameterization a
+ special R data.frame was constructed that contained these variables along
+ with the LAMS-determined airspeed and the temperature and water vapor pressure
+ for all cases where this could be determined reliably.
+ With four-beam LAMS the measured airspeed is over-constrained so the chisquare
+ for the airspeed measurement provides an indication of the quality of that
+ measurement and can be used to identify suspect measurements.
+ The formula used is listed later in this report, as (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:chi-2"
+
+\end_inset
+
+), and as defined there (with arbitrary specification of the expected standard
+ deviation as 1
+\begin_inset space ~
+\end_inset
+
+m/s) a limiting value of 
+\begin_inset Formula $\chi^{2}<0.1$
+\end_inset
+
+
+\begin_inset space \thinspace{}
+\end_inset
+
+m
+\begin_inset Formula $^{2}$
+\end_inset
+
+s
+\begin_inset Formula $^{-2}$
+\end_inset
+
+ appears to be a reasonable choice for excluding measurements.
+ This test was therefore applied when compiling the data.frame, and it was
+ also required that valid measurements (as determined by the Python processing
+ program) be available for all four beams.
+ The residual scatter for the fits was improved if the measured dynamic
+ pressure 
+\begin_inset Formula $q_{m}$
+\end_inset
+
+ was shifted earlier in time by about 105
+\begin_inset space ~
+\end_inset
+
+ms, which is reasonable because the LAMS observes ahead of the aircraft
+ so a time shift of about this magnitude between LAMS line-of-sight airspeeds
+ and 
+\begin_inset Formula $q_{m}$
+\end_inset
+
+ is expected.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Note Note
+status open
+
+\begin_layout Plain Layout
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<save-this, eval=FALSE>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+processWind <- function(Data) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data$BEAM1speed <- zoo::na.approx (as.vector(Data$BEAM1speed), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data$BEAM2speed <- zoo::na.approx (as.vector(Data$BEAM2speed), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data$BEAM3speed <- zoo::na.approx (as.vector(Data$BEAM3speed), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data$BEAM4speed <- zoo::na.approx (as.vector(Data$BEAM4speed), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## replace with Scott's values
+\end_layout
+
+\begin_layout Plain Layout
+
+  if (PCA) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    Data$BEAM1speed <- zoo::na.approx (as.vector(Data$Beam1_LAMS), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+    Data$BEAM2speed <- zoo::na.approx (as.vector(Data$Beam2_LAMS), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+    Data$BEAM3speed <- zoo::na.approx (as.vector(Data$Beam3_LAMS), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+    Data$BEAM4speed <- zoo::na.approx (as.vector(Data$Beam4_LAMS), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## try to fix CTHDG_LAMS bad points in transition through 180: (may no
+ longer be needed)
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (i in 2:(nrow(Data)-1)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (is.na(Data$CTHDG_LAMS[i]) || is.na(Data$CTHDG_LAMS[i-1]) || is.na(Data$CTHD
+G_LAMS[i+1])) {next}
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (abs(Data$CTHDG[i-1]-Data$CTHDG_LAMS[i+1]) > 10.) {next}
+\end_layout
+
+\begin_layout Plain Layout
+
+    if ((Data$CTHDG_LAMS[i-1] < 180.) && (Data$CTHDG_LAMS[i+1] > 180)) {Data$CTHD
+G_LAMS[i] <- NA}
+\end_layout
+
+\begin_layout Plain Layout
+
+    if ((Data$CTHDG_LAMS[i-1] > 180.) && (Data$CTHDG_LAMS[i+1] < 180)) {Data$CTHD
+G_LAMS[i] <- NA}
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data$CTHDG_LAMS <- zoo::na.approx (as.vector(Data$CTHDG_LAMS), maxgap=1000,
+ na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  Theta =  c(35.0802, 34.8501, 34.8496, 0.) * pi / 180 # revised 12 May 2014
+\end_layout
+
+\begin_layout Plain Layout
+
+  Theta <- c(35, 0, 35, 35) * pi / 180  ## ARISTO
+\end_layout
+
+\begin_layout Plain Layout
+
+  Phi = c(179.2171, -61.0712, 59.1506, 0.) * pi / 180  #  "  "
+\end_layout
+
+\begin_layout Plain Layout
+
+  Phi = c(0, 0, -120, 120) * pi / 180
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  # also need the distances from the IRS to LAMS: (x,y,z)
+\end_layout
+
+\begin_layout Plain Layout
+
+  LL = c(-10.305, -6.319, 1.359)                # these are GV values; need
+ C130 values
+\end_layout
+
+\begin_layout Plain Layout
+
+  # unit vectors along beams are then:
+\end_layout
+
+\begin_layout Plain Layout
+
+  #   a[i] = [cos(Theta[i]), -sin(Theta[i])*sin(Phi[i]), sin(Theta[i])*cos(Phi[i
+])]
+\end_layout
+
+\begin_layout Plain Layout
+
+  # and the dot products with the (i,j,k) unit vectors give the direction
+ cosine matrix:
+\end_layout
+
+\begin_layout Plain Layout
+
+  S = c(cos(Theta[1]), -sin(Theta[1])*sin(Phi[1]), sin(Theta[1])*cos(Phi[1]),
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+        cos(Theta[2]), -sin(Theta[2])*sin(Phi[2]), sin(Theta[2])*cos(Phi[2]),
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+        cos(Theta[3]), -sin(Theta[3])*sin(Phi[3]), sin(Theta[3])*cos(Phi[3]))
+\end_layout
+
+\begin_layout Plain Layout
+
+  S4 <- c(S, cos(Theta[4]), -sin(Theta[4])*sin(Phi[4]), sin(Theta[4])*cos(Phi[4]
+))
+\end_layout
+
+\begin_layout Plain Layout
+
+  dim(S) <- c(3,3)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Si = t(solve(S))  # calculate the inverse of S -- this is the 3-beam version
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## the following commented lines are the python code:
+\end_layout
+
+\begin_layout Plain Layout
+
+  # S4 = np.vstack ((S, [cos(Theta[3]), -sin(Theta[3])*sin(Phi[3]), sin(Theta[3])
+*cos(Phi[3])]))
+\end_layout
+
+\begin_layout Plain Layout
+
+  # StS =  linalg.inv (ma.dot (S4.T, S4))
+\end_layout
+
+\begin_layout Plain Layout
+
+  # M = ma.dot (StS, S4.T)      # matrix for finding relative wind from 4-beam
+ LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  dim(S4) <- c(3,4)
+\end_layout
+
+\begin_layout Plain Layout
+
+  StS <- S4 %*% t(S4)
+\end_layout
+
+\begin_layout Plain Layout
+
+  StS <- solve(StS)
+\end_layout
+
+\begin_layout Plain Layout
+
+  M <- StS %*% S4
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  A = c(Data$BEAM1speed, Data$BEAM2speed, Data$BEAM3speed)
+\end_layout
+
+\begin_layout Plain Layout
+
+  A4 <- c(A, Data$BEAM4speed)
+\end_layout
+
+\begin_layout Plain Layout
+
+  dim(A4) <- c(nrow(Data), 4)
+\end_layout
+
+\begin_layout Plain Layout
+
+  dim(A) <- c(nrow(Data), 3)
+\end_layout
+
+\begin_layout Plain Layout
+
+  RW = t (Si %*% t(A))    # gives u, v, w components, RW[,1] is u
+\end_layout
+
+\begin_layout Plain Layout
+
+  RW2 <- t (M %*% t(A4))
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## calculate the error in the solution:
+\end_layout
+
+\begin_layout Plain Layout
+
+  A4P <- t (t (S4) %*% t (RW2)) - A4
+\end_layout
+
+\begin_layout Plain Layout
+
+  CSQ <- A4P[,1]^2 + A4P[,2]^2 + A4P[,3]^2 + A4P[,4]^2
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## set up special data.frame for calculation of wind:
+\end_layout
+
+\begin_layout Plain Layout
+
+  D <- data.frame("Time"=Data$Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$TASX <- sqrt(RW2[,1]^2 + RW2[,2]^2 + RW2[,3]^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$TASX3 <- sqrt(RW[,1]^2 + RW[,2]^2 + RW[,3]^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$TASCSQ <- CSQ 
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$ATTACK <- atan (RW2[, 3] / RW2[, 1]) * 180 / pi
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$SSLIP <-  atan (RW2[, 2] / RW2[, 1]) * 180 / pi
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$GGVEW <- Data$CVEW_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$GGVNS <- Data$CVNS_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$GGVSPD <- Data$CVSPD_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$VEW <- Data$CVEW_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$VNS <- Data$CVNS_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$THDG <- Data$CTHDG_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$ROLL <- Data$CROLL_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$PITCH <- Data$CPITCH_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## save some variables for ease of plotting:
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$BEAM1speed <- Data$BEAM1speed
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$BEAM2speed <- Data$BEAM2speed
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$BEAM3speed <- Data$BEAM3speed
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$BEAM4speed <- Data$BEAM4speed
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$WDC <- Data$WDC
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$WSC <- Data$WSC
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$WIC <- Data$WIC
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$WD_LAMS <- Data$WD_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$WS_LAMS <- Data$WS_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$WI_LAMS <- Data$WI_LAMS
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$AKRD <- Data$AKRD
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$SSRD <- Data$SSRD
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$ADIFR <- Data$ADIFR
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$QCF <- Data$QCF
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$GGVSPD <- Data$GGVSPD
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$PSFD <- Data$PSFD
+\end_layout
+
+\begin_layout Plain Layout
+
+  D$EWX <- Data$EWX
+\end_layout
+
+\begin_layout Plain Layout
+
+  # if (grepl('rf03', fname)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  #   rg <- setRange (D$Time, 192300,213000)
+\end_layout
+
+\begin_layout Plain Layout
+
+  #   D <- D[rg, ]
+\end_layout
+
+\begin_layout Plain Layout
+
+  # }
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## use standard wind processor 
+\end_layout
+
+\begin_layout Plain Layout
+
+  ### rotation-rate corrections should be removed first, 
+\end_layout
+
+\begin_layout Plain Layout
+
+  ### but for standard routine they are insignificant so will be ignored.
+\end_layout
+
+\begin_layout Plain Layout
+
+  DW <- WindProcessor (data=D)
+\end_layout
+
+\begin_layout Plain Layout
+
+  return (DW)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<construct-dataframe, include=FALSE, cache=TRUE>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Data$QCF <- ShiftInTime (Data$QCF, 1, -105)
+\end_layout
+
+\begin_layout Plain Layout
+
+# Data$QCF <- SmoothInterp (Data$QCF, .Length=7)
+\end_layout
+
+\begin_layout Plain Layout
+
+# DW <- processWind (Data)  ## this causes problems; leave commented
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PSXC <- Data$PSXC
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PSFD <- Data$PSFD
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PSFRD <- Data$PSFRD
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QCFR <- Data$QCFR
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PS_A <- Data$PS_A
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PS_A2 <- Data$PS_A2
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QC_A <- Data$QC_A
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QC_A2 <- Data$QC_A2
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$CONCD_RWT <- Data$CONCD_RWT
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$GGALT <- Data$GGALT
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QCF <- Data$QCF
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QCXC <- Data$QCXC
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$ATX <- Data$ATX
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QR <- DW$ADIFR / DW$QCF
+\end_layout
+
+\begin_layout Plain Layout
+
+Valid <- DW$TASCSQ < 0.1
+\end_layout
+
+\begin_layout Plain Layout
+
+Valid <- Valid & DW$TASX > 60 & abs(DW$ROLL) < 5 & !is.na(DW$PITCH) & DW$PITCH
+ < 20
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+DW <- DW[Valid,]
+\end_layout
+
+\begin_layout Plain Layout
+
+NV <- nrow(DW)
+\end_layout
+
+\begin_layout Plain Layout
+
+CP <- SpecificHeats (DW$EWX / DW$PSFD)
+\end_layout
+
+\begin_layout Plain Layout
+
+TK <- 273.15+DW$ATX
+\end_layout
+
+\begin_layout Plain Layout
+
+Chi <- ( (1+DW$TASL^2 / (2*CP[,1]*TK))^(CP[,1]/CP[,3]) - 1)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$DQ <- (DW$QCF - DW$PSFD * Chi) / (1 + Chi)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$DQ2 <- (DW$QCFR - DW$PSFRD * Chi) / (1 + Chi)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$DP <- -DW$DQ
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$DP2 <- -DW$DQ2
+\end_layout
+
+\begin_layout Plain Layout
+
+## now have the errors DQ and DP, which are the negatives of the corrections,
+ for Q and P
+\end_layout
+
+\begin_layout Plain Layout
+
+## want to find a representation of those correction factors
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QP <- DW$QCF / DW$PSFD
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QP2 <- DW$QCFR / DW$PSFRD
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$M <- MachNumber (DW$PSFD, DW$QCF, DW$EWX)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$M2 <- MachNumber (DW$PSFRD, DW$QCFR, DW$EWX)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$DQP <- DW$DQ / DW$PSFD
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$DQP2 <- DW$DQ2 / DW$PSFRD
+\end_layout
+
+\begin_layout Plain Layout
+
+summary(lm(DQ ~ AKRD, data=DW))
+\end_layout
+
+\begin_layout Plain Layout
+
+summary(lm(DQP ~ I(AKRD*QP)+QP+M+I(AKRD*QP*M), data=DW))
+\end_layout
+
+\begin_layout Plain Layout
+
+summary(lm(DQP ~ AKRD*M*QP*I(AKRD^2)*I(QP^2)*I(M^2), data=DW))
+\end_layout
+
+\begin_layout Plain Layout
+
+fq23 <- lm(DQP ~ AKRD+M+QP+I(QP^2)+AKRD:M+M:QP+QP:I(AKRD^2)+M:I(QP^2)+QP:I(QP^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+           +I(AKRD^2):I(QP^2)+AKRD:I(M^2)+M:I(M^2)+QP:I(M^2)+I(QP^2):I(M^2)+M:QP
+:I(AKRD^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+           +AKRD:M:I(QP^2)+AKRD:QP:I(QP^2)+M:I(AKRD^2):I(QP^2)+AKRD:M:I(M^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+           +I(AKRD^2):I(QP^2):I(M^2)+AKRD:M:QP:I(QP^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+           +AKRD:M:QP:I(QP^2):I(M^2), data=DW)
+\end_layout
+
+\begin_layout Plain Layout
+
+summary(fq23)
+\end_layout
+
+\begin_layout Plain Layout
+
+cf <- coef(fq23)
+\end_layout
+
+\begin_layout Plain Layout
+
+DQX23 <- with(DW, cf[1]+cf[2]*AKRD+cf[3]*M+cf[4]*QP+cf[5]*QP^2+cf[6]*AKRD*M
+\end_layout
+
+\begin_layout Plain Layout
+
+      +cf[7]*M*QP+cf[8]*QP*AKRD^2+cf[9]*M*QP^2
+\end_layout
+
+\begin_layout Plain Layout
+
+      +cf[10]*QP^3+cf[11]*QP^2*AKRD^2+cf[12]*AKRD*M^2
+\end_layout
+
+\begin_layout Plain Layout
+
+      +cf[13]*M^3+cf[14]*QP*M^2+cf[15]*QP^2*M^2+cf[16]*M*QP*AKRD^2+cf[17]*AKRD*M
+*QP^2+cf[18]*AKRD*QP^3
+\end_layout
+
+\begin_layout Plain Layout
+
+      +cf[19]*M*QP^2*AKRD^2+cf[20]*AKRD*M^3
+\end_layout
+
+\begin_layout Plain Layout
+
+      +cf[21]*QP^2*AKRD^2*M^2+cf[22]*AKRD*M*QP^3+cf[23]*AKRD*M^3*QP^3)
+\end_layout
+
+\begin_layout Plain Layout
+
+sd23 <- sd(DW$PSFD*(DW$DQP-DQX23), na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+hist(DW$PSFD*(DW$DQP-DQX23), breaks=200, xlim=c(-1,1))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+fq <- lm(DQP ~ AKRD+M+QP+I(QP^2)+AKRD:M+M:QP+QP:I(AKRD^2)+M:I(QP^2)+QP:I(QP^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+         +I(AKRD^2):I(QP^2)+AKRD:I(M^2)+M:I(M^2)+QP:I(M^2)+I(QP^2):I(M^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+         +M:QP:I(AKRD^2)+AKRD:M:I(QP^2)+AKRD:QP:I(QP^2)+M:I(AKRD^2):I(QP^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+         +AKRD:M:I(M^2)+M:QP:I(M^2)+I(AKRD^2):I(QP^2):I(M^2)+AKRD:M:QP:I(QP^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+         +AKRD:M:QP:I(QP^2):I(M^2), data=DW)
+\end_layout
+
+\begin_layout Plain Layout
+
+fq <- lm (DQP ~ AKRD+M+QP+I(QP^2)+AKRD:M+M:QP+QP:I(AKRD^2)+M:I(QP^2)+QP:I(QP^2),
+ data=DW)
+\end_layout
+
+\begin_layout Plain Layout
+
+summary(fq)
+\end_layout
+
+\begin_layout Plain Layout
+
+fq <- lm (DQP ~ QP+AKRD+M+QP:I(AKRD^2), data=DW)
+\end_layout
+
+\begin_layout Plain Layout
+
+fq2 <- lm (DQP2 ~ QP2+AKRD+M2+QP2:I(AKRD^2), data=DW)
+\end_layout
+
+\begin_layout Plain Layout
+
+summary(fq)
+\end_layout
+
+\begin_layout Plain Layout
+
+anova(fq)
+\end_layout
+
+\begin_layout Plain Layout
+
+cf <- coef(fq)
+\end_layout
+
+\begin_layout Plain Layout
+
+cf2 <- coef (fq2)
+\end_layout
+
+\begin_layout Plain Layout
+
+DQX <- with(DW, cf[1]+cf[2]*QP+cf[3]*AKRD+cf[4]*M+cf[5]*QP*AKRD^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+DQX2 <- with(DW, cf2[1]+cf2[2]*QP2+cf2[3]*AKRD+cf2[4]*M2+cf2[5]*QP2*AKRD^2)
+\end_layout
+
+\begin_layout Plain Layout
+
+sd5 <- sd(DW$PSFD*(DW$DQP-DQX), na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DQ <- DW$PSFD * DQX
+\end_layout
+
+\begin_layout Plain Layout
+
+dmean <- mean (DQ, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+dsd <- sd(DQ, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+dmeanX <- mean (DQX, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+dsdX <- sd (DQX, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QC <- DW$QCF - DQ    # DQ is the error, so subtract it
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PC <- DW$PSFD + DQ
+\end_layout
+
+\begin_layout Plain Layout
+
+DQ2 <- DW$PSFRD * DQX2
+\end_layout
+
+\begin_layout Plain Layout
+
+dmean2 <- mean (DQ2, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+dsd2 <- sd(DQ2, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QC2 <- DW$QCFR - DQ2
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PC2 <- DW$PSFRD + DQ2
+\end_layout
+
+\begin_layout Plain Layout
+
+PCor <- DW$PSFD * PCorFunction (DW$PSFD, DW$QCF, DW$AKRD, "C130")
+\end_layout
+
+\begin_layout Plain Layout
+
+PCorMean <- mean (PCor, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DPmean <- mean (DQ, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+New empirical fits
+\end_layout
+
+\begin_layout Standard
+An overly complex fit with 23 coefficients, as listed in the R code, gave
+ a parameterized representation of 
+\begin_inset Formula $\Delta q$
+\end_inset
+
+ with standard deviation 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(sd23, 2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+hPa about the values given by LAMS via (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:delta-q"
+
+\end_inset
+
+).
+ This was based on about 15,600 1-Hz measurements that, in addition to the
+ chisquare test, met the requirements that TASX > 90, |ROLL|<5, and PITCH<20
+\begin_inset Formula $^{\circ}$
+\end_inset
+
+(to eliminate some obviously bad measurements from the INS).
+ The tests eliminated turns and times near takeoff and landing.
+ This fit provides an indication of the approximate target standard deviation
+ for the fit, but a much simpler fit is desirable because, even though all
+ 23 coefficients meet tests of significance 
+\begin_inset Formula $p$
+\end_inset
+
+<0.001, there could well be complex interactions dependent on the particular
+ flight profile or other peculiarities of the data that could lead to problems
+ when extrapolated beyond the range of the measurements or to new data.
+ For that reason, a much simpler fit was sought that could give almost as
+ small a standard deviation about the reference measurements from LAMS.
+ The approach was to consider analysis-of-variance tables as guides to selecting
+ the factors accounting for significant parts of the total variance.
+ A five-coefficient fit gave a residual standard deviation of 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(sd5, 2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+hPa with 15575 degrees of freedom and accounted for 85% of the total variance
+ (vs 90% for the 23-coefficient fit), so this appeared to be an acceptable
+ compromise.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+The residual variance was reduced by shifting the measured sequence of QCF
+ forward in time by 105
+\begin_inset space ~
+\end_inset
+
+ms, a reasonable value to compensate for the displacement of the LAMS measuremen
+ts ahead of the aircraft.
+\end_layout
+
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta q}{p_{m}}=b_{0}+b_{1}\frac{q_{m}}{p_{m}}+b_{2}\frac{\alpha}{a_{r}}+b_{3}M+b_{4}\frac{q_{m}}{p_{m}}\left(\frac{\alpha}{a_{r}}\right)^{2}\label{eq:dq-fit}
+\end{equation}
+
+\end_inset
+
+with coefficients {
+\begin_inset Formula $b_{0-4}$
+\end_inset
+
+}={
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[1],6)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[2],5)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[3],8)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[4],5)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[5],6)}
+\end_layout
+
+\end_inset
+
+} for the sensing pair producing PSFD and QCF.
+ For that producing PSFRD and QCFR, the corresponding coefficients are {
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[1],6)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[2],5)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[3],8)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[4],5)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[5],6)}
+\end_layout
+
+\end_inset
+
+}.
+\end_layout
+
+\begin_layout Standard
+The mean deduced error in measured dynamic pressure is 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(dmean,2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula $\pm$
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(dsd,2)}
+\end_layout
+
+\end_inset
+
+ for QCF, but it is much larger for QCFR, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(dmean2,2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula $\pm$
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(dsd2,2)}
+\end_layout
+
+\end_inset
+
+.
+ The mean error in ambient pressure (respectively PSFD and PSFRD) is therefore
+ the negative of these values.
+ These are the errors in the measurements, so to obtain corrected values
+ these errors should be subtracted from the measured values; i.e., 
+\begin_inset Formula $q_{c}=q_{m}-\Delta q$
+\end_inset
+
+ and 
+\begin_inset Formula $p_{c}=p_{m}+\Delta q$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<TAS-check, include=TRUE, fig.cap='Comparison of airspeed calculated from
+ the corrected dynamic and ambient pressure to the airspeed measured by
+ LAMS.
+ The dashed orange line is a 1:1 reference line.'>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+# recalculate TAS using corrected pressures:
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+TASQ <- TrueAirspeed (MachNumber (DW$PC, DW$QC, DW$EWX), DW$ATX, DW$EWX/DW$PC)
+\end_layout
+
+\begin_layout Plain Layout
+
+plotWAC(data.frame(DW$TASL, TASQ), xlab='LAMS-based TAS [m/s]', ylab='corrected-p
+ressure TAS [m/s]', type='p', pch=20, col='blue')
+\end_layout
+
+\begin_layout Plain Layout
+
+lines(c(70,160), c(70,160), lwd=3, lty=2, col='darkorange')
+\end_layout
+
+\begin_layout Plain Layout
+
+meanDTAS <- mean (TASQ-DW$TASL, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+sdDTAS <- sd (TASQ-DW$TASL, na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A test for consistency is that airspeed calculated from the corrected dynamic
+ pressure and ambient pressure should match the airspeed measured by LAMS.
+ Figure
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+ref{fig:TAS-check}
+\end_layout
+
+\end_inset
+
+ shows that there is good agreement between these two measurements for cases
+ where the LAMS-based airspeed meets the quality check discussed above,
+ with mean difference of 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(meanDTAS,4)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula $\pm$
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(sdDTAS,2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+m/s.
+\end_layout
+
+\begin_layout Standard
+These corrections are significantly different from those obtained earlier
+ by Cooper et al.
+\begin_inset space ~
+\end_inset
+
+(2014) and as revised in the Technical Note on Processing Algorithms.
+ For this flight, the average correction applied to pressure using the old
+ parameterization in the Processing Algorithms document would be 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(mean(PCor, na.rm=TRUE), 2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+hPa.
+ This difference does not only occur at low level but also is present when
+ measurements are restricted to those at pressure below 800
+\begin_inset space ~
+\end_inset
+
+hPa.
+ In comparison to the avionics-system pressure PS_A, the new parameterization
+ gives mean values about 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(mean(DW$PC-DW$PS_A, na.rm=TRUE),2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+hPa lower than PS_A, while the old parameterization gave mean values about
+ 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(mean(DW$PSXC-DW$PS_A, na.rm=TRUE),2)}
+\end_layout
+
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+hPa lower.
+ The original values were based on flight 8 from the 2011 project IDEAS-4,
+ and for that flight the difference between the corrected pressure and PS_A
+ was 
+\begin_inset Formula $-1.08$
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+hPa, close to the value found for this flight using the new parameterization.
+ The larger difference obtained using the old parameterization suggests
+ that the characteristics of the aircraft have changed, either affecting
+ the static defect of the research static ports, the radome, the sensor
+ calibrations, or some unknown change.
+ It may be useful to use the new parameterization for intervening C-130
+ projects like WINTER and FRAPPE, but that needs further study.
+\end_layout
+
+\begin_layout Section
 LAMS-based measurement of temperature
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:LAMS-based-measurement-of"
+
+\end_inset
+
+
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Subsection
 Theory and data available
 \end_layout
 
@@ -5540,7 +8582,7 @@ status open
 
 <<T-comparison, include=FALSE, fig.cap='LAMS-derived temperature (TL) vs
  the standard measurement (ATX) for ARISTO-2015 flight 4, 19:12:00--19:30:00
- UTC.'>>=
+ UTC.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -5549,17 +8591,57 @@ status open
 
 \begin_layout Plain Layout
 
-Flight <- "rf04_LAMS"
+SaveRDataC <- sprintf ('%sC.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList)))
+  Flight <- "rf04_LAMS"
+\end_layout
+
+\begin_layout Plain Layout
+
+  Project <- 'ARISTO'
+\end_layout
+
+\begin_layout Plain Layout
+
+  Directory <- DataDirectory ()
+\end_layout
+
+\begin_layout Plain Layout
+
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables(c(VarList)))
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRDataC)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRDataC)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -5701,16 +8783,21 @@ lines (xt, yt, col='darkorange', lwd=3, lty=2)
 
 \begin_layout Standard
 To investigate the performance of this measurement of temperature in cloud,
- the in-cloud measurements from ARISTO-2015 were examined.
+ the in-cloud measurements from ARISTO-2015 and ARISTO-2016 (flight 6 only)
+ were examined.
  The in-cloud measurements included those in the following table, along
- with a few other brief passes through rain, ice, or cloud:
+ with a few other brief passes through rain, ice, or cloud.
+ There were a large number of cloud passes (>27) in ARISTO-2016 flight 6,
+ but only three examples are included in the table and discussed in this
+ report.
+ 
 \end_layout
 
 \begin_layout Standard
 \noindent
 \align center
 \begin_inset Tabular
-<lyxtabular version="3" rows="11" columns="5">
+<lyxtabular version="3" rows="14" columns="5">
 <features tabularvalignment="middle">
 <column alignment="center" valignment="top">
 <column alignment="center" valignment="top">
@@ -6198,7 +9285,7 @@ Beam2 OK; Beam1 gaps
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -6207,7 +9294,7 @@ Beam2 OK; Beam1 gaps
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -6216,7 +9303,7 @@ Beam2 OK; Beam1 gaps
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -6225,7 +9312,7 @@ Beam2 OK; Beam1 gaps
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -6234,11 +9321,152 @@ Beam2 OK; Beam1 gaps
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 LAMS NG
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2016-6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+230510
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+230620
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2016-6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+240250
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+240415
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2016-6
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+250040
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+250130
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
@@ -6266,7 +9494,7 @@ status open
 
 \backslash
 _cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a
- different color.', fig.height=4>>=
+ different color.', fig.height=4, cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -6275,37 +9503,67 @@ _cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a
 
 \begin_layout Plain Layout
 
-Flight <- "rf03_LAMS"
+SaveRDataD <- sprintf ('%sD.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT")))
+  Flight <- "rf03_LAMS"
 \end_layout
 
 \begin_layout Plain Layout
 
-## these points appear to be bad, beam 2:
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
 \end_layout
 
 \begin_layout Plain Layout
 
-Data$BEAM2speed[getIndex(Data, 200951)] <- NA
+  Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT")))
 \end_layout
 
 \begin_layout Plain Layout
 
-Data$BEAM2speed[getIndex(Data, 200948)] <- NA
+  ## these points appear to be bad, beam 2:
 \end_layout
 
 \begin_layout Plain Layout
 
-Data$BEAM2speed[getIndex(Data, 200954)] <- NA
+  Data$BEAM2speed[getIndex(Data, 200951)] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data$BEAM2speed[getIndex(Data, 200948)] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data$BEAM2speed[getIndex(Data, 200954)] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRDataD)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRDataD)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -6580,7 +9838,11 @@ plotWAC(subset(DW,, c(Time, CONCD)))
 
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Subsection
+Case studies
+\end_layout
+
+\begin_layout Subsubsection
 Case 1: Flight 3, 20:09:00 to 20:10:00
 \end_layout
 
@@ -6692,7 +9954,7 @@ Despite the noisy signal, particularly in the vicinity of the clouds, the
  air in the housing causes an error of negative sign.
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Subsubsection
 Case 2: Flight 2, 17:30:00–19:20:00 
 \end_layout
 
@@ -6895,7 +10157,7 @@ status open
  airspeed (TASL) and the conventional airspeed (TASX), for the period from
  17:39:00--17:46:00 from ARISTO-2015 flight 2.
  (bottom) The RMS error for the fit to the four measured line-of-sight beam
- speeds, for the same flight segment.'>>=
+ speeds, for the same flight segment.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -6904,38 +10166,68 @@ status open
 
 \begin_layout Plain Layout
 
-Flight <- "rf02_LAMS"
+SaveRDataE <- sprintf ('%sE.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT", "PLWCD_RPT")
-))
+  Flight <- "rf02_LAMS"
 \end_layout
 
 \begin_layout Plain Layout
 
-## these points appear to be bad, beam 2:
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
 \end_layout
 
 \begin_layout Plain Layout
 
-# Data$BEAM2speed[getIndex(Data, 200951)] <- NA
+  Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT", "PLWCD_RPT
+")))
 \end_layout
 
 \begin_layout Plain Layout
 
-# Data$BEAM2speed[getIndex(Data, 200948)] <- NA
+  ## these points appear to be bad, beam 2:
 \end_layout
 
 \begin_layout Plain Layout
 
-# Data$BEAM2speed[getIndex(Data, 200954)] <- NA
+  # Data$BEAM2speed[getIndex(Data, 200951)] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+  # Data$BEAM2speed[getIndex(Data, 200948)] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+  # Data$BEAM2speed[getIndex(Data, 200954)] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRDataE)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRDataE)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -7275,8 +10567,8 @@ status open
 \backslash
 
 \backslash
-_cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a
- different color.'>>=
+ cm$^{-3}$ are shown as thicker lines plotted, in the case of ATX, in a
+ different color.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -7406,7 +10698,7 @@ status open
 <<LAMST-4, include=TRUE, fig.cap='Dependence of the difference between the
  LAMS-derived temperature (TLS) and the standard temperature (ATX) as a
  function of the liquid water content measured by the CDP (PLWCD), for the
- same flight period shown in the preceding two plots.'>>=
+ same flight period shown in the preceding two plots.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -7581,7 +10873,7 @@ clearpage
 
 \end_layout
 
-\begin_layout Subsection*
+\begin_layout Subsubsection
 Case 3: Flight 3, 18:10:00–18:20:00
 \end_layout
 
@@ -7595,7 +10887,7 @@ status open
  airspeed (TASL) and the conventional airspeed (TASX), for the period from
  18:10:00--18:20:00 from ARISTO-2015 flight 3.
  (bottom) The RMS error for the fit to the four measured line-of-sight beam
- speeds, for the same flight segment.'>>=
+ speeds, for the same flight segment.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -7604,18 +10896,48 @@ status open
 
 \begin_layout Plain Layout
 
-Flight <- "rf03_LAMS"
+SaveRDataF <- sprintf ('%sF.Rdata', thisFileName)
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+if (ReloadData) {
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT", "PLWCD_RPT")
-))
+  Flight <- "rf03_LAMS"
+\end_layout
+
+\begin_layout Plain Layout
+
+  fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables(c(VarList, "CONCD_RPT", "PLWCD_RPT
+")))
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRDataF)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRDataF)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -7971,7 +11293,7 @@ _cm$^{-3}$ are shown as thicker lines.
  on measurements with RMS smaller than 0.2 m/s.
  The cyan line (TLS1) is the result based only on the forward-pointing beam
  2, and the orange line (TLS3) is the result based on the 3-beam result
- using beams 1, 3, and 4.'>>=
+ using beams 1, 3, and 4.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -8239,9 +11561,25 @@ status open
 
 \begin_layout Plain Layout
 
+
+\backslash
+clearpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
 <<LAMST-7, include=TRUE, fig.cap='Same as in the previous plot, but for a
  later portion of the flight segment.
- See the caption for the previous plot.'>>=
+ See the caption for the previous plot.', cache=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -8413,13 +11751,1049 @@ C for in-cloud measurements.
  on the standard temperature probes.
 \end_layout
 
-\begin_layout Subsection*
-Conclusions, LAMS-measured temperature
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+clearpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Case 4: Flight 2016-6, 23:05:00 – 23:06:20
 \end_layout
 
 \begin_layout Standard
-The three cloud regions discussed in the previous three subsections are
- the best measurements from ARISTO-2015 for this study.
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<ARISTO2016-T, include=TRUE, cache=TRUE>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Flight <- "rf06"
+\end_layout
+
+\begin_layout Plain Layout
+
+Directory <- DataDirectory ()
+\end_layout
+
+\begin_layout Plain Layout
+
+ProjectDir <- 'ARISTO'
+\end_layout
+
+\begin_layout Plain Layout
+
+Project <- 'ARISTO2016'
+\end_layout
+
+\begin_layout Plain Layout
+
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory, ProjectDir, Project, Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+VarList16 <- c(VarList[-9:-12], 'WIC')
+\end_layout
+
+\begin_layout Plain Layout
+
+SaveRDataG <- sprintf ('%sG.Rdata', thisFileName)
+\end_layout
+
+\begin_layout Plain Layout
+
+if (ReloadData) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data <- getNetCDF (fname, standardVariables(c(VarList16, "CONCD_RWT")))
+\end_layout
+
+\begin_layout Plain Layout
+
+  save (Data, file=SaveRDataG)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load (SaveRDataG)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+PCA <- FALSE    ## use SG polynomial solution
+\end_layout
+
+\begin_layout Plain Layout
+
+# PCA <- TRUE     ## use PCA solution
+\end_layout
+
+\begin_layout Plain Layout
+
+DW <- processWind(Data)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$BEAM2speed <- Data$BEAM2speed
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$PSXC <- Data$PSXC
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QCXC <- Data$QCXC
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$ATX <- Data$ATX
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$CONCD <- Data$CONCD_RWT
+\end_layout
+
+\begin_layout Plain Layout
+
+# DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF,
+ DW$QCF, DW$EWX))
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$QR <- DW$ADIFR / DW$QCF
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$Mach <- MachNumber (DW$PSXC, DW$QCXC, DW$EWX)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TASL <- DW$TASX
+\end_layout
+
+\begin_layout Plain Layout
+
+## temporary: use beam 2 only
+\end_layout
+
+\begin_layout Plain Layout
+
+# DW$TASL <- DW$BEAM2speed
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TASL3 <- (Data$BEAM1speed + DW$BEAM3speed + DW$BEAM4speed) / (3 * cos
+ (35*pi/180))
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TASL1 <- Data$BEAM2speed
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TASX <- Data$TASX
+\end_layout
+
+\begin_layout Plain Layout
+
+CP <- SpecificHeats (DW$EWX / DW$PSXC)
+\end_layout
+
+\begin_layout Plain Layout
+
+cpa <- CP[,1]
+\end_layout
+
+\begin_layout Plain Layout
+
+Ra <- CP[,3]
+\end_layout
+
+\begin_layout Plain Layout
+
+cva <- CP[,2]
+\end_layout
+
+\begin_layout Plain Layout
+
+gamma <- cpa/cva
+\end_layout
+
+\begin_layout Plain Layout
+
+DTAS <- with(DW, mean (TASX-TASL, na.rm=TRUE))
+\end_layout
+
+\begin_layout Plain Layout
+
+DTAS3 <- with (DW, mean (TASX-TASL3, na.rm=TRUE))
+\end_layout
+
+\begin_layout Plain Layout
+
+DTAS1 <- with (DW, mean (TASX-TASL1, na.rm=TRUE))
+\end_layout
+
+\begin_layout Plain Layout
+
+Vs <- (DW$TASL + DTAS) / DW$Mach
+\end_layout
+
+\begin_layout Plain Layout
+
+Vs3 <- (DW$TASL3 + DTAS3) / DW$Mach
+\end_layout
+
+\begin_layout Plain Layout
+
+Vs1 <- (DW$TASL1 + DTAS1) / DW$Mach
+\end_layout
+
+\begin_layout Plain Layout
+
+TL <- Vs^2 / (gamma * Ra) - 273.15
+\end_layout
+
+\begin_layout Plain Layout
+
+TL3 <- Vs3^2 / (gamma * Ra) - 273.15
+\end_layout
+
+\begin_layout Plain Layout
+
+TL1 <- Vs1^2 / (gamma * Ra) - 273.15
+\end_layout
+
+\begin_layout Plain Layout
+
+LS <- 9
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS <- SmoothInterp (TL, .Length=LS)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS1 <- SmoothInterp (TL1, .Length=LS)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS3 <- SmoothInterp (TL3, .Length=LS)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLSG <- DW$TLS
+\end_layout
+
+\begin_layout Plain Layout
+
+# TL <- DW$TASL^2 / (2*cpa * (((DW$PSXC+DW$QCXC)/DW$PSXC)^(Ra/cpa) - 1))
+ - 273.15
+\end_layout
+
+\begin_layout Plain Layout
+
+DWsave <- DW
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<LAMST-8, include=TRUE, fig.cap='The temperature deduced from the measurement
+ obtained using the LAMS-measured airspeed (TLS, dashed green line), adjusted
+ as described in the text, plotted with the standard measurement of temperature
+ (ATX).
+ Where the chisquare of the fit (as defined in the text) was larger than
+ 0.1, the line is plotted as a solid line (TLSG).
+ Also shown is the temperature determined using only the three off-axis
+ beams (TLS3, red line).
+ Data from ARISTO-2016 flight 6, 23:05:00 -- 24:06:20 UTC.', fig.height=4.5>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 205500, 212000)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 212000, 213500)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 225700, 230000)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 230000, 230100)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 230200, 230300)
+\end_layout
+
+\begin_layout Plain Layout
+
+r <- setRange (DW, 230500, 230620)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 230830, 230900)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 230940, 231030)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 231100, 231130)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 231145, 231210)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 240250, 240415)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 240445, 240510)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 240555, 240620)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 240730, 240755)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 240925, 240950)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 240950, 241020)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 241405, 241445)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 241930, 242300)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 242140, 242245)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 244520, 244630)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 244830, 244940)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 245010, 245045)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 245240, 245350)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 250040, 250130)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 250400, 250530)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 250750, 250915)
+\end_layout
+
+\begin_layout Plain Layout
+
+# r <- setRange (DW, 250750, 250830)
+\end_layout
+
+\begin_layout Plain Layout
+
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+\end_layout
+
+\begin_layout Plain Layout
+
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+\end_layout
+
+\begin_layout Plain Layout
+
+ATX <- DW$ATX
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLSG[DW$TASCSQ > 0.1] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+r2 <- r[DW$CONC[r] < 5]
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS3 <- DW$TLS3+mean (DW$ATX[r2]-DW$TLS3[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS <- DW$TLS+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLSG <- DW$TLSG+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+plotWAC (subset(DW[r,],,c(Time, ATX, TLS, TLS3, TLSG)), ylab='Temperature
+ [C]', 
+\end_layout
+
+\begin_layout Plain Layout
+
+         col=c('blue', 'darkgreen', 'red', 'darkgreen', 'darkorange'), #
+ ylim=c(-15,-20),
+\end_layout
+
+\begin_layout Plain Layout
+
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,2), legend.position='topright')
+\end_layout
+
+\begin_layout Plain Layout
+
+Excl <- DW$CONC < 5
+\end_layout
+
+\begin_layout Plain Layout
+
+Excl[is.na(DW$CONC)] <- TRUE
+\end_layout
+
+\begin_layout Plain Layout
+
+# ATX[Excl] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+# TLS3[Excl] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+\end_layout
+
+\begin_layout Plain Layout
+
+# lines (DW$Time+0.5, TLS3, lwd=4, col='darkorange')
+\end_layout
+
+\begin_layout Plain Layout
+
+# points (DW$Time, TL, pch=20, col='magenta')
+\end_layout
+
+\begin_layout Plain Layout
+
+# plotWAC (subset( DW[r,],, c(Time, WIC)))
+\end_layout
+
+\begin_layout Plain Layout
+
+op <- par (mar=c(5,4,1,1)+0.1)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WW <- 400 + DW$WIC * 100
+\end_layout
+
+\begin_layout Plain Layout
+
+# plotWAC(subset(DW[r,],, c(Time, CONCD, WW)))
+\end_layout
+
+\begin_layout Plain Layout
+
+plotWAC(subset(DW[r,],, c(Time, CONCD)))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Figure 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+ref{fig:LAMST-8}
+\end_layout
+
+\end_inset
+
+ shows the conventional temperature ATX and the LAMS-derived temperatures
+ TLS and TLS3, the first found from the four-beam solution and the second
+ from the three-beam solution excluding the forward beam.
+ Portions of the TLS3 line where the chisquare as defined above is larger
+ than 0.1 are shown as dashed lines.
+ In this very dense cloud, with droplet concentrations as measured by the
+ CDP exceeding 1000
+\begin_inset space ~
+\end_inset
+
+cm
+\begin_inset Formula $^{-3}$
+\end_inset
+
+, the forward beam (not plotted) shows departures of many degrees and this
+ appears to bias the four-beam solution toward low values.
+ Even the three-beam solution (red line) appears to be affected.
+ The measurement appears to recover in the gap between clouds, but this
+ appears to be a case where the temperature from the LAMS is affected by
+ the presence of the cloud droplets to such an extent that it is not reliable.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+clearpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<LAMST-9, include=TRUE, fig.cap='See the caption for the preceding figure.
+ Data from ARISTO-2016 flight 6, 24:02:50 -- 24:04:15 UTC.', fig.height=4.5>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+DW <- DWsave
+\end_layout
+
+\begin_layout Plain Layout
+
+r <- setRange (DW, 240250, 240415)
+\end_layout
+
+\begin_layout Plain Layout
+
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+\end_layout
+
+\begin_layout Plain Layout
+
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+\end_layout
+
+\begin_layout Plain Layout
+
+ATX <- DW$ATX
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLSG[DW$TASCSQ > 0.1] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+r2 <- r[DW$CONC[r] < 5]
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS3 <- DW$TLS3+mean (DW$ATX[r2]-DW$TLS3[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS <- DW$TLS+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLSG <- DW$TLSG+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+plotWAC (subset(DW[r,],,c(Time, ATX, TLS, TLS3, TLSG)), ylab='Temperature
+ [C]', 
+\end_layout
+
+\begin_layout Plain Layout
+
+         col=c('blue', 'darkgreen', 'red', 'darkgreen', 'darkorange'), #
+ ylim=c(-15,-20),
+\end_layout
+
+\begin_layout Plain Layout
+
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,2), legend.position='topright')
+\end_layout
+
+\begin_layout Plain Layout
+
+Excl <- DW$CONC < 5
+\end_layout
+
+\begin_layout Plain Layout
+
+Excl[is.na(DW$CONC)] <- TRUE
+\end_layout
+
+\begin_layout Plain Layout
+
+ATX[Excl] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+TLS3[Excl] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+\end_layout
+
+\begin_layout Plain Layout
+
+# lines (DW$Time+0.5, TLS3, lwd=4, col='darkorange')
+\end_layout
+
+\begin_layout Plain Layout
+
+# points (DW$Time, TL, pch=20, col='magenta')
+\end_layout
+
+\begin_layout Plain Layout
+
+# plotWAC (subset( DW[r,],, c(Time, WIC)))
+\end_layout
+
+\begin_layout Plain Layout
+
+op <- par (mar=c(5,4,1,1)+0.1)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WW <- 400 + DW$WIC * 100
+\end_layout
+
+\begin_layout Plain Layout
+
+# plotWAC(subset(DW[r,],, c(Time, CONCD, WW)))
+\end_layout
+
+\begin_layout Plain Layout
+
+plotWAC(subset(DW[r,],, c(Time, CONCD)))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<LAMST-10, include=TRUE, fig.cap='See the caption for the preceding two
+ figures.
+ Data from ARISTO-2016 flight 6, 25:00:40 -- 25:01:30 UTC.', fig.height=4.5>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+r <- setRange (DW, 250040, 250130)
+\end_layout
+
+\begin_layout Plain Layout
+
+layout(matrix(1:2, ncol = 1), widths = 1,  heights = c(5,6))
+\end_layout
+
+\begin_layout Plain Layout
+
+op <- par (mar=c(2,4,1,1)+0.1, oma=c(1.1,0,0,0))
+\end_layout
+
+\begin_layout Plain Layout
+
+ATX <- DW$ATX
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLSG[DW$TASCSQ > 0.1] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+r2 <- r[DW$CONC[r] < 5]
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS3 <- DW$TLS3+mean (DW$ATX[r2]-DW$TLS3[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLS <- DW$TLS+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$TLSG <- DW$TLSG+mean (DW$ATX[r2]-DW$TLSG[r2],  na.rm=TRUE)
+\end_layout
+
+\begin_layout Plain Layout
+
+plotWAC (subset(DW[r,],,c(Time, ATX, TLS, TLS3, TLSG)), ylab='Temperature
+ [C]', 
+\end_layout
+
+\begin_layout Plain Layout
+
+         col=c('blue', 'darkgreen', 'red', 'darkgreen', 'darkorange'), #
+ ylim=c(-15,-20),
+\end_layout
+
+\begin_layout Plain Layout
+
+        lwd=c(2,2,3,2,2), lty=c(1,2,1,1,2), legend.position='topright')
+\end_layout
+
+\begin_layout Plain Layout
+
+Excl <- DW$CONC < 5
+\end_layout
+
+\begin_layout Plain Layout
+
+Excl[is.na(DW$CONC)] <- TRUE
+\end_layout
+
+\begin_layout Plain Layout
+
+ATX[Excl] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+TLS3[Excl] <- NA
+\end_layout
+
+\begin_layout Plain Layout
+
+# lines (DW$Time+0.5, ATX, lwd=4, col='cyan')
+\end_layout
+
+\begin_layout Plain Layout
+
+# lines (DW$Time+0.5, TLS3, lwd=4, col='darkorange')
+\end_layout
+
+\begin_layout Plain Layout
+
+# points (DW$Time, TL, pch=20, col='magenta')
+\end_layout
+
+\begin_layout Plain Layout
+
+# plotWAC (subset( DW[r,],, c(Time, WIC)))
+\end_layout
+
+\begin_layout Plain Layout
+
+op <- par (mar=c(5,4,1,1)+0.1)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WW <- 400 + DW$WIC * 100
+\end_layout
+
+\begin_layout Plain Layout
+
+# plotWAC(subset(DW[r,],, c(Time, CONCD, WW)))
+\end_layout
+
+\begin_layout Plain Layout
+
+plotWAC(subset(DW[r,],, c(Time, CONCD)))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Case 5: Flight 2016-6, 24:02:50 – 24:04:15
+\end_layout
+
+\begin_layout Standard
+See Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+ref{fig:LAMST-9}
+\end_layout
+
+\end_inset
+
+.
+ In this case the 3-beam solution (red line) appears reasonable except for
+ two possible errors toward low temperature in regions of very high cloud
+ droplet concentration.
+ The 4-beam solution shows pronounced errors in those locations, and the
+ high chisquare confirms inconsistency among the line-of-sight airspeeds.
+\end_layout
+
+\begin_layout Subsubsection
+Case 6: Flight 2016-6, 25:00:40 – 25:01:30
+\end_layout
+
+\begin_layout Standard
+See Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+ref{fig:LAMST-10}
+\end_layout
+
+\end_inset
+
+.
+ The LAMS-based temperature shows higher values on the edges of the cloud
+ and lower values inside the cloud in comparison to the conventional measurement.
+ The slow time response of the sensor measuring ATX, with around 3-s time
+ constant, may smooth the measurements from that sensor.
+ The agreement between 3-beam and 4-beam results lends some support to the
+ LAMS-based measurements, as does the mostly low chisquare for the 4-beam
+ measurements, even in cloud.
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+clearpage
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Conclusions, LAMS-measured temperature
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Conclusions,-LAMS-measured-tempe"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The three cloud regions discussed in the first three case studies are the
+ best measurements from ARISTO-2015 for this study, and the last three appear
+ to be the best from ARISTO-2016.
  The following assessment is based on those studies:
 \end_layout
 
@@ -8472,8 +12846,8 @@ The airspeed based on the three off-axis beams is much less affected by
  higher than the standard measurement in warm cloud, as would be expected
  if there is evaporative cooling as a result of wetting of the temperature
  sensor.
- However, this conclusion is based on only a few cloud passes, and more
- data and analysis would help test the utility of this measurement.
+ However, this conclusion is based on only a few case studies and is not
+ applicable to all cases, so no strung conclusion can be drawn.
 \end_layout
 
 \begin_layout Enumerate
@@ -8498,7 +12872,7 @@ clearpage
 
 \end_layout
 
-\begin_layout Section*
+\begin_layout Section
 Transient effects on wind measurements, C-130
 \end_layout
 
@@ -8516,15 +12890,15 @@ target "https://drive.google.com/open?id=0B1kIUH45ca5AVEJrbElxWmQzRnc"
  The conclusion of that memo was that effects, while detectable and correctable,
  were at the margin of uncertainty for wind measurements and so had little
  significant effect on wind measurements from the GV.
- A similar study is not possible here because there wasn't a good pitch
- maneuver to use for this purpose.
+ A similar study is not possible with ARISTO-2015 fights because there wasn't
+ a good pitch maneuver to use for this purpose.
  Two good maneuvers were flown in flight 4, 18:21:00–18:26:00 and 18:58:00–19:01
 :00, but in each case the LAMS signals were inadequate to provide a good
  measurement of vertical wind, as needed for this study.
  Other pitch maneuvers were flown, but some were compromised by times when
- the LAMS IRU was not working or, in the last flight, when LAMS signals
+ the LAMS IRU was not working or, in the last 2015 flight, when LAMS signals
  were too weak.
- This study will have to await better measurements, perhaps from ARISTO-2016.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -8533,7 +12907,7 @@ status open
 
 \begin_layout Plain Layout
 
-<<Transient-1, include=FALSE, fig.cap=' '>>=
+<<revised-netcdf, include=TRUE>>=
 \end_layout
 
 \begin_layout Plain Layout
@@ -8542,83 +12916,975 @@ status open
 
 \begin_layout Plain Layout
 
-Flight <- "rf04_LAMS"
+## this treats 50-Hz LAMS specially, without producing a full 50-Hz file
 \end_layout
 
 \begin_layout Plain Layout
 
-fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+#' @title getNetCDF
 \end_layout
 
 \begin_layout Plain Layout
 
-Data <- getNetCDF (fname, standardVariables(c(VarList)))
+#' @description Loads selected variables in a specified netCDF data file
+ into a data.frame.
 \end_layout
 
 \begin_layout Plain Layout
 
-PCA <- FALSE    ## use SG polynomial solution
+#' @details 'Time' is converted to a POSIXct variable, and other variables
+ specified in 
 \end_layout
 
 \begin_layout Plain Layout
 
-PCA <- TRUE     ## use PCA solution
+#' VarList are included in the data.frame.
+ By default, the entire file is loaded, but 
 \end_layout
 
 \begin_layout Plain Layout
 
-DW <- processWind(Data)
+#' optional arguments Start and End can limit the time range.
+ After reading the data, the 
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$RMS <- sqrt (DW$TASCSQ / 4)
+#' netCDF file is closed before returning the data.frame to the calling program.
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$BEAM2speed <- Data$BEAM2speed
+#' The global attributes in the netCDF file are loaded as attributes of
+ the returned 
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$PSXC <- Data$PSXC
+#' data.frame, and attributes of each requested variable are also assigned
+ to that column 
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$QCXC <- Data$QCXC
+#' in the data.frame from the variable attributes in the netCDF file.
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$ATX <- Data$ATX
+#' When working with attributes, it is a feature of R data.frames that subsetting
+ loses 
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$CONCD <- Data$CONCD_RPT
+#' all the assigned variable attributes.
+ To preserve them, copy them via 
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$PLWCD <- Data$PLWCD_RPT
+#' A <- attributes (Data$VAR), remove A$dim (e.g., A$dim <- NULL),
 \end_layout
 
 \begin_layout Plain Layout
 
-DW$AKRDF <- cf4[1] + DW$ADIFR/DW$QCF * (cf4[2] + cf4[3] * MachNumber (DW$PSF,
- DW$QCF, DW$EWX))
+#' and re-assign via attributes (DataNew$VAR) <- A.
+ The function does not handle 
 \end_layout
 
 \begin_layout Plain Layout
 
-r <- setRange (DW, 185800, 190100)
+#' multi-dimensional variables (e.g., CCDP, the size distribution measured
+ by a cloud
 \end_layout
 
 \begin_layout Plain Layout
 
-plotWAC(subset(DW[r, ],,c(Time, WIC, WIN)))
+#' droplet probe) yet; it does work for 25-Hz files, and returns with fractional
+-second times.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @aliases getnetcdf GetNetCDF
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @author William Cooper
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @import ncdf4
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @importFrom signal filter sgolay
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @importFrom stats approx
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @export getNetCDF
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param fname string, full-path file name, e.g., "/scr/raf_data/PREDICT/PREDICTr
+f01.nc"
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param VarList vector of variable names to load from the netCDF file.
+ Use "ALL" to load 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' everything.
+ (May produce quite large data.frames.) The default is the list given by
+\end_layout
+
+\begin_layout Plain Layout
+
+#' standardVariables ().
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' SPECIAL NOTE: Some variable names
+\end_layout
+
+\begin_layout Plain Layout
+
+#' have a suffix indicating the location on the aircraft, like _LWI (left-wing
+ inboard).
+\end_layout
+
+\begin_layout Plain Layout
+
+#' To avoid having to supply these, a partial name can be supplied, like
+ "CONCD_", and
+\end_layout
+
+\begin_layout Plain Layout
+
+#' the routine will find the first matching variable and use that variable
+ name.
+ These
+\end_layout
+
+\begin_layout Plain Layout
+
+#' can always be overridden by providing the full name; this is just a convenien
+ce to
+\end_layout
+
+\begin_layout Plain Layout
+
+#' avoid having to look up where a particular measurement was installed
+ in a given project.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param Start An optional numeric giving the desired start time in HHMMSS
+ format
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param End An optional numeric giving the desired end time in HHMMSS
+ format
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @param F An optional numeric entered in the data.frame as a column 'RF'
+ all set to 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' this integer.
+ This may be useful when the resulting data.frame is combined with others,
+ 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' to have a variable distinguishing different flights.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @return data.frame containing the specified variables as columns, along
+ with 'Time' 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' and optionally the flight number 'RF'.
+ The netCDF-file attributes and variable
+\end_layout
+
+\begin_layout Plain Layout
+
+#' attributes are assigned to the data.frame and columns, respectively.
+\end_layout
+
+\begin_layout Plain Layout
+
+#' @examples 
+\end_layout
+
+\begin_layout Plain Layout
+
+#' 
+\backslash
+dontrun{D <- getNetCDF ("PathToFile.nc", c("Var1", "Var2", "Var3"))}
+\end_layout
+
+\begin_layout Plain Layout
+
+#' 
+\backslash
+dontrun{D <- getNetCDF ("PathToFile.nc", c("Var1", "Var2"), 133000, 143000,
+ 5)}
+\end_layout
+
+\begin_layout Plain Layout
+
+getNetCDF <- function (fname, VarList=standardVariables(), Start=0, End=0,
+ F=0) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  # This function reads the netCDF file 'fname' and extracts 
+\end_layout
+
+\begin_layout Plain Layout
+
+  # the variables specified in 'VarList', returning the
+\end_layout
+
+\begin_layout Plain Layout
+
+  # results in a data.frame.
+ It includes the flight number F
+\end_layout
+
+\begin_layout Plain Layout
+
+  # in the data.frame, as variable RF.
+ It converts "Time",
+\end_layout
+
+\begin_layout Plain Layout
+
+  # seconds after a reference time in the netCDF files, to
+\end_layout
+
+\begin_layout Plain Layout
+
+  # a POSIXct date/time variable.
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## get the header information
+\end_layout
+
+\begin_layout Plain Layout
+
+  netCDFfile = nc_open (fname)
+\end_layout
+
+\begin_layout Plain Layout
+
+  if ("ALL" %in% VarList) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    VarList <- names (netCDFfile$var)
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## check that requested variables are present in netCDF file; fail otherwise
+\end_layout
+
+\begin_layout Plain Layout
+
+  namesCDF <- names (netCDFfile$var)
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (V in VarList) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (is.na(V)) {next}
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (length (which (grepl (V, namesCDF)))) {next}
+\end_layout
+
+\begin_layout Plain Layout
+
+    cat (sprintf ("requested variable %s not in netCDF file;
+\backslash
+n ----> getNetCDF returning with error", V))
+\end_layout
+
+\begin_layout Plain Layout
+
+    return (-1)
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  Time <- ncvar_get (netCDFfile, "Time")
+\end_layout
+
+\begin_layout Plain Layout
+
+  DL <- length (Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## set the maximum data rate (but not above 100 Hz):
+\end_layout
+
+\begin_layout Plain Layout
+
+  Rate <- 1
+\end_layout
+
+\begin_layout Plain Layout
+
+  nms <- names(netCDFfile$dim)
+\end_layout
+
+\begin_layout Plain Layout
+
+  if ("sps25" %in% nms) {Rate <- 25}
+\end_layout
+
+\begin_layout Plain Layout
+
+  # if ("sps50" %in% nms) {Rate <- 50}  ## limit to max 25 Hz (special for
+ BEAMn_LAMS)
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## comment next line when LAMS 100-Hz vector present but no others
+\end_layout
+
+\begin_layout Plain Layout
+
+  # if ("sps100" %in% nms) {Rate <- 100}
+\end_layout
+
+\begin_layout Plain Layout
+
+  # print (sprintf ("output rate for this data.frame is %d", Rate))
+\end_layout
+
+\begin_layout Plain Layout
+
+  # Expand Time to be high-rate if necessary
+\end_layout
+
+\begin_layout Plain Layout
+
+  if (Rate > 1) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    T <- vector ("numeric", Rate*length(Time))
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (i in 1:length(Time)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      for (j in 0:(Rate-1)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        T[(i-1)*Rate+j+1] <- Time[i] + j/Rate
+\end_layout
+
+\begin_layout Plain Layout
+
+      }  
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    Time <- T
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  time_units <- ncatt_get (netCDFfile, "Time", "units")
+\end_layout
+
+\begin_layout Plain Layout
+
+  tref <- sub ('seconds since ', '', time_units$value)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Time <- as.POSIXct (as.POSIXct (tref, tz='UTC')+Time, tz='UTC')
+\end_layout
+
+\begin_layout Plain Layout
+
+  # see if limited time range wanted:
+\end_layout
+
+\begin_layout Plain Layout
+
+  i1 <- ifelse ((Start != 0), getIndex (Time, Start), 1)
+\end_layout
+
+\begin_layout Plain Layout
+
+  i2 <- ifelse ((End != 0), getIndex (Time, End) + Rate - 1, length (Time))
+\end_layout
+
+\begin_layout Plain Layout
+
+  # if (End != 0) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  #   i2 <- getIndex (Time, End) + Rate - 1
+\end_layout
+
+\begin_layout Plain Layout
+
+  # } else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  #   i2 <- length (Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  # }
+\end_layout
+
+\begin_layout Plain Layout
+
+  r <- i1:i2
+\end_layout
+
+\begin_layout Plain Layout
+
+  # r is the appropriate index for any rate, but also need
+\end_layout
+
+\begin_layout Plain Layout
+
+  # the 1-Hz and 5-Hz indices for interpolation:
+\end_layout
+
+\begin_layout Plain Layout
+
+  r1 <- ((i1-1)/Rate+1):((i2-1)/Rate+1)
+\end_layout
+
+\begin_layout Plain Layout
+
+  DL <- length (r1)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Time <- Time[r]
+\end_layout
+
+\begin_layout Plain Layout
+
+  SE <- getStartEnd (Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## save 'Time' attributes:
+\end_layout
+
+\begin_layout Plain Layout
+
+  ATT <- ncatt_get (netCDFfile, "Time")   # get list of Time attributes
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (A in names (ATT)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    attr(Time, A) <- ATT[[A]]
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  d <- data.frame(Time)
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## save the dimensions, useful for archiving or re-writing to netCDF:---------
+----
+\end_layout
+
+\begin_layout Plain Layout
+
+  ##    but, to save space, omit the list of times
+\end_layout
+
+\begin_layout Plain Layout
+
+  nf <- netCDFfile
+\end_layout
+
+\begin_layout Plain Layout
+
+  nf$dim[1]$Time$vals <- NULL
+\end_layout
+
+\begin_layout Plain Layout
+
+  attr (d, "Dimensions") <- nf$dim
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## Save all the global attributes in the netCDF file as 'd' attributes:-------
+---
+\end_layout
+
+\begin_layout Plain Layout
+
+  ATT <- ncatt_get (netCDFfile, 0)   # get list of global attributes
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (A in names (ATT)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    attr(d, A) <- ATT[[A]]
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  attr (d, "R_dataframe_created") <- date()    # add one global attribute
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  ######------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+  IntFilter <- function (X, inRate, outRate) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (inRate == outRate) {return (X)}
+\end_layout
+
+\begin_layout Plain Layout
+
+    ratio <- as.integer(outRate/inRate)    ## expected to be an integer
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## beware of missing values
+\end_layout
+
+\begin_layout Plain Layout
+
+    z <- zoo::na.approx (as.vector(X), maxgap=1000, na.rm = FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+    z[is.na(z)] <- 0
+\end_layout
+
+\begin_layout Plain Layout
+
+    x <- 0:(length(X)-1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    A <- stats::approx (x, z, n=length(X)*ratio-ratio+1)
+\end_layout
+
+\begin_layout Plain Layout
+
+    T <- A$y
+\end_layout
+
+\begin_layout Plain Layout
+
+    T <- signal::filter(signal::sgolay(4,75),T)
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## now shift to match 25-Hz:
+\end_layout
+
+\begin_layout Plain Layout
+
+    n <- as.integer (ratio / 2)
+\end_layout
+
+\begin_layout Plain Layout
+
+    NL = length(T)
+\end_layout
+
+\begin_layout Plain Layout
+
+    T <- c(rep(T[1],n), T, rep(T[NL],ratio-n-1))  ## OK, even or odd ratio
+\end_layout
+
+\begin_layout Plain Layout
+
+    return (T)
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  ######------------------------------------------------------------------
+\end_layout
+
+\begin_layout Plain Layout
+
+  
+\end_layout
+
+\begin_layout Plain Layout
+
+  ## Add the requested variables:-----------------------------------------------
+-
+\end_layout
+
+\begin_layout Plain Layout
+
+  for (V in VarList) {
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (is.na(V)) {next}
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## fill in location-tag for variable name if needed:
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (substr(V, nchar(V), nchar(V)) == '_') {
+\end_layout
+
+\begin_layout Plain Layout
+
+      for (ncn in namesCDF) {
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (grepl (V, ncn)) {V <- ncn; break}   ## note, takes 1st match
+\end_layout
+
+\begin_layout Plain Layout
+
+      }
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## save dimensions for the variable:
+\end_layout
+
+\begin_layout Plain Layout
+
+    datt <- list()
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (dd in netCDFfile$var[[V]]$dim) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      datt[[length(datt)+1]] <- dd$name
+\end_layout
+
+\begin_layout Plain Layout
+
+    }    ## later, save datt as an attribute of V
+\end_layout
+
+\begin_layout Plain Layout
+
+    X <- ncvar_get (netCDFfile, V)
+\end_layout
+
+\begin_layout Plain Layout
+
+    ATT <- ncatt_get (netCDFfile, V)
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## for Rate == 1, nothing special is needed:
+\end_layout
+
+\begin_layout Plain Layout
+
+    if (Rate == 1) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      X <- X[r1]
+\end_layout
+
+\begin_layout Plain Layout
+
+    } else { ## other rates require flattening and possibly interpolation
+ and filtering
+\end_layout
+
+\begin_layout Plain Layout
+
+      DM <- length(dim(X))           
+\end_layout
+
+\begin_layout Plain Layout
+
+      if (DM == 2) {    # flatten
+\end_layout
+
+\begin_layout Plain Layout
+
+        X <- X[,r1]
+\end_layout
+
+\begin_layout Plain Layout
+
+        inputRate <- dim(X)[1]
+\end_layout
+
+\begin_layout Plain Layout
+
+        needFilter <- ifelse ((dim(X)[1] != Rate), TRUE, FALSE)
+\end_layout
+
+\begin_layout Plain Layout
+
+        dim(X) <- dim(X)[1]*dim(X)[2]
+\end_layout
+
+\begin_layout Plain Layout
+
+        ## see if adjustment to max rate is needed
+\end_layout
+
+\begin_layout Plain Layout
+
+        if (needFilter) {X <- IntFilter(X, inputRate, Rate)}
+\end_layout
+
+\begin_layout Plain Layout
+
+      } else {  ## single-dimension (1 Hz) in high-rate file
+\end_layout
+
+\begin_layout Plain Layout
+
+        X <- X[r1]
+\end_layout
+
+\begin_layout Plain Layout
+
+        X <- IntFilter (X, 1, Rate)
+\end_layout
+
+\begin_layout Plain Layout
+
+      }
+\end_layout
+
+\begin_layout Plain Layout
+
+    } 
+\end_layout
+
+\begin_layout Plain Layout
+
+    ## add variable attributes as in netCDF file
+\end_layout
+
+\begin_layout Plain Layout
+
+    for (A in names (ATT)) {
+\end_layout
+
+\begin_layout Plain Layout
+
+      attr (X, A) <- ATT[[A]]
+\end_layout
+
+\begin_layout Plain Layout
+
+    }
+\end_layout
+
+\begin_layout Plain Layout
+
+    attr (X, "Dimensions") <- datt
+\end_layout
+
+\begin_layout Plain Layout
+
+    d[V] <- X
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  if (F != 0) {    # if specified, include the flight number
+\end_layout
+
+\begin_layout Plain Layout
+
+    RF <- rep (F, times=length(Time))    # label flight number
+\end_layout
+
+\begin_layout Plain Layout
+
+    d["RF"] <- RF
+\end_layout
+
+\begin_layout Plain Layout
+
+  }
+\end_layout
+
+\begin_layout Plain Layout
+
+  nc_close (netCDFfile)
+\end_layout
+
+\begin_layout Plain Layout
+
+  return (d)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
 \end_layout
 
 \begin_layout Plain Layout
@@ -8633,6 +13899,818 @@ plotWAC(subset(DW[r, ],,c(Time, WIC, WIN)))
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+<<Transient-1, include=TRUE, fig.height=4.5, fig.cap=c('A flight segment with
+ pitch variations from flight 6 or ARISTO-2016.
+ The blue line shows the difference between the LAMS-based vertical wind
+ (WIL) and the conventional measurement (WIC).
+ Also shown are the rate-of-climb divided by 10 (GGVSPD/10, dashed green
+ line), the angle of attack (AKRD, dotted red line), and the normal component
+ of aircraft acceleration (BNORMA, magenta line).', 'As in the preceding
+ figure but for the vertical wind error after correction for the assumed
+ dependence on normal acceleration, as described in the text.')>>=
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+Directory <- DataDirectory ()
+\end_layout
+
+\begin_layout Plain Layout
+
+Flight <- "rf06hr" 		
+\end_layout
+
+\begin_layout Plain Layout
+
+Project = "AR16"		
+\end_layout
+
+\begin_layout Plain Layout
+
+ProjectDir <- 'ARISTO'
+\end_layout
+
+\begin_layout Plain Layout
+
+fname = sprintf("%s%s/%s%sLAMS.nc", Directory,ProjectDir,Project,Flight)
+\end_layout
+
+\begin_layout Plain Layout
+
+SaveRData2 <- sprintf("%s2.Rdata", thisFileName)
+\end_layout
+
+\begin_layout Plain Layout
+
+VarList2 <- VarList2[-32]    ## there is a problem with CONCD_RWT in this
+ file
+\end_layout
+
+\begin_layout Plain Layout
+
+if (ReloadData) {
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data2 <- getNetCDF (fname, c(VarList2, 'BNORMA'))
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data2$QR <- Data2$ADIFR / Data2$QCF
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data2$Mach <- MachNumber (Data2$PSFD, Data2$QCF, Data2$EWX)
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data2$AKRD <- cfl[1] + Data2$QR * (cfl[2] + cfl[3] * Data2$Mach) 		
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data2$SSLIP <- Data2$SSRD
+\end_layout
+
+\begin_layout Plain Layout
+
+  Data2$ATTACK <- Data2$AKRD
+\end_layout
+
+\begin_layout Plain Layout
+
+  save(Data2, file=SaveRData2)
+\end_layout
+
+\begin_layout Plain Layout
+
+} else {
+\end_layout
+
+\begin_layout Plain Layout
+
+  load(SaveRData2)
+\end_layout
+
+\begin_layout Plain Layout
+
+}
+\end_layout
+
+\begin_layout Plain Layout
+
+SampleRate <- 25  
+\end_layout
+
+\begin_layout Plain Layout
+
+DW <- processWind (Data2)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$BNORMA <- Data2$BNORMA
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WIL <- ShiftInTime (DW$WIN, 25, 100)  ## shift LAMS wind backward
+\end_layout
+
+\begin_layout Plain Layout
+
+## recalculate the vertical wind, for reference and to include the GPS-to-IRU
+ distance:
+\end_layout
+
+\begin_layout Plain Layout
+
+DS <- WindProcessor (Data2)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WIN <- DS$WIN
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WIC <- Data2$WIC
+\end_layout
+
+\begin_layout Plain Layout
+
+layout(matrix(1:1, ncol = 1), widths = 1,  heights = c(6))
+\end_layout
+
+\begin_layout Plain Layout
+
+op <- par (mar=c(5,4,1,1)+0.1, oma=c(1.1,0,0,0))
+\end_layout
+
+\begin_layout Plain Layout
+
+r <- setRange(DW, 205720, 205815)
+\end_layout
+
+\begin_layout Plain Layout
+
+# summary(lm((WIL-WIN)~AKRD, data=DW[r,]))$sigma
+\end_layout
+
+\begin_layout Plain Layout
+
+with(DW[r,], plotWAC(data.frame(Time, WIL-WIN, GGVSPD/10, AKRD, BNORMA),
+ ylab='WIL-WIC', col=c('blue', 'darkgreen', 'red', 'magenta'), lty=c(1,2,3,1)))
+\end_layout
+
+\begin_layout Plain Layout
+
+fw <- lm((WIL-WIN)~BNORMA, data=DW[r,])
+\end_layout
+
+\begin_layout Plain Layout
+
+cfw <- coef (fw)
+\end_layout
+
+\begin_layout Plain Layout
+
+DW$WIX <- DW$WIN + cfw[1] + cfw[2]*DW$BNORMA
+\end_layout
+
+\begin_layout Plain Layout
+
+with(DW[r,], plotWAC(data.frame(Time, WIL-WIX, GGVSPD/10, AKRD, BNORMA),
+ ylab='WIL-WIX', col=c('blue', 'darkgreen', 'red', 'magenta'), lty=c(1,2,3,1)))
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+@
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There were two good maneuvers with rapid pitch changes on flight 6 of ARISTO-201
+6, at 20:57:00–20:59:00 and 21:15:00–21:17:00 UTC.
+ The same approach was taken to these maneuvers as for the earlier study
+ of the GV:
+\end_layout
+
+\begin_layout Enumerate
+Produce a high-rate (25 Hz) netCDF file for the period of the two maneuvers.
+ This was saved as /scr/raf/cooperw/AR16rf06hr.nc on the EOL file system.
+ Note that there is an apparent bug in nimbus that prevents production of
+ the beam-speed histograms (BEAM1_LAMS, etc) at 25 Hz, giving all-zero values,
+ so these variables were produced at 50 Hz instead and the next processing
+ step was modified to average those to 25 Hz before proceeding.
+ The 
+\end_layout
+
+\begin_layout Enumerate
+Process this file using the Python program LAMS_ARISTO.py.
+ This was modified from the one used for other data files to include the
+ averaging of the 50-Hz beam-speed histograms to 25 Hz before proceeding.
+ That program produced a new netCDF file named AR16rf06hrLAMS.nc with added
+ variables BEAM[1-4]speed, needed for the present R program.
+\end_layout
+
+\begin_layout Enumerate
+This program (ARISTO-LAMS.Rnw) then read a subset of variables from that
+ file and calculated WIL, the LAMS-based vertical wind.
+ The conventional wind (WIC) was also recalculated using the sensitivity
+ coefficients recommended in this report.
+ To compensate for the displacement between the LAMS-based vertical wind
+ and that based on the radome, the LAMS-based value was delayed by 100
+\begin_inset space ~
+\end_inset
+
+ms after some study of how the difference between WIL and WIC varied with
+ this choice.
+\end_layout
+
+\begin_layout Standard
+The resulting difference between WIL and WIC then was used to investigate
+ if there appeared to be a false signal in the vertical wind and, if so,
+ to search for its source.
+ Figure
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+ref{fig:Transient-11}
+\end_layout
+
+\end_inset
+
+ shows that this difference shows clear dependence on angle-of-attack, rate-of-c
+limb, and normal acceleration of the aircraft.
+ The dependence on angle of attack is surprising because this flight was
+ used to determine the sensitivity coefficients in use, so residual dependence
+ on angle-of-attack indicates that this region has a different dependence
+ in comparison to the entire flight.
+ The variable showing the strongest correlation to the error, however, is
+ BNORMA, as was also found in the study of the GV.
+ In the interval plotted, the correlation between (WIL-WIC) and BNORMA is
+ 0.82.
+ As in the case of the GV, the correlation with rate-of-change of pitch
+ was almost identical to that with BNORMA, and the correlation to angle-of-attac
+k was 0.77, but other variables (GGVSPD, rate of change of angle of attack,
+ PITCH) gave significantly lower correlation to the error.
+\end_layout
+
+\begin_layout Standard
+As for the GV, a suggested correction for this effect is to add 
+\begin_inset Formula $g_{0}+g_{1}(\mathrm{BNORM})$
+\end_inset
+
+ to WIC, where {
+\begin_inset Formula $g_{0},\,g_{1}$
+\end_inset
+
+} = {
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfw[1], 3)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfw[2], 3)}
+\end_layout
+
+\end_inset
+
+}.
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Perhaps better would be to make the equivalent correction to AKRD before
+ calculation of the vertical wind.
+\end_layout
+
+\end_inset
+
+ When this correction is made, the new variable (WIX), shown in Fig.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+{fig:Transient-12}
+\end_layout
+
+\end_inset
+
+, no longer appears to depend on any of the other plotted variables.
+ With this correction, the standard deviation in the difference between
+ the LAMS-based and corrected vertical wind was 0.34
+\begin_inset space ~
+\end_inset
+
+m/s, similar to the standard deviation for a similar 30-s period just before
+ the maneuver (0.49
+\begin_inset space ~
+\end_inset
+
+m/s).
+ The applied correction had a standard deviation of 0.37
+\begin_inset space ~
+\end_inset
+
+m/s, so about half of the observed variance between WIL and WIC is removed
+ by this correction.
+ 
+\end_layout
+
+\begin_layout Standard
+The second pitch maneuver (21:15:00 – 21:17:00 UTC) was a little more turbulent,
+ but the results were consistent with those from the first.
+\end_layout
+
+\begin_layout Subsection*
+Summary - Transient Effects
+\end_layout
+
+\begin_layout Enumerate
+The pitch maneuver revealed that the difference between the LAMS-derived
+ vertical wind and that from the radome-based system varied with the vertical
+ acceleration.
+ The estimated magnitude of the combined effects, however, is modest, leading
+ to typical errors in WIC of about 0.4
+\begin_inset space ~
+\end_inset
+
+m/s when the vertical acceleration was in the range 
+\begin_inset Formula $\pm2\thinspace$
+\end_inset
+
+m
+\begin_inset space \thinspace{}
+\end_inset
+
+s
+\begin_inset Formula $^{-2}$
+\end_inset
+
+, as is typical of all but the most extreme flight conditions.
+\end_layout
+
+\begin_layout Enumerate
+A correction can be used to remove this error in vertical wind.
+ After application of that regression correction based on the pitch maneuver,
+ the measurements of vertical wind from the radome-based system agree with
+ those from the LAMS with a standard deviation between the two measurements
+ of about 0.4
+\begin_inset space ~
+\end_inset
+
+m/s during that pronounced maneuver.
+ This was significantly larger than that obtained for the GV, but this maneuver
+ was flown in more turbulent conditions where the true fluctuations in wind
+ were about of this magnitude.
+\end_layout
+
+\begin_layout Section
+Summary and Conclusions
+\end_layout
+
+\begin_layout Enumerate
+The four-beam LAMS produced useful measurements in all four beams for major
+ parts of the ARISTO flights.
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+The overconstrained solution for airspeed using all four beams provided
+ a useful measure of consistency that can be used to avoid instances where
+ the algorithm providing the line-of-sight airspeeds produced erroneous
+ results.
+ A proposed limit on the chisquare from the fit appeared to be useful, as
+ described in Section 2.
+\end_layout
+
+\begin_layout Enumerate
+The airspeed from the forward beam usually measured an airspeed that was
+ within about 0.3
+\begin_inset space ~
+\end_inset
+
+m/s of the airspeed determined from the other three off-axis beams.
+\end_layout
+
+\begin_layout Enumerate
+Dense cloud appeared to affect the measurements, especially for the forward
+ beam.
+ The three off-axis beams were less affected, but very dense cloud produced
+ erroneous measurements in all four beams.
+\end_layout
+
+\begin_layout Enumerate
+The downward-slanted beam occasionally was contaminated by return from the
+ surface during low-level flight.
+\end_layout
+
+\begin_layout Enumerate
+One flight (flight 6 of ARISTO-2016) included a wide range of conditions
+ spanning the altitude range of the C-130 and gave a good basis for determining
+ the fitted coefficients for the radome sensitivity and the static defect
+ based on the the range of conditions normally encountered by the C-130,
+ including for flight near sea level.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+New sensitivity coefficients were determined for the radome:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+For angle of attack, new suggested sensitivity coefficients based on calibration
+ to match LAMS-based measurements are {
+\begin_inset Formula $c_{0},\,c_{1},\,c_{2}$
+\end_inset
+
+} = {
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfl[1], 4)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfl[2], 4)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfl[3], 4)}
+\end_layout
+
+\end_inset
+
+}.
+ Cf.
+\begin_inset space ~
+\end_inset
+
+Equation
+\begin_inset space ~
+\end_inset
+
+(
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:akrd-fit"
+
+\end_inset
+
+).
+ These coefficients have been adjusted to account for the offset in vertical
+ alignment between the LAMS IRU and the upward axis normal to the longitudinal
+ axis of the aircraft.
+\end_layout
+
+\begin_layout Enumerate
+For sideslip, the suggested coefficients are {
+\begin_inset Formula $b_{0},\,b_{1}$
+\end_inset
+
+} = {
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfs[1], 4)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cfls[2], 4)}
+\end_layout
+
+\end_inset
+
+}.
+ (Cf.
+\begin_inset space ~
+\end_inset
+
+Eq.
+\begin_inset space ~
+\end_inset
+
+(
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:ssrd"
+
+\end_inset
+
+).
+ The second coefficient is based on the LAMS-based calibration, while the
+ first was determined from a conventional calibration using yaw maneuvers;
+ the justification is that the relative offset in installation orientation
+ between the LAMS and the longitudinal axis of the aircraft is uncertain
+ so this coefficient is chosen to match the conventional-calibration value.
+ (The value determined from the LAMS calibration is only about 0.05
+\begin_inset Formula $^{\circ}$
+\end_inset
+
+ larger than the coefficient listed.) The first coefficient (i.e., the offset
+ in sideslip) still needs to be determined from good circle maneuvers, which
+ can separate an offset in heading from one in sideslip.
+ It is significant, though, that these calibrations suggest a change in
+ offset of about 1.6
+\begin_inset Formula $^{\circ}$
+\end_inset
+
+ from the standard coefficients.
+ This will have a significant effect on calculated horizontal wind.
+\end_layout
+
+\begin_layout Enumerate
+Because the LAMS provides reference values for calibrations such as these
+ that are superior to those obtained in the conventional way (dependent
+ on zero vertical wind), it will be useful to include LAMS-based calibration
+ in future projects where the measurement of vertical wind is needed with
+ low uncertainty.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+A new parameterized correction to static and dynamic pressure was determined
+ using a wide range of flight conditions spanning the altitude range of
+ the C-130.
+ The suggested formula is (
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:dq-fit"
+
+\end_inset
+
+) with coefficients {
+\begin_inset Formula $b_{0-4}$
+\end_inset
+
+}={
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[1],6)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[2],5)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[3],8)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[4],5)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf[5],6)}
+\end_layout
+
+\end_inset
+
+} for the sensing pair producing PSFD and QCF and {
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[1],6)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[2],5)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[3],8)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[4],5)}
+\end_layout
+
+\end_inset
+
+, 
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+Sexpr{round(cf2[5],6)}
+\end_layout
+
+\end_inset
+
+} for the sensor pair producing PSFRD and QCFR.
+ This correction provides a consistent offset from the avionics-provided
+ pressure (PS_A) for recent C-130 projects since IDEAS-4-C130 in 2011, where
+ a different correction is needed.
+\end_layout
+
+\begin_layout Enumerate
+The LAMS-based measurement of temperature provides measurements out-of-cloud
+ in good agreement with the conventional temperature sensors.
+ In cloud, the measurements are sometimes compromised, especially in very
+ dense cloud, but sometimes suggest possibly real differences from the conventio
+nal sensors.
+ This portion of the study was mostly inconclusive.
+ See Sect.
+\begin_inset space ~
+\end_inset
+
+
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Conclusions,-LAMS-measured-tempe"
+
+\end_inset
+
+ for a more extensive summary.
+\end_layout
+
+\begin_layout Enumerate
+As was found for the GV, there are indications of transient effects on the
+ measured angle-of-attack of the C-130 when the pitch changes rapidly.
+ The best correction appeared to be to apply an empirical correction based
+ on the measured upward acceleration of the aircraft, as was also the case
+ for the GV.
+ The correction based on a linear fit to the measured normal acceleration
+ BNORMA made corrections of typically about 0.4
+\begin_inset space ~
+\end_inset
+
+m/s to the vertical wind, a value considerably larger than the typical correctio
+n of about 0.1
+\begin_inset space ~
+\end_inset
+
+m/s that applied to the GV.
+ However, except for this increased magnitude of the correction, the features
+ of the transient effects appeared similar for the two aircraft.
 \end_layout
 
 \begin_layout Standard
@@ -8678,7 +14756,7 @@ include enough info to re-run.
 
 \begin_layout Standard
 \begin_inset Tabular
-<lyxtabular version="3" rows="7" columns="2">
+<lyxtabular version="3" rows="9" columns="2">
 <features tabularvalignment="middle">
 <column alignment="left" valignment="top" width="0pt">
 <column alignment="left" valignment="top" width="0pt">
@@ -8823,6 +14901,30 @@ Sexpr{thisFileName}.Rnw
 \family sans
 \shape smallcaps
 \color blue
+Python:
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+/h/eol/cooperw/RStudio/LAMS3D/LAMS_ARISTO.py
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\family sans
+\shape smallcaps
+\color blue
 Original Data:
 \end_layout
 
@@ -8832,29 +14934,27 @@ Original Data:
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-
-\backslash
- %/scr/raf
-\backslash
-_data/
-\backslash
-Sexpr{Project}/
-\backslash
-Sexpr{Project}
-\backslash
-Sexpr{Flight}.nc
+/scr/raf_data/ARISTO{2015,2016}/rfxx.nc
 \end_layout
 
 \end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
 
- 
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+/scr/raf/cooperw/AR16rf06hr.nc
 \end_layout
 
 \end_inset
@@ -8954,19 +15054,27 @@ Sexpr{thisFileName}.Rnw
 \backslash
 
 \backslash
+LAMS
+\backslash
+_ARISTO.py
+\backslash
+
+\backslash
 
 \backslash
 Sexpr{thisFileName}.pdf
 \backslash
 
 \backslash
-
-\backslash
-Sexpr{SaveRData}
+SessionInfo
 \backslash
 
 \backslash
-SessionInfo}
+WorkflowARISTO-LAMS.pdf
+\backslash
+
+\backslash
+SaveRData.zip}
 \end_layout
 
 \begin_layout Plain Layout
@@ -9038,8 +15146,13 @@ cat (toLatex(sessionInfo()), file="SessionInfo")
 
 \begin_layout Plain Layout
 
-system (sprintf("zip %s.zip %s.Rnw %s.pdf Workflow%s.pdf SessionInfo %s", thisFileNa
-me, thisFileName, thisFileName, thisFileName, SaveRData))
+system (sprintf ('zip SaveRData.zip %s*Rdata', thisFileName))
+\end_layout
+
+\begin_layout Plain Layout
+
+system (sprintf("zip %s.zip %s.Rnw %s.pdf LAMS_ARISTO.py Workflow%s.pdf SessionInfo
+ SaveRData.zip", thisFileName, thisFileName, thisFileName, thisFileName))
 \end_layout
 
 \begin_layout Plain Layout
